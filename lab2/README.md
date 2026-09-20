@@ -100,10 +100,11 @@ lab2/<姓名>-<学号>/
 └── AGENT_TRACE.md
 ```
 
-如果完成选做任务 1，可额外提交：
+如果完成选做任务 1，可根据当前项目的数据结构额外提交：
 
 ```text
 data/messages.json
+或 data/conversations.json
 ```
 
 如果完成选做任务 2，请在个人 README 中说明 conversation 数据结构和 API 设计。
@@ -575,22 +576,23 @@ http://localhost:5001/
 
 > [AGENT STOP]
 
-告诉用户必做部分已经完成，询问是否进行选做任务。不得自动开始选做任务或提交前检查。
+告诉用户必做部分已经完成，并介绍两个选做任务。用户可以任选一个先做、两个都做或全部跳过；不得自动开始选做任务或提交前检查。
 
 ---
 
 ## 选做任务 1：使用 JSON 文件持久化
 
-目标是让 Flask 重启后仍能读取原来的聊天记录。
+目标是让 Flask 重启后仍能读取当前应用中的聊天数据。本任务可以在选做任务 2 之前或之后完成。
 
 > [AGENT ACTION]
 
-在不改变前端调用方式和 API Path 的前提下：
+在不改变当前前端调用方式和 API Path 的前提下，根据项目当前的数据结构实现：
 
-- 使用 `data/messages.json` 保存记录；
+- 如果尚未完成多会话功能，使用 `data/messages.json` 保存聊天记录；
+- 如果已经完成多会话功能，使用 `data/conversations.json` 保存 conversation 及其 messages；
 - Flask 启动时读取文件；
-- 文件不存在或为空时从空列表开始；
-- POST、PATCH、DELETE 后写回文件；
+- 文件不存在或为空时，从与当前数据结构匹配的空数据开始；
+- 创建、修改或删除消息、会话后及时写回文件；
 - 新记录 ID 不与已有记录冲突；
 - 不使用数据库；
 - 不改变 DeepSeek 调用逻辑。
@@ -599,11 +601,19 @@ http://localhost:5001/
 
 > [STUDENT ACTION]
 
-在 Codex 中依次完成：创建记录 → 确认文件更新 → 停止 Flask → 重启 Flask → 刷新页面 → 确认记录仍然存在。
+在 Codex 中依次完成：创建聊天数据 → 确认 JSON 文件更新 → 停止 Flask → 重启 Flask → 刷新页面 → 确认原有数据仍然存在。
+
+> [REFLECTION]
+
+让学生打开实际生成的 JSON 文件并结合后端代码回答一个问题：
+
+> 简要回答，这个 JSON 文件最外层是什么数据结构，CRUD 后文件如何变化？为什么 Flask 重启后还能恢复这些数据？
+
+等待学生回答后再评价和追问，帮助其把页面操作、Flask 中的内存数据和 JSON 文件之间的关系解释清楚，不得直接先给答案。
 
 > [AGENT ACTION]
 
-验证成功后创建 Commit：
+确认学生理解后，在个人 README 中说明实际采用的 JSON 数据结构和文件位置，并创建 Commit：
 
 ```text
 lab2: persist messages in json
@@ -611,13 +621,13 @@ lab2: persist messages in json
 
 > [AGENT STOP]
 
-等待用户决定是否继续选做任务 2 或进入提交前检查。
+等待用户决定是否继续另一个尚未完成的选做任务，或进入提交前检查。不得假定选做任务必须按编号完成。
 
 ---
 
 ## 选做任务 2：支持多个聊天会话
 
-必做部分把每次问答看作独立记录。真正的多轮聊天需要应用管理一个会话中的历史消息，并在后续模型调用时提供必要上下文。
+必做部分把每次问答看作独立记录。真正的多轮聊天需要应用管理一个会话中的历史消息，并在后续模型调用时提供必要上下文。本任务可以在选做任务 1 之前或之后完成。
 
 > [AGENT ACTION]
 
@@ -640,11 +650,23 @@ lab2: persist messages in json
 - `DELETE /api/conversations/<id>`
 - `POST /api/conversations/<id>/messages`
 
-完成代码后停止，等待用户实际验证两个会话之间的数据和上下文相互独立。
+完成代码后停止，不要直接宣称验证成功。
+
+> [STUDENT ACTION]
+
+让用户亲自在浏览器中创建两个会话，在两个会话中分别进行不同主题的对话，再切换回其中一个会话继续追问，确认历史消息和模型上下文不会混到另一个会话中。如果已经实现 JSON 持久化，还要重启 Flask 并确认会话仍然存在。
+
+> [REFLECTION]
+
+结合实际 DeepSeek 调用代码，让学生回答一个问题：
+
+> 当你在某个会话中发送一次新问题时，Flask 向 DeepSeek API 发出的这一次请求具体携带了哪些内容？为什么要这样做？
+
+等待学生回答后再评价和追问，帮助其说明 `messages` 数组、`role` 和当前 conversation 历史之间的关系，不得直接先给答案。
 
 > [AGENT ACTION]
 
-验证成功后，在个人 README 中说明项目的数据结构和 API 设计，并创建 Commit：
+确认实际验证成功且学生理解后，在个人 README 中说明 conversation/message 数据结构、API 设计以及传给 DeepSeek 的上下文组成，并创建 Commit：
 
 ```text
 lab2: add multiple conversations
@@ -652,7 +674,7 @@ lab2: add multiple conversations
 
 > [AGENT STOP]
 
-等待用户确认继续进行最后整理，不得提及步骤编号或控制标记。
+等待用户决定是否继续另一个尚未完成的选做任务，或进入提交前检查。即使选做任务 2 已完成，也允许随后继续选做任务 1；不得提及步骤编号或控制标记。
 
 ---
 
