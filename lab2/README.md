@@ -28,6 +28,7 @@ codex
 除非任务意外中断，整个 Lab 应在同一个 Codex 对话中完成。
 
 > 如果你是人类，则不必再继续阅读本 README 文件，后续任务只需在 Codex 中交互完成。
+> 请不要修改本文件与同路径下的 AGENTS.md 文件。
 
 ---
 
@@ -44,9 +45,9 @@ codex
 
 最终我们可以达成：
 
-- 在浏览器访问 `http://localhost:5000/` 可以打开前端页面；
+- 在浏览器访问 `http://localhost:5001/` 可以打开前端页面；
 - 前端使用 HTML + CSS + JavaScript；
-- 后端使用 Python + Flask，并监听 `5000` 端口；
+- 后端使用 Python + Flask，并监听 `5001` 端口；
 - 前端通过 `fetch()` 调用自己的 Flask API；
 - Flask 后端调用 DeepSeek API 获得真实 AI 回复；
 - DeepSeek API Key 只保存在后端，通过 `.env` 管理；
@@ -124,35 +125,11 @@ data/messages.json
 
 本 Lab 不要求提交截图。运行与验证过程应直接在当前 Codex 任务的终端和浏览器中完成。
 
-由于接入第三方 API 后 Codex 任务可能无法共享，本 Lab 不要求提交对话分享链接。请在个人目录提交 `AGENT_TRACE.md`，作为本次人机协作过程的简要轨迹。
+全部任务完成后，在 Codex 对话页面右键，选择“复制”→“复制为 Markdown”，将完整对话粘贴到个人目录的 `AGENT_TRACE.md`。该文件用于保留真实的人机协作过程，不由 Agent 分阶段生成或事后总结。
 
-`AGENT_TRACE.md` 由 Agent 在实验过程中持续维护，而不是在最后重新生成一篇实验报告。每个必做里程碑至少记录：
+如果使用 ChatGPT 账号登录 Codex，并且当前任务支持分享，也可以右键对话选择“分享”，将分享链接写在 `AGENT_TRACE.md` 顶部，无需粘贴对话内容。
 
-- 本阶段要实现的内容；
-- Agent 完成的主要代码工作；
-- 学生亲自执行的终端或浏览器操作；
-- 学生实际观察到的结果；
-- 遇到的问题及解决方式；
-- 思考题讨论的简要结论；
-- 对应的 Commit message。
-
-建议使用下面的简洁结构：
-
-```markdown
-# Agent 协作轨迹
-
-## 阶段名称
-
-- 本阶段目标：
-- Agent 主要工作：
-- 学生亲自操作：
-- 实际观察结果：
-- 遇到的问题与解决：
-- 思考题结论：
-- 对应 Commit：
-```
-
-轨迹只记录已经实际发生的内容。学生没有观察或表达过的信息，Agent 不得补写。轨迹中不得包含真实 API Key、完整 `.env` 内容或其他敏感信息，也不需要复制完整对话、完整终端输出或 Codex 内部历史文件。
+粘贴后必须检查其中没有真实 API Key、`.env` 内容或其他敏感信息，再将 `AGENT_TRACE.md` 作为最后一次 Commit 提交。
 
 ### 5. API Key 安全检查
 
@@ -175,6 +152,7 @@ lab2: scaffold frontend and flask api
 lab2: connect frontend with message crud
 lab2: integrate deepseek api
 lab2: finalize documentation
+lab2: add codex conversation trace
 ```
 
 完成后 Push 自己的分支并创建 Pull Request。PR 标题使用：
@@ -188,19 +166,23 @@ lab2: finalize documentation
 ## 准备个人工作目录
 
 > [AGENT ACTION]
+>
+先确认目前工作目录为isse-labs/，若不是则提醒用户在该目录下创建新的工作会话。
 
-第一次回复先向用户说明：
-
-- 最终会得到一个可以在浏览器中使用的 AI 聊天 Web 应用，；
-- 前端使用 HTML、CSS、JavaScript，后端使用 Flask；
-- 前端通过自己的 RESTful API 完成聊天记录的增删改查；
-- Flask 后端最终会调用 DeepSeek API；
-- 项目会依次经历“独立前后端骨架、接通 CRUD、接入 DeepSeek”三个必做阶段；
-- Agent 负责编写和修改代码，用户需要亲自运行终端命令、操作浏览器、观察结果并回答思考题。
+第一次回复先详细说明上面提及的作业目标、三个主要阶段和人机分工，再引导用户创建个人分支及同名目录。
 
 介绍完成后，在同一条回复中一次性引导用户完成下面两项准备，不要拆成多轮确认。
 
-先直接打开 Codex 内置终端，再显示需要用户亲自输入的命令。示例路径统一写作 `lab2/<姓名>-<学号>`。
+请你直接打开 Codex 内置终端，再显示需要用户亲自输入的命令。示例路径统一写作 `lab2/<姓名>-<学号>`。
+
+只用让用户输入
+```bash
+git switch -c lab2/<姓名>-<学号>
+mkdir -p lab2/<姓名>-<学号>
+```
+即可，其他由你来进行操作。
+
+同时提示用户如果使用 Codex 桌面版用户可以通过右上角按钮打开内置终端或浏览器。
 
 > [STUDENT ACTION]
 
@@ -220,8 +202,6 @@ lab2: finalize documentation
 5. 后续所有文件创建、编辑、读取和 Git 检查都必须明确限定在这个解析出的目录中；
 6. 禁止将 `stat`、工具输出、临时目录、仓库根目录或其他任意目录当作个人目录；
 7. 创建个人 README，只写入项目名称和项目说明所需的基本结构，不加入 Lab 进度、Agent 轨迹或思考题；
-8. 创建 `AGENT_TRACE.md`，写入标题和说明，暂不虚构任何尚未发生的实验记录；
-   
 > [STUDENT ACTION]
 下面介绍即将搭建的前后端骨架，介绍文件目录、前后端要求和 RESTful API 的设计，等待用户确认后继续
 ---
@@ -254,6 +234,7 @@ lab2: finalize documentation
 - 只使用 HTML + CSS + JavaScript；
 - 包含聊天记录区域、输入框和发送按钮；
 - 为每条聊天记录预留修改和删除入口；
+- 不依赖 `alert()`、`prompt()`、`confirm()` 等浏览器弹窗，后续交互所需的输入、确认和反馈都应通过页面内元素呈现；
 - 本阶段只完成页面结构和样式；
 - JavaScript 暂时不调用后端或第三方 API。
 
@@ -261,7 +242,8 @@ lab2: finalize documentation
 
 - 使用 Python + Flask；
 - 实现 `GET /api/hello`，返回 `{"message":"你好"}`；
-- 使用 `app.run(port=5000, debug=True)`；
+- 创建 Flask app 后设置 `app.json.ensure_ascii = False`，确保 JSON 响应中的中文直接显示为汉字，而不是 `\u4f60\u597d` 形式的 Unicode 转义；
+- 使用 `app.run(port=5001, debug=True)`；
 - 暂时不返回前端页面；
 - 暂时不接入 DeepSeek；
 - 暂时不保存数据。
@@ -301,9 +283,9 @@ lab2: finalize documentation
 
 > [STUDENT ACTION]
 
-告诉用户接下来 Codex 将安装依赖，由用户来启动后端并使用 curl 观察真实响应。根据用户环境提供准确命令并简要解释，但 Agent 不得执行这些命令。
+请安装完所有依赖后，告诉用户接下来由用户来启动后端并使用 curl 观察真实响应。根据用户环境提供准确命令并简要解释，但 Agent 不得执行这些命令。
 
-先直接打开 Codex 内置终端。用户在其中进入自己的个人目录并运行：
+请你直接打开 Codex 内置终端。用户在其中进入自己的个人目录并运行：
 
 ```bash
 python app.py
@@ -312,10 +294,10 @@ python app.py
 保持 Flask 运行。Agent 直接打开第二个 Codex 内置终端，由用户在其中调用：
 
 ```bash
-curl http://localhost:5000/api/hello
+curl http://localhost:5001/api/hello
 ```
 
-确认实际返回包含：
+请你通过 Codex 内置终端读取信息，确认实际返回包含：
 
 ```json
 {"message":"你好"}
@@ -327,18 +309,17 @@ curl http://localhost:5000/api/hello
 
 先让学生回答：
 
-> 现在前端通过直接打开 `frontend/index.html` 访问。如果希望只在浏览器中输入 `http://localhost:5000/` 就能获得前端页面，Flask 还需要增加什么 Route？这个 Route 应该返回什么？浏览器为什么能通过一个 URL 获得前端页面？请阅读当前项目代码来回答这个问题。
+> 现在前端通过直接打开 `frontend/index.html` 访问。如果希望只在浏览器中输入 `http://localhost:5001/` 就能获得前端页面，Flask 还需要增加什么 Route？这个 Route 应该返回什么？浏览器为什么能通过一个 URL 获得前端页面？请阅读当前项目代码来回答这个问题。
 
-等待学生回答后再评价和追问，不得直接泄露答案。确认学生理解后，将其答案轻微整理并写入 `AGENT_TRACE.md`。
+等待学生回答后再评价和追问，不得直接泄露答案，不用额外提出其他问题。学生的回答可以比较简单，没有事实错误即可。
 
 ### T1-CHECKPOINT：完成任务 1
 
 > [AGENT ACTION]
 
 1. 确认静态页面和 `GET /api/hello` 都已经实际验证；
-2. 根据真实对话和观察结果，将本阶段轨迹追加到 `AGENT_TRACE.md`；
-3. 确认 Commit 只包含个人目录中的文件；
-4. 创建 Commit：`lab2: scaffold frontend and flask api`。
+2. 确认 Commit 只包含个人目录中的文件；
+3. 创建 Commit：`lab2: scaffold frontend and flask api`。
 
 > [AGENT STOP]
 
@@ -357,12 +338,13 @@ curl http://localhost:5000/api/hello
 继续修改当前项目：
 
 1. Flask 同时提供前端页面和后端 API；
-2. 访问 `http://localhost:5000/` 时返回 `frontend/index.html`；
+2. 访问 `http://localhost:5001/` 时返回 `frontend/index.html`；
 3. `frontend/style.css` 和 `frontend/app.js` 也必须能由 Flask 正常提供，不得出现静态资源 404；
-4. 前端和后端使用同一个 Flask 服务和 `5000` 端口；
+4. 前端和后端使用同一个 Flask 服务和 `5001` 端口；
 5. 前端使用 `fetch()` 和相对 URL 调用后端 API；
-6. 保留 `GET /api/hello`。
-7. 不要使用文件或数据库持久化保存数据
+6. 保留 `GET /api/hello`；
+7. 保留 `app.json.ensure_ascii = False`，使所有 JSON 响应中的中文直接显示。
+8. 不要使用文件或数据库持久化保存数据。
 
 ```json
 {"id": 1, "message": "用户输入", "reply": "后端回复"}
@@ -386,6 +368,7 @@ curl http://localhost:5000/api/hello
 - 将返回的 `message` 和 `reply` 显示到聊天区域；
 - 每条记录提供修改和删除入口；
 - 修改或删除后及时更新页面；
+- 不使用 `alert()`、`prompt()`、`confirm()` 完成修改、删除确认或错误提示，相关交互和反馈全部显示在页面中；
 - 所有数据操作都通过 API 完成。
 
 本阶段不要接入 DeepSeek、API Key、数据库或 JSON 文件持久化。完成代码后解释前端如何调用后端，但不要运行测试。
@@ -409,7 +392,7 @@ python app.py
 用户确认服务已经启动后，Agent 直接打开 Codex 内置浏览器并导航到：
 
 ```text
-http://localhost:5000/
+http://localhost:5001/
 ```
 
 引导用户亲自完成：
@@ -427,20 +410,19 @@ http://localhost:5000/
 
 先让学生回答：
 
-> 网页来自 `http://localhost:5000/`，为什么 JavaScript 中写 `fetch("/api/messages")` 时不需要再写 `http://localhost:5000`？如果前端页面运行在 `http://localhost:5173/`，而 Flask 仍然运行在 `http://localhost:5000/`，那么 `fetch("/api/messages")` 又会请求到哪里？
+> 网页来自 `http://localhost:5001/`，为什么 JavaScript 中写 `fetch("/api/messages")` 时不需要再写 `http://localhost:5001`？如果前端页面运行在 `http://localhost:5173/`，而 Flask 仍然运行在 `http://localhost:5001/`，那么 `fetch("/api/messages")` 又会请求到哪里？
 
 本题只需要学生理解相对 URL 会基于当前网页地址解析，不需要展开其他浏览器网络机制。
 
-等待学生回答后再评价和追问。确认学生理解后，将其答案轻微整理并写入 `AGENT_TRACE.md`。
+等待学生回答后再评价和追问，确认学生理解即可。
 
 ### T2-CHECKPOINT：完成任务 2
 
 > [AGENT ACTION]
 
 1. 确认 Create、Read、Update、Delete 都已经在浏览器中实际验证；
-2. 根据真实对话和观察结果，将本阶段轨迹追加到 `AGENT_TRACE.md`；
-3. 确认 Commit 只包含个人目录中的文件；
-4. 创建 Commit：`lab2: connect frontend with message crud`。
+2. 确认 Commit 只包含个人目录中的文件；
+3. 创建 Commit：`lab2: connect frontend with message crud`。
 
 > [AGENT STOP]
 向用户说明接下来会准备 API Key 的安全配置，讲解具体流程，等待用户确认后继续。
@@ -453,14 +435,26 @@ http://localhost:5000/
 
 ### T3-S1：先准备安全配置
 
+> [STUDENT ACTION]
+
+在创建真实 `.env` 之前，Agent 先说明 `.gitignore` 的作用，再请用户自行在个人项目根目录创建或编辑 `.gitignore`，至少加入：
+
+```gitignore
+.env
+__pycache__/
+.venv/
+```
+
+Agent 应根据已经解析出的个人目录提供准确路径，但不得代替用户创建或修改 `.gitignore`，也不要要求用户在终端中使用 `nano` 或其他指定编辑器。用户自行选择创建方式，完成后只需回复“`.gitignore` 已完成”。
+
 > [AGENT ACTION]
 
-在用户创建真实 `.env` 之前先完成：
+用户确认后：
 
-1. 创建 `.gitignore`，至少忽略 `.env`、`__pycache__/`、`.venv/`；
+1. 读取并确认个人目录的 `.gitignore` 已包含 `.env`；
 2. 创建 `.env.example`，只包含 `DEEPSEEK_API_KEY=your_api_key_here`；
 3. 在需要时更新 `requirements.txt`，加入 `python-dotenv` 和调用 DeepSeek 所需的依赖；
-4. 使用 `git check-ignore .env` 所需的规则确认 `.env` 会被忽略；
+4. 使用 `git check-ignore .env` 确认将要创建的 `.env` 会被忽略；
 5. 不创建、不读取真实 `.env`。
 
 完成后说明 `.env` 和 `.env.example` 的区别。
@@ -476,7 +470,7 @@ http://localhost:5000/
 Agent 先直接打开 Codex 内置浏览器并导航到 DeepSeek 开放平台。用户亲自完成注册、登录和 API Key 创建，Agent 不得点击、输入、查看或复述生成的 Key。
 
 1. 进入 DeepSeek 开放平台注册、登录并创建 API Key；
-2. 在个人项目根目录手动创建 `.env`；
+2. 在个人项目根目录自行创建 `.env`，不要求使用终端或指定编辑器；
 3. 写入 `DEEPSEEK_API_KEY=你的真实APIKey`；
 4. 不要把真实 Key 发送给 Agent；
 5. 完成后只告诉 Agent：“`.env` 已创建”。
@@ -540,7 +534,7 @@ python app.py
 保持 Flask 运行。Agent 直接打开第二个 Codex 内置终端，由用户在其中执行：
 
 ```bash
-curl -X POST http://localhost:5000/api/messages \
+curl -X POST http://localhost:5001/api/messages \
   -H "Content-Type: application/json" \
   -d '{"message":"请用一句话介绍北京大学"}'
 ```
@@ -550,7 +544,7 @@ curl -X POST http://localhost:5000/api/messages \
 curl 验证完成后，Agent 直接打开 Codex 内置浏览器并导航到：
 
 ```text
-http://localhost:5000/
+http://localhost:5001/
 ```
 
 引导用户亲自确认：
@@ -568,7 +562,7 @@ http://localhost:5000/
 1. 为什么不让浏览器前端直接调用 DeepSeek API，而要经过 Flask 后端？请从 API Key 安全角度解释。
 2. 停止并重新启动 Flask 后，为什么原有聊天记录会消失？记录原本保存在哪里？如果希望长期保留，需要增加什么机制？
 
-确认学生理解后，将其答案轻微整理并写入 `AGENT_TRACE.md`。
+确认学生理解即可，不要把答案另行整理到项目文件中。
 
 ### T3-CHECKPOINT：完成任务 3
 
@@ -576,10 +570,8 @@ http://localhost:5000/
 
 1. 确认 curl 和浏览器中的真实模型回复都已经实际验证；
 2. 再次确认 `.env` 被忽略且未被 Git 跟踪；
-3. 根据真实对话和观察结果，将本阶段轨迹追加到 `AGENT_TRACE.md`；
-4. 确认轨迹不包含 API Key、`.env` 内容或其他敏感信息；
-5. 确认 Commit 只包含个人目录中的文件；
-6. 创建 Commit：`lab2: integrate deepseek api`。
+3. 确认 Commit 只包含个人目录中的文件；
+4. 创建 Commit：`lab2: integrate deepseek api`。
 
 > [AGENT STOP]
 
@@ -611,7 +603,7 @@ http://localhost:5000/
 
 > [AGENT ACTION]
 
-验证成功后将真实过程追加到 `AGENT_TRACE.md`，并创建 Commit：
+验证成功后创建 Commit：
 
 ```text
 lab2: persist messages in json
@@ -652,7 +644,7 @@ lab2: persist messages in json
 
 > [AGENT ACTION]
 
-验证成功后，在个人 README 中说明项目的数据结构和 API 设计，将真实过程追加到 `AGENT_TRACE.md`，并创建 Commit：
+验证成功后，在个人 README 中说明项目的数据结构和 API 设计，并创建 Commit：
 
 ```text
 lab2: add multiple conversations
@@ -671,14 +663,37 @@ lab2: add multiple conversations
 逐项完成以下检查，但不得读取 `.env`：
 
 1. 根据已经实际完成的项目补全个人 README，只写项目功能、配置和使用方法，不写 Lab 进度、Agent 过程或思考题；
-2. 检查 `AGENT_TRACE.md` 是否包含各必做阶段、学生思考答案和真实观察，不得在最后虚构缺失过程；
-3. 检查 `AGENT_TRACE.md` 中没有真实 Key、`.env` 内容或其他敏感信息；
-4. 检查必需文件是否齐全；
-5. 检查安装、启动、浏览器访问和 curl 测试说明是否清楚；
-6. 检查 `.env.example` 只有示例值；
-7. 使用安全命令确认 `.env` 被忽略且未被 Git 跟踪；
-8. 检查当前 `git status` 和阶段性 Commit；
-9. 创建 Commit：`lab2: finalize documentation`。
+2. 检查除 `AGENT_TRACE.md` 外的必需文件是否齐全；
+3. 检查安装、启动、浏览器访问和 curl 测试说明是否清楚；
+4. 检查 `.env.example` 只有示例值；
+5. 使用安全命令确认 `.env` 被忽略且未被 Git 跟踪；
+6. 检查当前 `git status` 和阶段性 Commit；
+7. 创建 Commit：`lab2: finalize documentation`。
+
+> [AGENT ACTION]
+
+文档 Commit 完成后，Agent 在个人目录创建空的 `AGENT_TRACE.md` 并在 Codex 中打开该文件，但不得自动生成、总结或改写对话内容。
+
+> [STUDENT ACTION]
+
+文件打开后，引导用户亲自完成：
+
+1. 在当前 Codex 对话页面右键；
+2. 选择“复制”→“复制为 Markdown”；
+3. 将复制的完整对话粘贴到 `AGENT_TRACE.md`；
+4. 如果使用 ChatGPT 账号登录 Codex，并且右键菜单中可以选择“分享”，可以将分享链接写在文件顶部，无需再粘贴完整对话；
+5. 保存文件并告诉 Agent“对话轨迹已粘贴”。
+
+
+> [AGENT ACTION]
+
+用户确认后：
+
+1. 检查 `AGENT_TRACE.md` 已包含复制得到的真实对话，而不是 Agent 生成的总结；
+2. 检查其中没有真实 API Key、`.env` 内容或其他敏感信息；
+3. 如果发现敏感信息，停止提交并引导用户删除；真实 Key 曾进入对话时，还应提醒用户立即废弃并重新生成；
+4. 确认本次 Commit 只加入 `AGENT_TRACE.md`；
+5. 创建最后一次 Commit：`lab2: add codex conversation trace`。
 
 最后向用户展示：
 
@@ -686,7 +701,7 @@ lab2: add multiple conversations
 - Commit 列表；
 - 尚未提交的文件；
 - API Key 安全检查结果；
-- `AGENT_TRACE.md` 完整性检查结果；
+- `AGENT_TRACE.md` 检查结果；
 - Pull Request 标题和下一步操作。
 
 > [AGENT STOP]
