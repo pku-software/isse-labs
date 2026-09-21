@@ -89,6 +89,10 @@ textarea {
   border-radius: 18px;
 }
 
+.message-card + .message-card {
+  margin-top: 18px;
+}
+
 .message-row {
   display: grid;
   grid-template-columns: 46px 1fr;
@@ -128,6 +132,55 @@ textarea {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 16px;
+}
+
+.edit-panel,
+.delete-panel {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #dce5ee;
+}
+
+.edit-input {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1px solid #aebdca;
+  border-radius: 9px;
+}
+
+.delete-panel p {
+  flex: 1;
+  margin: 0;
+  color: #8c2f25;
+  font-size: 0.9rem;
+}
+
+.action-button {
+  padding: 8px 13px;
+  color: #fff;
+  background: #24679d;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.action-button.secondary {
+  color: #344256;
+  background: #e6ebf0;
+}
+
+.action-button.danger {
+  background: #b42318;
+}
+
+.empty-state {
+  margin: 70px 0;
+  color: #6b7a8c;
+  text-align: center;
 }
 
 .text-button,
@@ -198,6 +251,19 @@ textarea:focus {
   font-size: 0.86rem;
 }
 
+.page-feedback.error {
+  color: #b42318;
+}
+
+.page-feedback.success {
+  color: #18794e;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
 @media (max-width: 620px) {
   body {
     padding: 18px 10px;
@@ -216,6 +282,11 @@ textarea:focus {
 
   .composer-row {
     flex-direction: column;
+  }
+
+  .edit-panel,
+  .delete-panel {
+    flex-wrap: wrap;
   }
 
   .primary-button {
