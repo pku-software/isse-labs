@@ -1,0 +1,224 @@
+:root {
+  color: #18212f;
+  font-family:
+    Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system,
+    sans-serif;
+  background: #edf3f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  padding: 48px 20px;
+  background:
+    radial-gradient(circle at top left, #dcecff 0, transparent 38%),
+    linear-gradient(145deg, #f7fafc, #e8eff6);
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+.chat-app {
+  width: min(820px, 100%);
+  margin: 0 auto;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 24px;
+  box-shadow: 0 24px 70px rgba(46, 64, 87, 0.14);
+}
+
+.app-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 30px 34px;
+  color: #f8fafc;
+  background: linear-gradient(125deg, #163a63, #296ca3);
+}
+
+.eyebrow,
+.app-header h1,
+.subtitle {
+  margin: 0;
+}
+
+.eyebrow {
+  margin-bottom: 7px;
+  color: #a9d7ff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+}
+
+.app-header h1 {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+}
+
+.subtitle {
+  margin-top: 8px;
+  color: #d8eaff;
+}
+
+.status-badge {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  color: #164e63;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: #cffafe;
+  border-radius: 999px;
+}
+
+.message-list {
+  min-height: 330px;
+  padding: 32px 34px 18px;
+}
+
+.message-card {
+  padding: 22px;
+  background: #f8fafc;
+  border: 1px solid #dce5ee;
+  border-radius: 18px;
+}
+
+.message-row {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.message-row + .message-row {
+  margin-top: 16px;
+}
+
+.message-row p {
+  margin: 0;
+  padding: 12px 15px;
+  line-height: 1.65;
+  border-radius: 4px 14px 14px;
+}
+
+.user-message p {
+  background: #e4effa;
+}
+
+.assistant-message p {
+  background: #e7f7ef;
+}
+
+.role-label {
+  padding-top: 12px;
+  color: #526173;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.message-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.text-button,
+.primary-button {
+  border: 0;
+  cursor: pointer;
+}
+
+.text-button {
+  padding: 6px 10px;
+  color: #2563a3;
+  background: transparent;
+}
+
+.text-button.danger {
+  color: #b42318;
+}
+
+.composer {
+  padding: 24px 34px 30px;
+  background: #f8fafc;
+  border-top: 1px solid #e1e8f0;
+}
+
+.composer label {
+  display: block;
+  margin-bottom: 9px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.composer-row {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+textarea {
+  flex: 1;
+  min-width: 0;
+  resize: vertical;
+  padding: 13px 15px;
+  color: #18212f;
+  background: #fff;
+  border: 1px solid #bdc9d6;
+  border-radius: 12px;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: #347db6;
+  box-shadow: 0 0 0 3px rgba(52, 125, 182, 0.14);
+}
+
+.primary-button {
+  align-self: stretch;
+  padding: 0 24px;
+  color: #fff;
+  font-weight: 700;
+  background: #24679d;
+  border-radius: 12px;
+}
+
+.page-feedback {
+  min-height: 1.4em;
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+@media (max-width: 620px) {
+  body {
+    padding: 18px 10px;
+  }
+
+  .app-header,
+  .message-list,
+  .composer {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .app-header {
+    flex-direction: column;
+  }
+
+  .composer-row {
+    flex-direction: column;
+  }
+
+  .primary-button {
+    min-height: 46px;
+  }
+}
