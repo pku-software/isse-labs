@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI 聊天</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <main class="chat-app">
@@ -14,19 +14,7 @@
     </header>
 
     <section class="chat-window" id="chat-window" aria-live="polite">
-      <!-- 示例记录：只为展示一条聊天记录的排版，按钮还没有交互逻辑 -->
-      <article class="message" data-id="0">
-        <div class="bubbles">
-          <div class="user-block">
-            <p class="bubble bubble-user"><span class="role">我</span>你好，请用一句话介绍你自己。</p>
-            <div class="message-actions">
-              <button type="button" class="action-link" data-action="edit">修改</button>
-              <button type="button" class="action-link" data-action="delete">删除</button>
-            </div>
-          </div>
-          <p class="bubble bubble-ai"><span class="role">AI</span>示例回复：这一阶段还没有接入后端，所以这里是一条占位内容。</p>
-        </div>
-      </article>
+      <p class="empty-hint" id="empty-hint">暂无聊天记录</p>
     </section>
 
     <form class="chat-input" id="chat-form" autocomplete="off">
@@ -43,6 +31,6 @@
     </form>
   </main>
 
-  <script src="app.js"></script>
+  <script src="/static/app.js"></script>
 </body>
 </html>

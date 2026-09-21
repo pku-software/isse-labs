@@ -127,6 +127,9 @@ body {
 /* 用户消息下方的操作入口，做成小字而不是按钮 */
 .message-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-end;
   gap: 12px;
   padding-right: 4px;
 }
@@ -146,6 +149,14 @@ body {
 }
 
 .action-link[data-action="delete"] {
+  color: var(--danger);
+}
+
+.action-link[data-action="save"] {
+  color: #2f6bff;
+}
+
+.action-link[data-action="confirm-delete"] {
   color: var(--danger);
 }
 
@@ -210,6 +221,42 @@ body {
 .status-text {
   color: var(--text-muted);
   font-size: 13px;
+}
+
+.status-text.error {
+  color: var(--danger);
+}
+
+/* 行内修改记录时的编辑区 */
+.message-edit {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.edit-input {
+  width: 86%;
+  padding: 8px 12px;
+  border: 1px solid var(--user-bubble);
+  border-radius: 10px;
+  font: inherit;
+  resize: vertical;
+}
+
+.edit-input:focus {
+  outline: 2px solid rgba(47, 107, 255, 0.25);
+}
+
+.confirm-text {
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .visually-hidden {
