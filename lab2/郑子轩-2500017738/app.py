@@ -1,4 +1,11 @@
+import os
+
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request
+from openai import OpenAI
+
+
+load_dotenv()
 
 
 app = Flask(__name__, static_folder="frontend", static_url_path="")
@@ -34,10 +41,30 @@ def create_message():
     if not isinstance(message_text, str) or not message_text.strip():
         return jsonify({"error": "message 不能为空"}), 400
 
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        return jsonify({"error": "服务器未配置 DeepSeek API Key"}), 500
+
+    try:
+        client = OpenAI(
+            api_key=api_key,
+            base_url="https://api.deepseek.com",
+        )
+        response = client.chat.completions.create(
+            model="deepseek-flash",
+            messages=[{"role": "user", "content": message_text.strip()}],
+            stream=False,
+        )
+        reply = response.choices[0].message.content
+        if not reply:
+            raise ValueError("DeepSeek returned an empty reply")
+    except Exception:
+        return jsonify({"error": "DeepSeek API 调用失败，请稍后重试"}), 502
+
     message = {
         "id": next_message_id,
         "message": message_text.strip(),
-        "reply": "你好",
+        "reply": reply,
     }
     messages.append(message)
     next_message_id += 1
