@@ -1,4 +1,6 @@
+import json
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
@@ -11,8 +13,36 @@ load_dotenv()
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 app.json.ensure_ascii = False
 
-messages = []
-next_message_id = 1
+DATA_FILE = Path(__file__).resolve().parent / "data" / "messages.json"
+
+
+def load_messages():
+    if not DATA_FILE.exists():
+        return []
+
+    content = DATA_FILE.read_text(encoding="utf-8").strip()
+    if not content:
+        return []
+
+    data = json.loads(content)
+    if not isinstance(data, list):
+        raise ValueError("messages.json 的最外层必须是数组")
+    return data
+
+
+def save_messages():
+    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    DATA_FILE.write_text(
+        json.dumps(messages, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
+messages = load_messages()
+next_message_id = max(
+    (item.get("id", 0) for item in messages if isinstance(item, dict)),
+    default=0,
+) + 1
 
 
 def find_message(message_id):
@@ -68,6 +98,7 @@ def create_message():
     }
     messages.append(message)
     next_message_id += 1
+    save_messages()
     return jsonify(message), 201
 
 
@@ -91,6 +122,7 @@ def update_message(message_id):
         return jsonify({"error": "message 不能为空"}), 400
 
     message["message"] = message_text.strip()
+    save_messages()
     return jsonify(message)
 
 
@@ -101,6 +133,7 @@ def delete_message(message_id):
         return jsonify({"error": "聊天记录不存在"}), 404
 
     messages.remove(message)
+    save_messages()
     return jsonify({"message": "删除成功"})
 
 
