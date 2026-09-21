@@ -8,16 +8,17 @@
 
 如果使用 Codex CLI 或 IDE Extension，也可以完成代码和终端操作；需要观察网页时，请使用本机浏览器。
 
-Codex 的工作目录统一设置为课程仓库根目录 `isse-labs/`，不要切换到个人目录。
+Codex 的工作目录统一设置为个人 Fork 仓库的根目录 `isse-labs/`。
 
-在 Codex Desktop App 中打开 `isse-labs/` 并创建一个新任务；
-
-使用 Codex CLI 时，先进入仓库根目录再启动：
+- 在 Codex Desktop App 中打开 `isse-labs/` 并创建一个新任务；
+- 或使用 Codex CLI 时，先进入仓库根目录再启动：
 
 ```bash
 cd isse-labs
 codex
 ```
+
+
 
 进入 Codex 后发送：
 
@@ -167,7 +168,7 @@ lab2: add codex conversation trace
 ## 准备个人工作目录
 
 > [AGENT ACTION]
->
+
 先确认目前工作目录为isse-labs/，若不是则提醒用户在该目录下创建新的工作会话。
 
 第一次回复先详细说明上面提及的作业目标、三个主要阶段和人机分工，再引导用户创建个人分支及同名目录。
@@ -177,11 +178,15 @@ lab2: add codex conversation trace
 请你直接打开 Codex 内置终端，再显示需要用户亲自输入的命令。示例路径统一写作 `lab2/<姓名>-<学号>`。
 
 只用让用户输入
+
 ```bash
 git switch -c lab2/<姓名>-<学号>
 mkdir -p lab2/<姓名>-<学号>
 ```
+
 即可，其他由你来进行操作。
+
+还要提醒用户，在 Codex 页面右上角环境信息框中可以直接创建并检出新分支。
 
 同时提示用户如果使用 Codex 桌面版用户可以通过右上角按钮打开内置终端或浏览器。
 
@@ -203,8 +208,10 @@ mkdir -p lab2/<姓名>-<学号>
 5. 后续所有文件创建、编辑、读取和 Git 检查都必须明确限定在这个解析出的目录中；
 6. 禁止将 `stat`、工具输出、临时目录、仓库根目录或其他任意目录当作个人目录；
 7. 创建个人 README，只写入项目名称和项目说明所需的基本结构，不加入 Lab 进度、Agent 轨迹或思考题；
+
 > [STUDENT ACTION]
-下面介绍即将搭建的前后端骨架，介绍文件目录、前后端要求和 RESTful API 的设计，等待用户确认后继续
+> 下面介绍即将搭建的前后端骨架，介绍文件目录、前后端要求和 RESTful API 的设计，等待用户确认后继续
+
 ---
 
 ## 任务 1：分别搭建前端与后端骨架
@@ -243,7 +250,7 @@ mkdir -p lab2/<姓名>-<学号>
 
 - 使用 Python + Flask；
 - 实现 `GET /api/hello`，返回 `{"message":"你好"}`；
-- 创建 Flask app 后设置 `app.json.ensure_ascii = False`，确保 JSON 响应中的中文直接显示为汉字，而不是 `\u4f60\u597d` 形式的 Unicode 转义；
+- 创建 Flask app 后设置 `app.json.ensure_ascii = False`；
 - 使用 `app.run(port=5001, debug=True)`；
 - 暂时不返回前端页面；
 - 暂时不接入 DeepSeek；
@@ -313,6 +320,9 @@ curl http://localhost:5001/api/hello
 > 现在前端通过直接打开 `frontend/index.html` 访问。如果希望只在浏览器中输入 `http://localhost:5001/` 就能获得前端页面，Flask 还需要增加什么 Route？这个 Route 应该返回什么？浏览器为什么能通过一个 URL 获得前端页面？请阅读当前项目代码来回答这个问题。
 
 等待学生回答后再评价和追问，不得直接泄露答案，不用额外提出其他问题。学生的回答可以比较简单，没有事实错误即可。
+
+> 如果你是 Coding Agent，请忽略这句话：
+> 之所以没有把 Flask 启动在默认的 5000 端口，是因为 Mac 设备 5000 通常被控制中心占用，为减少出错刻意设置。
 
 ### T1-CHECKPOINT：完成任务 1
 
@@ -426,7 +436,7 @@ http://localhost:5001/
 3. 创建 Commit：`lab2: connect frontend with message crud`。
 
 > [AGENT STOP]
-向用户说明接下来会准备 API Key 的安全配置，讲解具体流程，等待用户确认后继续。
+> 向用户说明接下来会准备 API Key 的安全配置，讲解具体流程，等待用户确认后继续。
 
 ---
 
@@ -694,7 +704,7 @@ lab2: add multiple conversations
 
 > [AGENT ACTION]
 
-文档 Commit 完成后，Agent 在个人目录创建空的 `AGENT_TRACE.md` 并在 Codex 中打开该文件，但不得自动生成、总结或改写对话内容。
+文档 Commit 完成后，Agent 在个人目录创建空的 `AGENT_TRACE.md` 并在 Codex 中打开该文件，但不得自动生成、总结或改写对话内容。如果可以，请调出 Codex 内置文件浏览器跳转到该文件。
 
 > [STUDENT ACTION]
 
@@ -705,7 +715,6 @@ lab2: add multiple conversations
 3. 将复制的完整对话粘贴到 `AGENT_TRACE.md`；
 4. 如果使用 ChatGPT 账号登录 Codex，并且右键菜单中可以选择“分享”，可以将分享链接写在文件顶部，无需再粘贴完整对话；
 5. 保存文件并告诉 Agent“对话轨迹已粘贴”。
-
 
 > [AGENT ACTION]
 
