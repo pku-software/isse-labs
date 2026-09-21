@@ -8,6 +8,9 @@
 
 - 在浏览器中与 DeepSeek 进行问答；
 - 创建、查看、修改和删除聊天记录；
+- 创建、切换、重命名和删除多个聊天会话；
+- 在同一会话中将历史消息作为 DeepSeek 的上下文；
+- 使用 JSON 文件持久化保存会话与消息；
 - 在页面内显示操作状态、错误和删除确认；
 - 将 DeepSeek API Key 仅保存在后端的 `.env` 中。
 
@@ -21,7 +24,7 @@
 │   ├── style.css
 │   └── app.js
 ├── data/
-│   └── messages.json
+│   └── conversations.json
 ├── .env.example
 ├── .gitignore
 ├── requirements.txt
@@ -73,16 +76,35 @@ http://localhost:5001/
 | `GET` | `/api/messages` | 返回全部聊天记录 |
 | `PATCH` | `/api/messages/<id>` | 修改指定记录的用户消息 |
 | `DELETE` | `/api/messages/<id>` | 删除指定聊天记录 |
+| `POST` | `/api/conversations` | 创建会话 |
+| `GET` | `/api/conversations` | 返回全部会话 |
+| `GET` | `/api/conversations/<id>` | 返回指定会话及其消息 |
+| `PATCH` | `/api/conversations/<id>` | 重命名指定会话 |
+| `DELETE` | `/api/conversations/<id>` | 删除指定会话及其消息 |
+| `POST` | `/api/conversations/<id>/messages` | 在指定会话中发送新消息 |
 
-聊天记录的 JSON 格式为：
+会话的 JSON 格式为：
 
 ```json
 {
   "id": 1,
-  "message": "用户输入",
-  "reply": "DeepSeek 回复"
+  "title": "校园生活",
+  "messages": [
+    {
+      "id": 1,
+      "role": "user",
+      "content": "北京大学在哪里？"
+    },
+    {
+      "id": 2,
+      "role": "assistant",
+      "content": "DeepSeek 的回复"
+    }
+  ]
 }
 ```
+
+`/api/messages` 路由保留原有单列表 CRUD 接口的兼容能力；多会话页面使用 `/api/conversations` 路由。
 
 ## 简单 API 测试
 
@@ -100,8 +122,28 @@ curl -X POST http://localhost:5001/api/messages \
   -d '{"message":"请用一句话介绍北京大学"}'
 ```
 
+创建一个会话：
+
+```bash
+curl -X POST http://localhost:5001/api/conversations \
+  -H "Content-Type: application/json" \
+  -d '{"title":"校园生活"}'
+```
+
+假设新会话的 ID 为 `1`，在该会话中发送消息：
+
+```bash
+curl -X POST http://localhost:5001/api/conversations/1/messages \
+  -H "Content-Type: application/json" \
+  -d '{"message":"北京大学在哪里？"}'
+```
+
 ## 数据存储
 
-聊天记录持久化保存在 `data/messages.json` 中。文件最外层是 JSON 数组，每个元素是一条包含 `id`、`message` 和 `reply` 的聊天记录。
+会话与消息持久化保存在 `data/conversations.json` 中。文件最外层是 JSON 数组，每个元素是一个 conversation；每个 conversation 包含 `id`、`title` 和按时间顺序排列的 `messages` 数组。
 
-Flask 启动时读取该文件，创建、修改或删除记录后立即将完整数组写回文件，因此重启后仍能恢复数据。当前每条问答是独立记录，尚未启用多会话功能。
+Flask 启动时读取该文件，创建、重命名或删除会话以及创建、修改或删除消息后，都会立即将完整数组写回文件。
+
+## DeepSeek 上下文
+
+用户在某个会话中发送新问题时，Flask 只读取当前 conversation 的 `messages` 数组，按原有顺序保留每条消息的 `role` 和 `content`，再追加本次的 `user` 消息后发给 DeepSeek。`user` 表示用户消息，`assistant` 表示模型回复。其他会话的历史不会加入该请求。
