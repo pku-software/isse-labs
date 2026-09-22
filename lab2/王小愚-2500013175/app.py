@@ -1,4 +1,6 @@
+import json
 import os
+from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
 from dotenv import load_dotenv
@@ -13,9 +15,46 @@ app.json.ensure_ascii = False
 
 messages = []
 next_message_id = 1
-conversations = []
-next_conversation_id = 1
-next_conversation_message_id = 1
+data_file = Path(__file__).parent / "data" / "conversations.json"
+
+
+def load_conversations():
+    if not data_file.exists() or data_file.stat().st_size == 0:
+        return []
+
+    try:
+        with data_file.open("r", encoding="utf-8") as file:
+            loaded = json.load(file)
+        if isinstance(loaded, list):
+            return loaded
+    except (OSError, json.JSONDecodeError):
+        app.logger.exception("Failed to load conversation data")
+    return []
+
+
+def save_conversations():
+    data_file.parent.mkdir(parents=True, exist_ok=True)
+    temporary_file = data_file.with_suffix(".tmp")
+    with temporary_file.open("w", encoding="utf-8") as file:
+        json.dump(conversations, file, ensure_ascii=False, indent=2)
+    temporary_file.replace(data_file)
+
+
+conversations = load_conversations()
+next_conversation_id = (
+    max((conversation["id"] for conversation in conversations), default=0) + 1
+)
+next_conversation_message_id = (
+    max(
+        (
+            message["id"]
+            for conversation in conversations
+            for message in conversation.get("messages", [])
+        ),
+        default=0,
+    )
+    + 1
+)
 
 
 def generate_reply(api_messages):
@@ -139,6 +178,7 @@ def create_conversation():
     }
     conversations.append(conversation)
     next_conversation_id += 1
+    save_conversations()
     return jsonify(conversation), 201
 
 
@@ -178,6 +218,7 @@ def update_conversation(conversation_id):
         return jsonify({"error": "title 不能为空"}), 400
 
     conversation["title"] = title.strip()
+    save_conversations()
     return jsonify(conversation)
 
 
@@ -188,6 +229,7 @@ def delete_conversation(conversation_id):
         return jsonify({"error": "会话不存在"}), 404
 
     conversations.remove(conversation)
+    save_conversations()
     return jsonify({"message": "会话已删除"})
 
 
@@ -236,6 +278,7 @@ def create_conversation_message(conversation_id):
     }
     next_conversation_message_id += 1
     conversation["messages"].extend([user_message, assistant_message])
+    save_conversations()
 
     return jsonify(
         {
@@ -271,6 +314,7 @@ def update_conversation_message(conversation_id, message_id):
         return jsonify({"error": "message 不能为空"}), 400
 
     item["content"] = content.strip()
+    save_conversations()
     return jsonify(item)
 
 
@@ -304,6 +348,7 @@ def delete_conversation_message(conversation_id, message_id):
     ):
         delete_count = 2
     del conversation["messages"][message_index : message_index + delete_count]
+    save_conversations()
     return jsonify({"message": "问答已删除"})
 
 
