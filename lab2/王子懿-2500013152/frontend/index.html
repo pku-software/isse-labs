@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 聊天助手</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">ISSE · LAB 2</p>
+          <h1>AI 聊天助手</h1>
+          <p class="subtitle">在这里记录你和 AI 的每次问答。</p>
+        </div>
+        <span class="status-badge">静态预览</span>
+      </header>
+
+      <section class="chat-panel" aria-label="聊天记录">
+        <div class="message-card">
+          <div class="message-block">
+            <span class="message-role">你</span>
+            <p>你好，请简单介绍一下你自己。</p>
+          </div>
+          <div class="message-block assistant-message">
+            <span class="message-role">AI</span>
+            <p>这里将显示 AI 的回复。</p>
+          </div>
+          <div class="record-actions" aria-label="记录操作">
+            <button class="button button-secondary" type="button">修改</button>
+            <button class="button button-danger" type="button">删除</button>
+          </div>
+        </div>
+      </section>
+
+      <form class="composer">
+        <label for="message-input">输入消息</label>
+        <div class="composer-row">
+          <textarea
+            id="message-input"
+            name="message"
+            rows="3"
+            placeholder="输入你想问的问题……"
+          ></textarea>
+          <button class="button button-primary" type="submit">发送</button>
+        </div>
+        <p id="page-feedback" class="page-feedback" aria-live="polite">
+          当前是静态界面，功能尚未连接后端。
+        </p>
+      </form>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
