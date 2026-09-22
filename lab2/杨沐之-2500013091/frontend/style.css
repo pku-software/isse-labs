@@ -27,6 +27,11 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .chat-app {
   width: min(900px, calc(100% - 32px));
   margin: 0 auto;
@@ -99,11 +104,25 @@ h2 {
   margin-top: 24px;
 }
 
+.message-list:empty::before {
+  display: block;
+  padding: 38px 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 18px;
+  color: #64748b;
+  text-align: center;
+  content: "还没有聊天记录，发送第一条消息吧。";
+}
+
 .message-card {
   padding: 20px;
   border: 1px solid #e2e8f0;
   border-radius: 18px;
   background: #fff;
+}
+
+.message-card + .message-card {
+  margin-top: 14px;
 }
 
 .message-row {
@@ -152,6 +171,46 @@ h2 {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 18px;
+}
+
+.inline-editor,
+.delete-confirmation {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.inline-editor label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.inline-editor textarea {
+  background: #fff;
+}
+
+.inline-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.delete-confirmation p {
+  margin: 0 0 10px;
+  color: #9f1239;
+  font-size: 0.9rem;
+}
+
+.hidden {
+  display: none;
+}
+
+.error-text {
+  color: #be123c;
 }
 
 .composer {
