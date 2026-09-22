@@ -226,6 +226,144 @@ textarea:disabled {
   align-items: end;
 }
 
+.multi-chat-app {
+  width: min(1180px, 100%);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  min-height: 650px;
+}
+
+.conversation-panel {
+  padding: 26px 20px;
+  background: #f6f8fc;
+  border-right: 1px solid #dde4ed;
+}
+
+.conversation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.conversation-heading h2,
+.active-conversation-heading h2 {
+  margin: 0;
+}
+
+.conversation-heading h2 {
+  font-size: 20px;
+}
+
+.conversation-heading .primary-button {
+  padding: 8px 11px;
+  font-size: 13px;
+}
+
+.conversation-list {
+  display: grid;
+  gap: 10px;
+}
+
+.conversation-empty {
+  padding: 24px 12px;
+  color: #697586;
+  line-height: 1.6;
+  text-align: center;
+  border: 1px dashed #cfd8e7;
+  border-radius: 12px;
+}
+
+.conversation-item {
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #dce3ee;
+  border-radius: 12px;
+}
+
+.conversation-item.is-active {
+  background: #edf1ff;
+  border-color: #8da2ef;
+}
+
+.conversation-select {
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  font-weight: 650;
+  text-align: left;
+  background: transparent;
+}
+
+.conversation-meta {
+  display: block;
+  margin-top: 5px;
+  color: #697586;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.conversation-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.conversation-actions button {
+  flex: 1;
+  padding: 7px 9px;
+  font-size: 12px;
+}
+
+.conversation-inline-panel {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #dce3ee;
+}
+
+.conversation-inline-panel input {
+  width: 100%;
+  padding: 9px 10px;
+  color: inherit;
+  border: 1px solid #cfd7e3;
+  border-radius: 9px;
+}
+
+.conversation-inline-panel p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.active-conversation-heading {
+  min-height: 58px;
+  margin-bottom: 20px;
+}
+
+.active-conversation-heading h2 {
+  font-size: 22px;
+}
+
+.section-label {
+  margin: 0 0 4px;
+  color: #697586;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.multi-chat-app .message-list {
+  min-height: 360px;
+}
+
+.multi-chat-app .chat-record + .chat-record {
+  margin-top: 14px;
+}
+
 textarea {
   width: 100%;
   min-height: 82px;
@@ -251,6 +389,15 @@ textarea {
   .app-header,
   .chat-panel {
     padding-inline: 20px;
+  }
+
+  .workspace {
+    display: block;
+  }
+
+  .conversation-panel {
+    border-right: 0;
+    border-bottom: 1px solid #dde4ed;
   }
 
   .composer-row {
