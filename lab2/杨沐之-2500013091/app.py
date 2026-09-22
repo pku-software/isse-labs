@@ -24,10 +24,21 @@ else:
 
 messages = []
 next_message_id = 1
+conversations = []
+next_conversation_id = 1
+next_conversation_message_id = 1
+next_turn_id = 1
 
 
 def find_message(message_id):
     return next((item for item in messages if item["id"] == message_id), None)
+
+
+def find_conversation(conversation_id):
+    return next(
+        (item for item in conversations if item["id"] == conversation_id),
+        None,
+    )
 
 
 def read_message_text():
@@ -40,6 +51,47 @@ def read_message_text():
         return None, "message 必须是非空字符串"
 
     return message.strip(), None
+
+
+def generate_reply(api_messages):
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        return None, ("服务器未配置 DeepSeek API Key", 500)
+
+    try:
+        with OpenAI(
+            api_key=api_key,
+            base_url="https://api.deepseek.com",
+            http_client=httpx.Client(trust_env=False),
+        ) as client:
+            response = client.chat.completions.create(
+                model="deepseek-flash",
+                messages=api_messages,
+                stream=False,
+            )
+        reply = response.choices[0].message.content
+    except AuthenticationError:
+        app.logger.error("DeepSeek API 鉴权失败")
+        return None, ("DeepSeek API 鉴权失败，请检查服务器端 Key 配置", 502)
+    except RateLimitError:
+        app.logger.error("DeepSeek API 请求受限")
+        return None, ("DeepSeek API 请求过于频繁，请稍后重试", 502)
+    except APIConnectionError:
+        app.logger.error("无法连接 DeepSeek API")
+        return None, ("无法连接 DeepSeek API，请检查网络后重试", 502)
+    except APIStatusError as error:
+        app.logger.error("DeepSeek API 返回 HTTP %s", error.status_code)
+        if error.status_code == 402:
+            return None, ("DeepSeek API 账户余额不足", 502)
+        return None, (f"DeepSeek API 返回 HTTP {error.status_code}", 502)
+    except (IndexError, AttributeError):
+        app.logger.error("DeepSeek API 响应格式异常")
+        return None, ("DeepSeek API 响应格式异常", 502)
+
+    if not isinstance(reply, str) or not reply.strip():
+        return None, ("DeepSeek API 未返回有效回复", 502)
+
+    return reply.strip(), None
 
 
 @app.get("/")
@@ -60,47 +112,17 @@ def create_message():
     if error:
         return jsonify({"error": error}), 400
 
-    api_key = os.getenv("DEEPSEEK_API_KEY")
-    if not api_key:
-        return jsonify({"error": "服务器未配置 DeepSeek API Key"}), 500
-
-    try:
-        with OpenAI(
-            api_key=api_key,
-            base_url="https://api.deepseek.com",
-            http_client=httpx.Client(trust_env=False),
-        ) as client:
-            response = client.chat.completions.create(
-                model="deepseek-flash",
-                messages=[{"role": "user", "content": message}],
-                stream=False,
-            )
-        reply = response.choices[0].message.content
-    except AuthenticationError:
-        app.logger.error("DeepSeek API 鉴权失败")
-        return jsonify({"error": "DeepSeek API 鉴权失败，请检查服务器端 Key 配置"}), 502
-    except RateLimitError:
-        app.logger.error("DeepSeek API 请求受限")
-        return jsonify({"error": "DeepSeek API 请求过于频繁，请稍后重试"}), 502
-    except APIConnectionError:
-        app.logger.error("无法连接 DeepSeek API")
-        return jsonify({"error": "无法连接 DeepSeek API，请检查网络后重试"}), 502
-    except APIStatusError as error:
-        app.logger.error("DeepSeek API 返回 HTTP %s", error.status_code)
-        if error.status_code == 402:
-            return jsonify({"error": "DeepSeek API 账户余额不足"}), 502
-        return jsonify({"error": f"DeepSeek API 返回 HTTP {error.status_code}"}), 502
-    except (IndexError, AttributeError):
-        app.logger.error("DeepSeek API 响应格式异常")
-        return jsonify({"error": "DeepSeek API 响应格式异常"}), 502
-
-    if not isinstance(reply, str) or not reply.strip():
-        return jsonify({"error": "DeepSeek API 未返回有效回复"}), 502
+    reply, deepseek_error = generate_reply(
+        [{"role": "user", "content": message}]
+    )
+    if deepseek_error:
+        error_message, status_code = deepseek_error
+        return jsonify({"error": error_message}), status_code
 
     record = {
         "id": next_message_id,
         "message": message,
-        "reply": reply.strip(),
+        "reply": reply,
     }
     messages.append(record)
     next_message_id += 1
@@ -134,6 +156,161 @@ def delete_message(message_id):
 
     messages.remove(record)
     return jsonify({"message": "聊天记录已删除", "id": message_id})
+
+
+@app.post("/api/conversations")
+def create_conversation():
+    global next_conversation_id
+
+    data = request.get_json(silent=True)
+    if data is None:
+        data = {}
+    if not isinstance(data, dict):
+        return jsonify({"error": "请求体必须是 JSON 对象"}), 400
+
+    title = data.get("title", "新会话")
+    if not isinstance(title, str) or not title.strip():
+        return jsonify({"error": "title 必须是非空字符串"}), 400
+
+    conversation = {
+        "id": next_conversation_id,
+        "title": title.strip(),
+        "messages": [],
+    }
+    conversations.append(conversation)
+    next_conversation_id += 1
+    return jsonify(conversation), 201
+
+
+@app.get("/api/conversations")
+def list_conversations():
+    summaries = [
+        {
+            "id": conversation["id"],
+            "title": conversation["title"],
+            "message_count": len(conversation["messages"]),
+        }
+        for conversation in conversations
+    ]
+    return jsonify(summaries)
+
+
+@app.get("/api/conversations/<int:conversation_id>")
+def get_conversation(conversation_id):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify({"error": "会话不存在"}), 404
+    return jsonify(conversation)
+
+
+@app.patch("/api/conversations/<int:conversation_id>")
+def rename_conversation(conversation_id):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify({"error": "会话不存在"}), 404
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "请求体必须是 JSON 对象"}), 400
+
+    title = data.get("title")
+    if not isinstance(title, str) or not title.strip():
+        return jsonify({"error": "title 必须是非空字符串"}), 400
+
+    conversation["title"] = title.strip()
+    return jsonify(conversation)
+
+
+@app.delete("/api/conversations/<int:conversation_id>")
+def delete_conversation(conversation_id):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify({"error": "会话不存在"}), 404
+
+    conversations.remove(conversation)
+    return jsonify({"message": "会话已删除", "id": conversation_id})
+
+
+@app.post("/api/conversations/<int:conversation_id>/messages")
+def create_conversation_message(conversation_id):
+    global next_conversation_message_id, next_turn_id
+
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify({"error": "会话不存在"}), 404
+
+    message, error = read_message_text()
+    if error:
+        return jsonify({"error": error}), 400
+
+    api_messages = [
+        {"role": item["role"], "content": item["content"]}
+        for item in conversation["messages"]
+    ]
+    api_messages.append({"role": "user", "content": message})
+
+    reply, deepseek_error = generate_reply(api_messages)
+    if deepseek_error:
+        error_message, status_code = deepseek_error
+        return jsonify({"error": error_message}), status_code
+
+    user_message = {
+        "id": next_conversation_message_id,
+        "turn_id": next_turn_id,
+        "role": "user",
+        "content": message,
+    }
+    assistant_message = {
+        "id": next_conversation_message_id + 1,
+        "turn_id": next_turn_id,
+        "role": "assistant",
+        "content": reply,
+    }
+    conversation["messages"].extend([user_message, assistant_message])
+    next_conversation_message_id += 2
+    next_turn_id += 1
+    return jsonify(conversation), 201
+
+
+@app.patch("/api/conversations/<int:conversation_id>/turns/<int:turn_id>")
+def update_conversation_turn(conversation_id, turn_id):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify({"error": "会话不存在"}), 404
+
+    user_message = next(
+        (
+            item
+            for item in conversation["messages"]
+            if item["turn_id"] == turn_id and item["role"] == "user"
+        ),
+        None,
+    )
+    if user_message is None:
+        return jsonify({"error": "聊天轮次不存在"}), 404
+
+    message, error = read_message_text()
+    if error:
+        return jsonify({"error": error}), 400
+
+    user_message["content"] = message
+    return jsonify(conversation)
+
+
+@app.delete("/api/conversations/<int:conversation_id>/turns/<int:turn_id>")
+def delete_conversation_turn(conversation_id, turn_id):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify({"error": "会话不存在"}), 404
+
+    remaining_messages = [
+        item for item in conversation["messages"] if item["turn_id"] != turn_id
+    ]
+    if len(remaining_messages) == len(conversation["messages"]):
+        return jsonify({"error": "聊天轮次不存在"}), 404
+
+    conversation["messages"] = remaining_messages
+    return jsonify(conversation)
 
 
 if __name__ == "__main__":

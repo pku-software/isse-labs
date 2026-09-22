@@ -19,6 +19,7 @@ body {
 }
 
 button,
+input,
 textarea {
   font: inherit;
 }
@@ -32,27 +33,162 @@ button:disabled {
   opacity: 0.6;
 }
 
-.chat-app {
-  width: min(900px, calc(100% - 32px));
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+  gap: 20px;
+  width: min(1200px, calc(100% - 32px));
+  min-height: calc(100vh - 64px);
   margin: 0 auto;
-  padding: 56px 0;
+  padding: 32px 0;
 }
 
-.app-header {
-  margin-bottom: 28px;
+.conversation-sidebar,
+.workspace {
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 24px 60px rgba(51, 65, 85, 0.1);
+  backdrop-filter: blur(16px);
 }
 
-.app-header h1 {
-  margin: 8px 0;
-  font-size: clamp(2rem, 6vw, 3.5rem);
+.conversation-sidebar {
+  padding: 24px;
+}
+
+.brand-block h1 {
+  margin: 7px 0;
+  font-size: 1.8rem;
   letter-spacing: -0.04em;
 }
 
-.app-header > p:last-child {
-  max-width: 620px;
+.brand-block > p:last-child {
   margin: 0;
   color: #64748b;
-  line-height: 1.7;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.new-conversation-form {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.new-conversation-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.compact-form-row {
+  display: flex;
+  gap: 8px;
+}
+
+input {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+}
+
+input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
+}
+
+.compact-form-row input {
+  flex: 1;
+}
+
+.compact-form-row .primary-button {
+  padding-inline: 14px;
+}
+
+.conversation-list {
+  display: grid;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.conversation-list:empty::before {
+  padding: 24px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  color: #64748b;
+  font-size: 0.86rem;
+  text-align: center;
+  content: "还没有会话，请先创建一个。";
+}
+
+.conversation-item {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+  color: #334155;
+  background: #fff;
+  text-align: left;
+}
+
+.conversation-item strong,
+.conversation-item span {
+  display: block;
+}
+
+.conversation-item strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversation-item span {
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 0.76rem;
+}
+
+.conversation-item.active {
+  border-color: #6366f1;
+  color: #3730a3;
+  background: #eef2ff;
+}
+
+.workspace {
+  display: flex;
+  min-height: 700px;
+  padding: 28px;
+  flex-direction: column;
+}
+
+.workspace-header,
+.conversation-controls,
+.composer-footer,
+.message-actions {
+  display: flex;
+  align-items: center;
+}
+
+.workspace-header,
+.composer-footer {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.conversation-controls {
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.conversation-panel {
+  margin-top: 12px;
 }
 
 .eyebrow {
@@ -61,29 +197,6 @@ button:disabled {
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.16em;
-}
-
-.chat-panel,
-.composer {
-  padding: 28px;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 24px;
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 24px 60px rgba(51, 65, 85, 0.1);
-  backdrop-filter: blur(16px);
-}
-
-.section-heading,
-.composer-footer,
-.message-actions {
-  display: flex;
-  align-items: center;
-}
-
-.section-heading,
-.composer-footer {
-  justify-content: space-between;
-  gap: 16px;
 }
 
 h2 {
@@ -101,6 +214,7 @@ h2 {
 }
 
 .message-list {
+  flex: 1;
   margin-top: 24px;
 }
 
@@ -111,7 +225,7 @@ h2 {
   border-radius: 18px;
   color: #64748b;
   text-align: center;
-  content: "还没有聊天记录，发送第一条消息吧。";
+  content: "当前会话还没有消息。";
 }
 
 .message-card {
@@ -215,11 +329,13 @@ h2 {
 
 .composer {
   margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .composer label {
   display: block;
-  margin: 22px 0 8px;
+  margin: 0 0 8px;
   font-size: 0.9rem;
   font-weight: 700;
 }
@@ -279,16 +395,21 @@ textarea:focus {
   background: #fff1f2;
 }
 
-@media (max-width: 600px) {
-  .chat-app {
-    width: min(100% - 20px, 900px);
-    padding: 28px 0;
+@media (max-width: 800px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    width: min(100% - 20px, 1200px);
+    padding: 20px 0;
   }
 
-  .chat-panel,
-  .composer {
+  .conversation-sidebar,
+  .workspace {
     padding: 20px;
     border-radius: 18px;
+  }
+
+  .workspace {
+    min-height: 640px;
   }
 
   .composer-footer {
@@ -298,5 +419,10 @@ textarea:focus {
 
   .primary-button {
     width: 100%;
+  }
+
+  .compact-form-row .primary-button,
+  .inline-actions .primary-button {
+    width: auto;
   }
 }
