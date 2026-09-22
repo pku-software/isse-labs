@@ -12,13 +12,53 @@
 
 ## 安装与配置
 
-待项目实现后补充。
+1. 进入项目目录，安装 Python 依赖：
+
+   ```bash
+   python -m pip install -r requirements.txt
+   ```
+
+2. 根据模板创建本地配置：
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. 在 `.env` 中配置自己的 DeepSeek API Key：
+
+   ```dotenv
+   DEEPSEEK_API_KEY=你的真实APIKey
+   ```
+
+`.env` 已由 `.gitignore` 忽略，不应提交到 Git。`.env.example` 只包含可公开的占位值。
 
 ## 启动方式
 
-待项目实现后补充。
+运行：
+
+```bash
+python app.py
+```
+
+服务默认监听 `5001` 端口。启动后在浏览器访问：
+
+```text
+http://localhost:5001/
+```
+
+页面可以创建多个会话、切换会话、进行多轮对话，以及重命名或删除会话。
 
 ## API
+
+### 基础 API
+
+- `GET /api/hello`：返回中文问候；
+- `POST /api/messages`：创建一条独立问答记录；
+- `GET /api/messages`：获取当前进程内的独立问答记录；
+- `PATCH /api/messages/<id>`：修改独立记录的用户消息；
+- `DELETE /api/messages/<id>`：删除独立问答记录。
+
+多会话页面使用下方的会话 API；基础 `/api/messages` 接口保留用于独立问答和 API 测试，其数据只保存在当前 Python 进程中。
 
 ### 多会话数据结构
 
@@ -51,3 +91,38 @@
 - `POST /api/conversations/<id>/messages`：在指定会话中发送新消息；
 - `PATCH /api/conversations/<id>/messages/<message_id>`：修改用户消息；
 - `DELETE /api/conversations/<id>/messages/<message_id>`：删除一轮问答。
+
+### API 测试
+
+服务启动后，可用以下命令测试基础响应：
+
+```bash
+curl http://localhost:5001/api/hello
+```
+
+查看所有会话：
+
+```bash
+curl http://localhost:5001/api/conversations
+```
+
+创建一个会话：
+
+```bash
+curl -X POST http://localhost:5001/api/conversations \
+  -H "Content-Type: application/json" \
+  -d '{"title":"测试会话"}'
+```
+
+向会话发送消息时，将 `<conversation_id>` 替换为已创建会话的 ID：
+
+```bash
+curl -X POST http://localhost:5001/api/conversations/<conversation_id>/messages \
+  -H "Content-Type: application/json" \
+  -d '{"message":"请用一句话介绍北京大学"}'
+```
+
+## 选做功能
+
+- 已完成 JSON 文件持久化；
+- 已完成多会话和多轮对话。
