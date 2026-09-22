@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 聊天助手</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="chat-app">
+      <header class="app-header">
+        <p class="eyebrow">AI CHAT</p>
+        <h1>AI 聊天助手</h1>
+        <p>在这里记录问题与回答，稍后我们会把页面连接到 Flask 后端。</p>
+      </header>
+
+      <section class="chat-panel" aria-labelledby="messages-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CONVERSATION</p>
+            <h2 id="messages-title">聊天记录</h2>
+          </div>
+          <span class="status-badge">静态预览</span>
+        </div>
+
+        <div class="message-list" id="message-list" aria-live="polite">
+          <article class="message-card">
+            <div class="message-row user-message">
+              <span class="role">你</span>
+              <p>你好，请介绍一下你自己。</p>
+            </div>
+            <div class="message-row assistant-message">
+              <span class="role">AI</span>
+              <p>这里将显示 AI 的回复。</p>
+            </div>
+            <div class="message-actions">
+              <button type="button" class="secondary-button">修改</button>
+              <button type="button" class="danger-button">删除</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="composer" aria-labelledby="composer-title">
+        <div>
+          <p class="eyebrow">NEW MESSAGE</p>
+          <h2 id="composer-title">发送消息</h2>
+        </div>
+        <label for="message-input">你的问题</label>
+        <textarea
+          id="message-input"
+          name="message"
+          rows="4"
+          placeholder="输入想问 AI 的内容……"
+        ></textarea>
+        <div class="composer-footer">
+          <p class="form-feedback" id="form-feedback">当前为静态页面，功能将在后续接入。</p>
+          <button type="button" class="primary-button" id="send-button">发送</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

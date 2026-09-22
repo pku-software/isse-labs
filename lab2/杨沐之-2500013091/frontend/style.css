@@ -1,0 +1,243 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #1e293b;
+  background: #eef2ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(129, 140, 248, 0.3), transparent 32rem),
+    linear-gradient(145deg, #f8fafc, #eef2ff 55%, #f5f3ff);
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.chat-app {
+  width: min(900px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 56px 0;
+}
+
+.app-header {
+  margin-bottom: 28px;
+}
+
+.app-header h1 {
+  margin: 8px 0;
+  font-size: clamp(2rem, 6vw, 3.5rem);
+  letter-spacing: -0.04em;
+}
+
+.app-header > p:last-child {
+  max-width: 620px;
+  margin: 0;
+  color: #64748b;
+  line-height: 1.7;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #6366f1;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+.chat-panel,
+.composer {
+  padding: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 24px 60px rgba(51, 65, 85, 0.1);
+  backdrop-filter: blur(16px);
+}
+
+.section-heading,
+.composer-footer,
+.message-actions {
+  display: flex;
+  align-items: center;
+}
+
+.section-heading,
+.composer-footer {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+h2 {
+  margin: 6px 0 0;
+  font-size: 1.35rem;
+}
+
+.status-badge {
+  padding: 7px 12px;
+  border-radius: 999px;
+  color: #4338ca;
+  background: #eef2ff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.message-list {
+  margin-top: 24px;
+}
+
+.message-card {
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.message-row {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.message-row + .message-row {
+  margin-top: 14px;
+}
+
+.message-row p {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 4px 14px 14px;
+  line-height: 1.6;
+}
+
+.user-message p {
+  background: #eef2ff;
+}
+
+.assistant-message p {
+  background: #f1f5f9;
+}
+
+.role {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 12px;
+  color: #fff;
+  background: #4f46e5;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.assistant-message .role {
+  background: #0f766e;
+}
+
+.message-actions {
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.composer {
+  margin-top: 20px;
+}
+
+.composer label {
+  display: block;
+  margin: 22px 0 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 14px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
+}
+
+.composer-footer {
+  margin-top: 14px;
+}
+
+.form-feedback {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button {
+  border: 0;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.primary-button {
+  padding: 11px 22px;
+  color: #fff;
+  background: #4f46e5;
+}
+
+.secondary-button,
+.danger-button {
+  padding: 8px 12px;
+  background: #f1f5f9;
+}
+
+.secondary-button {
+  color: #334155;
+}
+
+.danger-button {
+  color: #be123c;
+  background: #fff1f2;
+}
+
+@media (max-width: 600px) {
+  .chat-app {
+    width: min(100% - 20px, 900px);
+    padding: 28px 0;
+  }
+
+  .chat-panel,
+  .composer {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .composer-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .primary-button {
+    width: 100%;
+  }
+}
