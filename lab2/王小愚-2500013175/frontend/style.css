@@ -75,6 +75,18 @@ h1 {
   min-height: 320px;
 }
 
+.empty-state {
+  display: grid;
+  min-height: 320px;
+  place-items: center;
+  padding: 40px;
+  color: #697586;
+  text-align: center;
+  background: #f8faff;
+  border: 1px dashed #cfd8e7;
+  border-radius: 16px;
+}
+
 .chat-record {
   padding: 20px;
   background: #f8faff;
@@ -128,6 +140,36 @@ h1 {
   margin-top: 18px;
 }
 
+.edit-panel,
+.delete-panel {
+  margin-top: 18px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #dce3ee;
+  border-radius: 12px;
+}
+
+.edit-panel label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 650;
+}
+
+.edit-panel textarea {
+  min-height: 72px;
+}
+
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.delete-panel p {
+  margin: 0;
+}
+
 button {
   padding: 10px 17px;
   border: 0;
@@ -161,6 +203,14 @@ textarea:disabled {
   margin: 22px 0 12px;
   color: #697586;
   font-size: 14px;
+}
+
+.feedback[data-kind="error"] {
+  color: #b42318;
+}
+
+.feedback[data-kind="success"] {
+  color: #067647;
 }
 
 .composer label {
