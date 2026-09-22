@@ -7,6 +7,7 @@
 - 创建、查看、切换、重命名和删除聊天会话；
 - 在每个会话中进行多轮 AI 对话；
 - 修改或删除会话内的一轮问答；
+- 使用 JSON 文件持久化会话，Flask 重启后仍可恢复数据；
 - 由 Flask 后端安全调用 DeepSeek API，API Key 不进入浏览器。
 
 ## 安装依赖
@@ -39,3 +40,9 @@
 每个 conversation 包含唯一 `id`、`title` 和 `messages` 数组。数组中的每条消息包含唯一 `id`、所属轮次 `turn_id`、角色 `role` 和文本 `content`。`role` 为 `user` 时表示用户消息，为 `assistant` 时表示模型回复。
 
 调用 DeepSeek 时，后端按顺序取出当前 conversation 的全部历史消息，转换为由 `role` 和 `content` 组成的 `messages` 数组，再把本次新问题作为最后一条 `user` 消息加入。其他 conversation 的内容不会进入本次请求。
+
+## 数据持久化
+
+会话数据保存在 `data/conversations.json`。文件最外层是一个 JSON 对象，其中 `conversations` 字段是会话数组；每个会话对象内部的 `messages` 字段保存按顺序排列的用户和 AI 消息。
+
+Flask 启动时读取该文件，并根据已有数据计算后续会话、消息和轮次 ID。创建、重命名或删除会话，以及新增、修改或删除消息后，后端都会立即把最新数据写回文件，因此 Flask 重启后可以恢复会话和聊天内容。
