@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 聊天室</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="chat-app">
+      <header class="app-header">
+        <p class="eyebrow">AI CHAT</p>
+        <h1>和 AI 聊一聊</h1>
+        <p class="subtitle">输入问题，开始一段新的对话。</p>
+      </header>
+
+      <section class="conversation" aria-labelledby="conversation-title">
+        <div class="section-heading">
+          <h2 id="conversation-title">聊天记录</h2>
+          <span class="record-count">0 条记录</span>
+        </div>
+
+        <div class="empty-state">
+          <p>还没有聊天记录。</p>
+          <p>在下方输入消息后，它会显示在这里。</p>
+        </div>
+
+        <article class="message-card sample-message" aria-label="聊天记录示例">
+          <div class="message-content">
+            <p class="message-label">你的问题</p>
+            <p>示例消息会在后续功能完成后由真实聊天记录替代。</p>
+            <p class="message-label reply-label">AI 回复</p>
+            <p>这里将展示 AI 的回复。</p>
+          </div>
+          <div class="message-actions" aria-label="记录操作">
+            <button type="button" class="secondary-button">修改</button>
+            <button type="button" class="danger-button">删除</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="composer" aria-labelledby="composer-title">
+        <h2 id="composer-title">发送消息</h2>
+        <label for="message-input">想问 AI 什么？</label>
+        <textarea
+          id="message-input"
+          name="message"
+          rows="4"
+          placeholder="例如：用简单的语言解释什么是 REST API"
+        ></textarea>
+        <div class="composer-footer">
+          <p class="status-message" role="status">聊天功能将在下一步接入。</p>
+          <button type="button" class="primary-button">发送消息</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
