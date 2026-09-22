@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 聊天助手</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="chat-app">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">AI CHAT</p>
+          <h1>AI 聊天助手</h1>
+        </div>
+        <span class="status-badge">静态预览</span>
+      </header>
+
+      <section class="chat-panel" aria-label="聊天记录">
+        <div class="message-list" id="message-list" aria-live="polite">
+          <article class="chat-record">
+            <div class="message user-message">
+              <span class="message-label">你</span>
+              <p>这里将显示你发送的消息。</p>
+            </div>
+            <div class="message assistant-message">
+              <span class="message-label">AI</span>
+              <p>这里将显示 AI 的回复。</p>
+            </div>
+            <div class="record-actions" aria-label="记录操作">
+              <button type="button" class="secondary-button" disabled>修改</button>
+              <button type="button" class="danger-button" disabled>删除</button>
+            </div>
+          </article>
+        </div>
+
+        <p class="feedback" id="feedback">当前是静态页面，交互功能尚未接入。</p>
+
+        <form class="composer" id="message-form">
+          <label for="message-input">输入消息</label>
+          <div class="composer-row">
+            <textarea
+              id="message-input"
+              name="message"
+              rows="3"
+              placeholder="输入你想说的内容……"
+              disabled
+            ></textarea>
+            <button type="submit" class="primary-button" disabled>发送</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
