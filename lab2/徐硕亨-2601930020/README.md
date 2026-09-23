@@ -50,6 +50,15 @@
 }
 ```
 
+### 4. 数据持久化设计（JSON 文件持久化）
+- **持久化文件位置**：`data/conversations.json`
+- **数据结构**：最外层为会话对象构成的列表数组（Array），每个会话包含 `id`、`title` 以及 `messages` 列表。
+- **机制原理**：
+  - Flask 启动时自动从 `data/conversations.json` 载入历史数据至内存；
+  - 任何创建、修改、删除会话或消息的操作，都会即时序列化并写回该文件；
+  - 保证服务重启或系统关机后数据不丢失。
+
+
 ## 环境依赖与安装
 ```bash
 pip install -r requirements.txt
