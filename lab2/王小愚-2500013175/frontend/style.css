@@ -1,0 +1,410 @@
+:root {
+  color: #19202a;
+  background: #eef2f7;
+  font-family:
+    Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px 20px;
+  background:
+    radial-gradient(circle at top left, #dce8ff 0, transparent 32%),
+    #eef2f7;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+.chat-app {
+  width: min(880px, 100%);
+  margin: 0 auto;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #dde4ed;
+  border-radius: 22px;
+  box-shadow: 0 24px 70px rgb(45 60 80 / 14%);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 28px 32px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #3156d3, #663acb);
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  opacity: 0.75;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(24px, 4vw, 34px);
+}
+
+.status-badge {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  font-size: 13px;
+  background: rgb(255 255 255 / 16%);
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 999px;
+}
+
+.chat-panel {
+  padding: 30px 32px 34px;
+}
+
+.message-list {
+  min-height: 320px;
+}
+
+.empty-state {
+  display: grid;
+  min-height: 320px;
+  place-items: center;
+  padding: 40px;
+  color: #697586;
+  text-align: center;
+  background: #f8faff;
+  border: 1px dashed #cfd8e7;
+  border-radius: 16px;
+}
+
+.chat-record {
+  padding: 20px;
+  background: #f8faff;
+  border: 1px solid #e3e9f4;
+  border-radius: 16px;
+}
+
+.message {
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.message + .message {
+  margin-top: 16px;
+}
+
+.message p {
+  margin: 0;
+  padding: 11px 14px;
+  line-height: 1.65;
+  background: #ffffff;
+  border-radius: 4px 14px 14px;
+}
+
+.assistant-message p {
+  background: #edf1ff;
+}
+
+.message-label {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  background: #3156d3;
+  border-radius: 12px;
+}
+
+.assistant-message .message-label {
+  background: #663acb;
+}
+
+.record-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.edit-panel,
+.delete-panel {
+  margin-top: 18px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #dce3ee;
+  border-radius: 12px;
+}
+
+.edit-panel label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 650;
+}
+
+.edit-panel textarea {
+  min-height: 72px;
+}
+
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.delete-panel p {
+  margin: 0;
+}
+
+button {
+  padding: 10px 17px;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+button:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.primary-button {
+  color: #ffffff;
+  background: #3156d3;
+}
+
+.secondary-button {
+  color: #3156d3;
+  background: #e8edff;
+}
+
+.danger-button {
+  color: #b42318;
+  background: #feeceb;
+}
+
+.feedback {
+  min-height: 24px;
+  margin: 22px 0 12px;
+  color: #697586;
+  font-size: 14px;
+}
+
+.feedback[data-kind="error"] {
+  color: #b42318;
+}
+
+.feedback[data-kind="success"] {
+  color: #067647;
+}
+
+.composer label {
+  display: inline-block;
+  margin-bottom: 9px;
+  font-weight: 650;
+}
+
+.composer-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.multi-chat-app {
+  width: min(1180px, 100%);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  min-height: 650px;
+}
+
+.conversation-panel {
+  padding: 26px 20px;
+  background: #f6f8fc;
+  border-right: 1px solid #dde4ed;
+}
+
+.conversation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.conversation-heading h2,
+.active-conversation-heading h2 {
+  margin: 0;
+}
+
+.conversation-heading h2 {
+  font-size: 20px;
+}
+
+.conversation-heading .primary-button {
+  padding: 8px 11px;
+  font-size: 13px;
+}
+
+.conversation-list {
+  display: grid;
+  gap: 10px;
+}
+
+.conversation-empty {
+  padding: 24px 12px;
+  color: #697586;
+  line-height: 1.6;
+  text-align: center;
+  border: 1px dashed #cfd8e7;
+  border-radius: 12px;
+}
+
+.conversation-item {
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #dce3ee;
+  border-radius: 12px;
+}
+
+.conversation-item.is-active {
+  background: #edf1ff;
+  border-color: #8da2ef;
+}
+
+.conversation-select {
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  font-weight: 650;
+  text-align: left;
+  background: transparent;
+}
+
+.conversation-meta {
+  display: block;
+  margin-top: 5px;
+  color: #697586;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.conversation-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.conversation-actions button {
+  flex: 1;
+  padding: 7px 9px;
+  font-size: 12px;
+}
+
+.conversation-inline-panel {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #dce3ee;
+}
+
+.conversation-inline-panel input {
+  width: 100%;
+  padding: 9px 10px;
+  color: inherit;
+  border: 1px solid #cfd7e3;
+  border-radius: 9px;
+}
+
+.conversation-inline-panel p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.active-conversation-heading {
+  min-height: 58px;
+  margin-bottom: 20px;
+}
+
+.active-conversation-heading h2 {
+  font-size: 22px;
+}
+
+.section-label {
+  margin: 0 0 4px;
+  color: #697586;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.multi-chat-app .message-list {
+  min-height: 360px;
+}
+
+.multi-chat-app .chat-record + .chat-record {
+  margin-top: 14px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 82px;
+  padding: 13px 14px;
+  resize: vertical;
+  color: inherit;
+  background: #ffffff;
+  border: 1px solid #cfd7e3;
+  border-radius: 12px;
+}
+
+@media (max-width: 620px) {
+  body {
+    padding: 0;
+  }
+
+  .chat-app {
+    min-height: 100vh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .app-header,
+  .chat-panel {
+    padding-inline: 20px;
+  }
+
+  .workspace {
+    display: block;
+  }
+
+  .conversation-panel {
+    border-right: 0;
+    border-bottom: 1px solid #dde4ed;
+  }
+
+  .composer-row {
+    grid-template-columns: 1fr;
+  }
+
+  .primary-button {
+    width: 100%;
+  }
+}
