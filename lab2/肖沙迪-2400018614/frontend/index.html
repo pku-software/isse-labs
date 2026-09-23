@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 聊天</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>AI 聊天</h1>
+      <p class="app-subtitle">向 AI 提问，并随时修改或删除历史记录</p>
+    </header>
+
+    <main class="chat-panel">
+      <ul class="message-list" id="message-list">
+        <!-- 静态占位示例：这个阶段页面还没有接入后端，下面是界面结构示意 -->
+        <li class="message-item" data-id="1">
+          <div class="message-content">
+            <p class="message-user">你好，请介绍一下你自己。</p>
+            <p class="message-reply">这里是 AI 的回复内容。</p>
+          </div>
+          <div class="message-actions">
+            <button type="button" class="btn btn-edit">修改</button>
+            <button type="button" class="btn btn-delete">删除</button>
+          </div>
+        </li>
+      </ul>
+    </main>
+
+    <form class="composer" id="composer">
+      <label class="visually-hidden" for="message-input">输入消息</label>
+      <input
+        id="message-input"
+        class="composer-input"
+        type="text"
+        placeholder="输入消息，按回车或点击发送"
+        autocomplete="off"
+      >
+      <button type="submit" class="btn btn-send" id="send-button">发送</button>
+    </form>
+
+    <p class="status" id="status" role="status">页面骨架已就绪，尚未接入后端。</p>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
