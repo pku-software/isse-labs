@@ -1,4 +1,6 @@
 import os
+import json
+from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
@@ -8,8 +10,40 @@ from openai import OpenAI
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 app.json.ensure_ascii = False
 load_dotenv()
-messages = []
-next_message_id = 1
+DATA_FILE = Path(__file__).parent / "data" / "messages.json"
+
+
+def load_messages():
+    if not DATA_FILE.exists() or DATA_FILE.stat().st_size == 0:
+        return []
+
+    try:
+        with DATA_FILE.open("r", encoding="utf-8") as file:
+            records = json.load(file)
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    if not isinstance(records, list):
+        return []
+
+    return [
+        record
+        for record in records
+        if isinstance(record, dict)
+        and isinstance(record.get("id"), int)
+        and isinstance(record.get("message"), str)
+        and isinstance(record.get("reply"), str)
+    ]
+
+
+def save_messages():
+    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with DATA_FILE.open("w", encoding="utf-8") as file:
+        json.dump(messages, file, ensure_ascii=False, indent=2)
+
+
+messages = load_messages()
+next_message_id = max((record["id"] for record in messages), default=0) + 1
 
 
 def error_response(message, status_code):
@@ -76,6 +110,12 @@ def create_message():
 
     record = {"id": next_message_id, "message": message, "reply": reply}
     messages.append(record)
+    try:
+        save_messages()
+    except OSError:
+        messages.pop()
+        return error_response("Unable to save message", 500)
+
     next_message_id += 1
     return jsonify(record), 201
 
@@ -95,7 +135,14 @@ def update_message(message_id):
     if message is None:
         return error_response("message must be a non-empty string", 400)
 
+    previous_message = record["message"]
     record["message"] = message
+    try:
+        save_messages()
+    except OSError:
+        record["message"] = previous_message
+        return error_response("Unable to save message", 500)
+
     return jsonify(record)
 
 
@@ -105,7 +152,14 @@ def delete_message(message_id):
     if record is None:
         return error_response("message not found", 404)
 
-    messages.remove(record)
+    record_index = messages.index(record)
+    messages.pop(record_index)
+    try:
+        save_messages()
+    except OSError:
+        messages.insert(record_index, record)
+        return error_response("Unable to save message", 500)
+
     return jsonify({"message": "deleted", "id": message_id})
 
 
