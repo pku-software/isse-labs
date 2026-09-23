@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 聊天助手</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">ISSE · LAB 2</p>
+          <h1>AI 聊天助手</h1>
+          <p class="subtitle">在这里记录你和 AI 的每次问答。</p>
+        </div>
+        <span class="status-badge">已连接 Flask</span>
+      </header>
+
+      <section id="chat-panel" class="chat-panel" aria-label="聊天记录">
+        <p class="empty-state">正在加载聊天记录……</p>
+      </section>
+
+      <form class="composer">
+        <label for="message-input">输入消息</label>
+        <div class="composer-row">
+          <textarea
+            id="message-input"
+            name="message"
+            rows="3"
+            placeholder="输入你想问的问题……"
+          ></textarea>
+          <button class="button button-primary" type="submit">发送</button>
+        </div>
+        <p id="page-feedback" class="page-feedback" aria-live="polite"></p>
+      </form>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
