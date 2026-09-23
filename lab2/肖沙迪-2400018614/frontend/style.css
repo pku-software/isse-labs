@@ -161,6 +161,52 @@ body {
   font-size: 13px;
 }
 
+.status-success {
+  color: #1c7a43;
+}
+
+.status-error {
+  color: var(--color-danger);
+}
+
+.empty-hint {
+  padding: 40px 14px;
+  color: var(--color-muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.message-edit-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-size: 15px;
+  font-family: inherit;
+}
+
+.message-edit-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.15);
+}
+
+.message-confirm {
+  color: var(--color-danger);
+}
+
+.btn-save {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.btn-save:hover {
+  background-color: var(--color-primary-hover);
+  border-color: var(--color-primary-hover);
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
