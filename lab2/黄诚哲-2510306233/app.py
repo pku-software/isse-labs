@@ -1,4 +1,5 @@
 import os
+import json
 
 import requests
 from flask import Flask, jsonify, request, send_from_directory
@@ -8,6 +9,7 @@ load_dotenv()
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 DEEPSEEK_MODEL = "deepseek-chat"
+DATA_FILE = os.path.join("data", "messages.json")
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
@@ -15,6 +17,30 @@ app.json.ensure_ascii = False
 # 内存中的聊天记录列表
 messages = []
 next_id = 1
+
+
+def load_messages():
+    global messages, next_id
+    if not os.path.exists(DATA_FILE):
+        messages = []
+        next_id = 1
+        return
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            messages = json.load(f)
+        if not isinstance(messages, list):
+            messages = []
+    except (json.JSONDecodeError, OSError):
+        messages = []
+    next_id = max((m["id"] for m in messages), default=0) + 1
+
+
+def save_messages():
+    directory = os.path.dirname(DATA_FILE)
+    if directory:
+        os.makedirs(directory, exist_ok=True)
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(messages, f, ensure_ascii=False, indent=2)
 
 
 @app.route("/")
@@ -78,6 +104,7 @@ def create_message():
     }
     next_id += 1
     messages.append(record)
+    save_messages()
     return jsonify(record), 201
 
 
@@ -100,6 +127,7 @@ def update_message(message_id):
         return jsonify({"error": "message 不能为空"}), 400
 
     record["message"] = message.strip()
+    save_messages()
     return jsonify(record)
 
 
@@ -110,8 +138,10 @@ def delete_message(message_id):
     if record is None:
         return jsonify({"error": "记录不存在"}), 404
     messages = [m for m in messages if m["id"] != message_id]
+    save_messages()
     return jsonify({"message": "删除成功"})
 
 
 if __name__ == "__main__":
+    load_messages()
     app.run(port=5001, debug=True)
