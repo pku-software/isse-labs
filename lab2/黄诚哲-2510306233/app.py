@@ -1,4 +1,13 @@
+import os
+
+import requests
 from flask import Flask, jsonify, request, send_from_directory
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
+DEEPSEEK_MODEL = "deepseek-chat"
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
@@ -38,10 +47,34 @@ def create_message():
     if not isinstance(message, str) or not message.strip():
         return jsonify({"error": "message 不能为空"}), 400
 
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        return jsonify({"error": "缺少 DEEPSEEK_API_KEY"}), 500
+
+    try:
+        response = requests.post(
+            DEEPSEEK_API_URL,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": DEEPSEEK_MODEL,
+                "messages": [{"role": "user", "content": message.strip()}],
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        reply = response.json()["choices"][0]["message"]["content"]
+    except requests.RequestException as exc:
+        return jsonify({"error": f"调用 DeepSeek 失败: {exc}"}), 502
+    except (KeyError, IndexError, TypeError, ValueError) as exc:
+        return jsonify({"error": f"解析 DeepSeek 响应失败: {exc}"}), 502
+
     record = {
         "id": next_id,
         "message": message.strip(),
-        "reply": "你好",
+        "reply": reply,
     }
     next_id += 1
     messages.append(record)
