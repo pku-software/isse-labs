@@ -10,13 +10,80 @@ body {
 }
 
 .chat-app {
-  max-width: 720px;
+  max-width: 960px;
   height: 100vh;
   margin: 0 auto;
   display: flex;
-  flex-direction: column;
   background: #ffffff;
   box-shadow: 0 0 24px rgba(0, 0, 0, 0.06);
+}
+
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  border-right: 1px solid #e5e7eb;
+  background: #fafbfc;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  overflow-y: auto;
+}
+
+.conversation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.conversation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.conversation-item {
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  word-break: break-word;
+}
+
+.conversation-item:hover {
+  background: #eceef1;
+}
+
+.conversation-item.active {
+  background: #e3ecfd;
+}
+
+.conversation-item .conversation-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.conversation-item .conversation-actions button {
+  border: none;
+  background: transparent;
+  color: #5b6470;
+  cursor: pointer;
+  padding: 0;
+}
+
+.conversation-item .conversation-actions button:hover {
+  color: #1f6feb;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .chat-header {
@@ -39,12 +106,6 @@ body {
   gap: 12px;
 }
 
-.record {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .message {
   max-width: 78%;
   padding: 10px 14px;
@@ -57,7 +118,7 @@ body {
   background: #e8f0fe;
 }
 
-.message.reply {
+.message.assistant {
   align-self: flex-start;
   background: #f1f2f4;
 }
@@ -156,4 +217,12 @@ button.secondary {
 
 button.secondary:hover {
   background: #d7dae0;
+}
+
+button.danger {
+  background: #e5534b;
+}
+
+button.danger:hover {
+  background: #c93c34;
 }
