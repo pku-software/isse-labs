@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 聊天助手</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">AI CHAT</p>
+          <h1>AI 聊天助手</h1>
+          <p class="subtitle">一个简洁的问答工作台</p>
+        </div>
+        <span class="status-badge">静态预览</span>
+      </header>
+
+      <section class="chat-panel" aria-label="聊天记录">
+        <div class="message-list" id="message-list" aria-live="polite">
+          <article class="chat-record" data-message-id="preview">
+            <div class="message-row message-row--user">
+              <div class="message-bubble message-bubble--user">
+                <span class="message-label">你</span>
+                <p>你好，请介绍一下自己。</p>
+              </div>
+            </div>
+
+            <div class="message-row message-row--assistant">
+              <div class="avatar" aria-hidden="true">AI</div>
+              <div class="message-bubble message-bubble--assistant">
+                <span class="message-label">助手</span>
+                <p>你好！这是聊天记录的静态预览。</p>
+              </div>
+            </div>
+
+            <div class="record-actions" aria-label="记录操作">
+              <button class="text-button" type="button" data-action="edit">修改</button>
+              <button class="text-button text-button--danger" type="button" data-action="delete">删除</button>
+            </div>
+          </article>
+        </div>
+
+        <p class="page-feedback" id="page-feedback" role="status">
+          当前仅展示页面结构，交互功能将在后续接入。
+        </p>
+
+        <form class="composer" id="message-form">
+          <label class="sr-only" for="message-input">输入消息</label>
+          <textarea
+            id="message-input"
+            name="message"
+            rows="2"
+            placeholder="输入你的问题……"
+          ></textarea>
+          <button class="send-button" type="button">发送</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
