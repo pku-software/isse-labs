@@ -76,6 +76,16 @@ h1 {
   font-weight: 700;
 }
 
+.status-badge[data-state="success"] {
+  color: #187750;
+  background: #e6f7ef;
+}
+
+.status-badge[data-state="error"] {
+  color: #a92f3c;
+  background: #ffedef;
+}
+
 .chat-panel {
   padding: 28px 32px 32px;
 }
@@ -87,6 +97,10 @@ h1 {
 .chat-record {
   padding-bottom: 24px;
   border-bottom: 1px solid #edf0f5;
+}
+
+.chat-record + .chat-record {
+  padding-top: 24px;
 }
 
 .message-row {
@@ -147,6 +161,81 @@ h1 {
   gap: 8px;
 }
 
+.empty-state {
+  display: grid;
+  min-height: 300px;
+  margin: 0;
+  place-items: center;
+  color: #7c8598;
+  text-align: center;
+}
+
+.inline-panel {
+  margin: 16px 0 0 50px;
+  padding: 14px;
+  border: 1px solid #dce2ed;
+  border-radius: 14px;
+  background: #f8f9fc;
+}
+
+.inline-panel--danger {
+  border-color: #f1c7cc;
+  background: #fff7f8;
+}
+
+.inline-panel label,
+.inline-panel p {
+  display: block;
+  margin: 0 0 10px;
+  color: #4e586d;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.inline-panel textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cfd6e4;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.inline-panel textarea:focus {
+  border-color: #8790ee;
+  outline: 3px solid rgba(89, 101, 232, 0.12);
+}
+
+.inline-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.action-button {
+  padding: 8px 13px;
+  border: 0;
+  border-radius: 9px;
+  color: #ffffff;
+  background: #5965e8;
+  font-weight: 700;
+}
+
+.action-button--secondary {
+  color: #4e586d;
+  background: #e7eaf1;
+}
+
+.action-button--danger {
+  background: #c33e4c;
+}
+
+.action-button:disabled,
+.send-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .text-button {
   padding: 7px 10px;
   border: 0;
@@ -172,6 +261,14 @@ h1 {
   margin: 22px 0 10px;
   color: #69738a;
   font-size: 0.88rem;
+}
+
+.page-feedback[data-kind="success"] {
+  color: #187750;
+}
+
+.page-feedback[data-kind="error"] {
+  color: #b13240;
 }
 
 .composer {
@@ -255,6 +352,10 @@ textarea::placeholder {
 
   .message-bubble {
     max-width: 90%;
+  }
+
+  .inline-panel {
+    margin-left: 0;
   }
 
   .composer {
