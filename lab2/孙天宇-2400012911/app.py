@@ -1,9 +1,42 @@
-"""AI 聊天应用的 Flask 接口骨架。"""
+"""提供聊天页面和基于进程内存的问答记录 API。"""
 
-from flask import Flask, jsonify
+from itertools import count
+from threading import Lock
 
-app = Flask(__name__, static_folder=None)
+from flask import Flask, jsonify, request
+from werkzeug.exceptions import HTTPException
+
+app = Flask(__name__, static_folder="frontend", static_url_path="/static")
 app.json.ensure_ascii = False
+
+# 记录只属于当前进程，重启后会清空。
+messages = []
+message_ids = count(1)
+messages_lock = Lock()
+
+
+def read_message():
+    """只接受包含非空字符串 message 的 JSON 对象。"""
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return None
+    message = data.get("message")
+    if not isinstance(message, str) or not message.strip():
+        return None
+    return message.strip()
+
+
+@app.errorhandler(HTTPException)
+def http_error(error):
+    response = error.get_response()
+    response.data = app.json.dumps({"error": error.description})
+    response.content_type = "application/json"
+    return response
+
+
+@app.get("/")
+def index():
+    return app.send_static_file("index.html")
 
 
 @app.get("/api/hello")
@@ -13,26 +46,42 @@ def hello():
 
 @app.post("/api/messages")
 def create_message():
-    # TODO: 校验输入并创建一条问答记录。
-    return jsonify(error="创建聊天记录尚未实现"), 501
+    message = read_message()
+    if message is None:
+        return jsonify(error="请提交 JSON 对象，message 必须是非空字符串。"), 400
+    with messages_lock:
+        record = {"id": next(message_ids), "message": message, "reply": "你好"}
+        messages.append(record)
+        return jsonify(record), 201
 
 
 @app.get("/api/messages")
 def list_messages():
-    # TODO: 返回全部聊天记录。
-    return jsonify(error="查看聊天记录尚未实现"), 501
+    with messages_lock:
+        return jsonify(messages)
 
 
 @app.patch("/api/messages/<int:message_id>")
 def update_message(message_id):
-    # TODO: 根据 message_id 查找记录并修改用户消息。
-    return jsonify(error="修改聊天记录尚未实现"), 501
+    message = read_message()
+    if message is None:
+        return jsonify(error="请提交 JSON 对象，message 必须是非空字符串。"), 400
+    with messages_lock:
+        for record in messages:
+            if record["id"] == message_id:
+                record["message"] = message
+                return jsonify(record)
+    return jsonify(error="聊天记录不存在，请重新加载记录。"), 404
 
 
 @app.delete("/api/messages/<int:message_id>")
 def delete_message(message_id):
-    # TODO: 根据 message_id 查找并删除记录。
-    return jsonify(error="删除聊天记录尚未实现"), 501
+    with messages_lock:
+        for index, record in enumerate(messages):
+            if record["id"] == message_id:
+                messages.pop(index)
+                return jsonify(id=message_id, message="问答已删除。")
+    return jsonify(error="聊天记录不存在，请重新加载记录。"), 404
 
 
 if __name__ == "__main__":
