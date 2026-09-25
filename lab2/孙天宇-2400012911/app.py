@@ -1,6 +1,8 @@
-"""通过 Flask 调用 DeepSeek，并在进程内存中保存问答记录。"""
+"""通过 Flask 调用 DeepSeek，并使用 JSON 文件持久化问答记录。"""
 
+import json
 import os
+import tempfile
 from itertools import count
 from pathlib import Path
 from threading import Lock
@@ -19,9 +21,75 @@ load_dotenv(Path(__file__).with_name(".env"), interpolate=False)
 DEEPSEEK_URL = "https://api.deepseek.com/chat/completions"
 DEEPSEEK_MODEL = "deepseek-flash"
 
-# 记录只属于当前进程，重启后会清空。
-messages = []
-message_ids = count(1)
+DATA_FILE = Path(__file__).resolve().parent / "data" / "messages.json"
+
+
+class StorageError(Exception):
+    """持久化失败时向前端返回安全的错误说明。"""
+
+
+def load_messages():
+    try:
+        content = DATA_FILE.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return []
+    except (OSError, UnicodeError):
+        raise SystemExit("无法读取 data/messages.json，请检查文件权限和 UTF-8 编码。") from None
+    if not content.strip():
+        return []
+    try:
+        records = json.loads(content)
+    except ValueError:
+        raise SystemExit("data/messages.json 不是有效 JSON，请修复文件后重新启动。原文件未被覆盖。") from None
+
+    valid = isinstance(records, list)
+    seen_ids = set()
+    if valid:
+        for record in records:
+            if (
+                not isinstance(record, dict)
+                or type(record.get("id")) is not int
+                or record["id"] < 1
+                or record["id"] in seen_ids
+                or not isinstance(record.get("message"), str)
+                or not isinstance(record.get("reply"), str)
+            ):
+                valid = False
+                break
+            seen_ids.add(record["id"])
+    if not valid:
+        raise SystemExit("data/messages.json 的记录结构或 ID 不合法，请修复后重新启动。原文件未被覆盖。")
+    return records
+
+
+def save_messages(records):
+    """先写同目录临时文件，再原子替换，避免中途失败破坏旧数据。"""
+    temporary_path = None
+    try:
+        DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=DATA_FILE.parent,
+            prefix=".messages-", suffix=".tmp", delete=False,
+        ) as temporary:
+            temporary_path = Path(temporary.name)
+            json.dump(records, temporary, ensure_ascii=False, indent=2)
+            temporary.write("\n")
+            temporary.flush()
+            os.fsync(temporary.fileno())
+        os.replace(temporary_path, DATA_FILE)
+    except (OSError, UnicodeError):
+        raise StorageError("保存失败，本次记录变更未生效。请检查 data 目录的写入权限和磁盘空间。") from None
+    finally:
+        if temporary_path is not None:
+            try:
+                temporary_path.unlink(missing_ok=True)
+            except OSError:
+                app.logger.warning("无法清理保存记录时产生的临时文件，请检查 data 目录。")
+
+
+# 本实验使用单个 Flask 进程；锁保证同一进程内的保存操作依次完成。
+messages = load_messages()
+message_ids = count(max((record["id"] for record in messages), default=0) + 1)
 messages_lock = Lock()
 
 
@@ -94,6 +162,11 @@ def read_message():
     return message.strip()
 
 
+@app.errorhandler(StorageError)
+def storage_error(error):
+    return jsonify(error=str(error)), 500
+
+
 @app.errorhandler(HTTPException)
 def http_error(error):
     response = error.get_response()
@@ -124,7 +197,9 @@ def create_message():
         return jsonify(error=str(error)), error.status_code
     with messages_lock:
         record = {"id": next(message_ids), "message": message, "reply": reply}
-        messages.append(record)
+        updated = [*messages, record]
+        save_messages(updated)
+        messages[:] = updated
         return jsonify(record), 201
 
 
@@ -140,10 +215,14 @@ def update_message(message_id):
     if message is None:
         return jsonify(error="请提交 JSON 对象，message 必须是非空字符串。"), 400
     with messages_lock:
-        for record in messages:
+        for index, record in enumerate(messages):
             if record["id"] == message_id:
-                record["message"] = message
-                return jsonify(record)
+                updated_record = {**record, "message": message}
+                updated = messages.copy()
+                updated[index] = updated_record
+                save_messages(updated)
+                messages[:] = updated
+                return jsonify(updated_record)
     return jsonify(error="聊天记录不存在，请重新加载记录。"), 404
 
 
@@ -152,7 +231,10 @@ def delete_message(message_id):
     with messages_lock:
         for index, record in enumerate(messages):
             if record["id"] == message_id:
-                messages.pop(index)
+                updated = messages.copy()
+                updated.pop(index)
+                save_messages(updated)
+                messages[:] = updated
                 return jsonify(id=message_id, message="问答已删除。")
     return jsonify(error="聊天记录不存在，请重新加载记录。"), 404
 
