@@ -13,6 +13,22 @@
 - 聊天数据保存在 `data/conversations.json`，重启 Flask 后依然存在；
 - API Key 只保存在后端的 `.env` 文件中，前端接触不到。
 
+## 项目结构
+
+```
+.
+├── app.py                    # Flask 后端：页面、API、DeepSeek 调用、数据读写
+├── frontend/
+│   ├── index.html            # 页面结构
+│   ├── style.css             # 页面样式
+│   └── app.js                # 前端逻辑，通过 fetch() 调用后端 API
+├── data/
+│   └── conversations.json    # 会话与消息的持久化文件
+├── requirements.txt          # 依赖清单
+├── .env.example              # 环境变量示例（复制为 .env 后填入真实 Key）
+└── .gitignore                # 忽略 .env、.venv/、__pycache__/ 等
+```
+
 ## 安装依赖
 
 ```bash
@@ -43,7 +59,7 @@ DEEPSEEK_API_KEY=你的真实APIKey
 python app.py
 ```
 
-Flask 监听 5001 端口，调试模式下会自动重载。
+Flask 监听 `5001` 端口（macOS 上 5000 端口常被系统服务占用，所以特意避开），调试模式下修改代码会自动重载。终端里看到 `Running on http://127.0.0.1:5001` 就表示启动成功。
 
 ## 浏览器访问
 
