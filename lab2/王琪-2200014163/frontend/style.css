@@ -41,12 +41,25 @@ body {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
+}
+
+.empty {
+  color: #999;
+  text-align: center;
+  margin-top: 40px;
 }
 
 .message {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.user-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 6px;
 }
 
@@ -59,7 +72,6 @@ body {
 }
 
 .user-bubble {
-  align-self: flex-end;
   background: #3b82f6;
   color: #fff;
   border-bottom-right-radius: 4px;
@@ -73,13 +85,11 @@ body {
 }
 
 .message-actions {
-  align-self: flex-end;
   display: flex;
   gap: 8px;
 }
 
-.edit-button,
-.delete-button {
+.action-button {
   border: none;
   background: transparent;
   color: #888;
@@ -94,6 +104,61 @@ body {
 
 .delete-button:hover {
   color: #e11d48;
+}
+
+.save-button {
+  color: #16a34a;
+}
+
+.save-button:hover {
+  color: #15803d;
+}
+
+.cancel-button:hover {
+  color: #555;
+}
+
+.confirm-delete-button {
+  color: #e11d48;
+}
+
+.confirm-delete-button:hover {
+  color: #be123c;
+}
+
+.edit-editor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-input {
+  width: 220px;
+  padding: 6px 10px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.edit-input:focus {
+  border-color: #3b82f6;
+}
+
+.delete-confirm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #888;
+}
+
+.error {
+  padding: 10px 20px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border-top: 1px solid #fecaca;
+  font-size: 13px;
 }
 
 .composer {
