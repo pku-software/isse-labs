@@ -188,3 +188,74 @@ body {
   font-size: 0.85rem;
   color: var(--color-danger);
 }
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- 空列表提示 ---------- */
+
+.empty {
+  margin: 0;
+  padding: 0 24px 12px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+/* ---------- 编辑消息 ---------- */
+
+.editor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor__input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid #d5d9df;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  color: inherit;
+}
+
+.editor__input:focus {
+  outline: 2px solid rgba(47, 111, 237, 0.35);
+  outline-offset: 1px;
+  border-color: var(--color-primary);
+}
+
+.editor .button {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+}
+
+/* ---------- 删除确认 ---------- */
+
+.confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: #fdecea;
+  color: #8c2f22;
+  font-size: 0.85rem;
+}
+
+.confirm__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.button--danger {
+  padding: 3px 10px;
+  border: 1px solid var(--color-danger);
+  background: var(--color-danger);
+  color: #ffffff;
+  font-size: 0.8rem;
+}
