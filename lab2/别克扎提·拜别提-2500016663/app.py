@@ -2,19 +2,31 @@
 
 同一个 Flask 进程同时提供：
 - 前端页面（frontend/ 目录下的静态文件）
-- 聊天记录 CRUD API
+- 聊天记录 CRUD API（回复由 DeepSeek 模型生成）
 
 数据只保存在内存列表中，Flask 重启后清空（本阶段刻意不持久化）。
+API Key 通过 .env 提供，只存在于后端进程的环境中。
 """
 
+import os
+
+import requests
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
+
+# 从项目根目录的 .env 文件加载环境变量（文件不存在时静默跳过）
+load_dotenv()
 
 app = Flask(__name__)
 
 # 让 JSON 响应中的中文直接显示，而不是被转义成 \uXXXX
 app.json.ensure_ascii = False
 
-# 内存中的聊天记录：每个元素形如 {"id": 1, "message": "用户输入", "reply": "后端回复"}
+# DeepSeek 官方 API 配置（文档：https://api-docs.deepseek.com/zh-cn/）
+DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
+DEEPSEEK_MODEL = "deepseek-chat"
+
+# 内存中的聊天记录：每个元素形如 {"id": 1, "message": "用户输入", "reply": "模型回复"}
 messages = []
 # 自增 id 计数器，用于保证每条记录的 id 唯一
 next_id = 1
@@ -39,6 +51,32 @@ def serve_frontend_file(filename):
     return send_from_directory("frontend", filename)
 
 
+# ---------- DeepSeek 调用 ----------
+
+
+def call_deepseek(message):
+    """把用户消息发给 DeepSeek，返回模型回复文本；失败时抛出异常。"""
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        # 只判断变量是否存在，绝不输出它的值
+        raise ValueError("服务器缺少 DEEPSEEK_API_KEY，请检查 .env 是否创建")
+
+    response = requests.post(
+        DEEPSEEK_API_URL,
+        headers={"Authorization": f"Bearer {api_key}"},
+        json={
+            "model": DEEPSEEK_MODEL,
+            "messages": [{"role": "user", "content": message}],
+        },
+        timeout=30,
+    )
+    # 4xx / 5xx 响应时抛出 requests.HTTPError
+    response.raise_for_status()
+    data = response.json()
+    # 官方响应结构：choices[0].message.content 即模型回复文本
+    return data["choices"][0]["message"]["content"]
+
+
 # ---------- API ----------
 
 
@@ -50,7 +88,7 @@ def hello():
 
 @app.route("/api/messages", methods=["POST"])
 def create_message():
-    """创建一条聊天记录：读取 message，reply 暂时固定为“你好”。"""
+    """创建一条聊天记录：读取 message，reply 由 DeepSeek 模型生成。"""
     global next_id
 
     data = request.get_json(silent=True)
@@ -61,10 +99,23 @@ def create_message():
     if not isinstance(message, str) or not message.strip():
         return jsonify({"error": "字段 message 不能为空"}), 400
 
+    # 先拿到模型回复，调用成功后才保存记录
+    try:
+        reply = call_deepseek(message.strip())
+    except ValueError as exc:
+        # Key 缺失属于服务器配置错误
+        return jsonify({"error": str(exc)}), 500
+    except requests.RequestException as exc:
+        # 网络错误、超时、DeepSeek 返回 4xx/5xx
+        return jsonify({"error": f"调用 DeepSeek API 失败：{exc}"}), 502
+    except (KeyError, IndexError):
+        # 响应 JSON 结构不符合预期
+        return jsonify({"error": "DeepSeek 返回了无法解析的响应"}), 502
+
     record = {
         "id": next_id,
         "message": message.strip(),
-        "reply": "你好",
+        "reply": reply,
     }
     next_id += 1
     messages.append(record)
