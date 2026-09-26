@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊一聊 · AI 聊天</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">聊</span>
+          <div>
+            <p class="eyebrow">AI 聊天</p>
+            <h1>聊一聊</h1>
+          </div>
+        </div>
+        <span class="preview-badge">静态预览</span>
+      </header>
+
+      <section class="chat-panel" aria-labelledby="chat-heading">
+        <div class="panel-heading">
+          <div>
+            <h2 id="chat-heading">从一个问题开始</h2>
+            <p>在这里提问、阅读回答，整理你的思路。</p>
+          </div>
+          <span class="section-label">聊天记录</span>
+        </div>
+
+        <div id="message-list" class="message-list" aria-live="polite">
+          <p class="sample-label">下方为界面示例，不是真实聊天记录</p>
+          <article class="message-record" aria-label="示例问答">
+            <div class="message-row user-row">
+              <span class="avatar user-avatar" aria-hidden="true">你</span>
+              <div class="message-content">
+                <span class="speaker">你的问题</span>
+                <p class="bubble user-bubble">你输入的问题会显示在这里。</p>
+              </div>
+            </div>
+            <div class="message-row assistant-row">
+              <span class="avatar assistant-avatar" aria-hidden="true">AI</span>
+              <div class="message-content">
+                <span class="speaker">AI 助手</span>
+                <p class="bubble assistant-bubble">回复会显示在这里。每次提问和对应的回答组成一条聊天记录。</p>
+              </div>
+            </div>
+            <div class="record-actions" aria-label="记录操作">
+              <button type="button" class="text-button" disabled title="修改功能尚未启用">修改</button>
+              <button type="button" class="text-button delete-button" disabled title="删除功能尚未启用">删除</button>
+            </div>
+          </article>
+        </div>
+
+        <section class="composer" aria-labelledby="composer-heading">
+          <label id="composer-heading" for="message-input">写下你的问题</label>
+          <textarea
+            id="message-input"
+            name="message"
+            rows="3"
+            placeholder="有什么想聊的？"
+            aria-describedby="composer-help"
+          ></textarea>
+          <div class="composer-footer">
+            <p id="composer-help">当前仅展示界面，发送、修改和删除尚未启用。</p>
+            <button id="send-button" class="send-button" type="button" disabled>发送消息 <span aria-hidden="true">↗</span></button>
+          </div>
+          <p id="status-message" class="status-message" role="status"></p>
+        </section>
+      </section>
+
+      <footer class="app-footer">保留好问题，慢慢找答案。</footer>
+    </main>
+  </body>
+</html>
