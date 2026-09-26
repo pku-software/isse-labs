@@ -14,47 +14,8 @@
     </header>
 
     <main class="chat-list" id="chat-list">
-      <!--
-        下面两条是用于查看页面结构的静态示例记录。
-        后续阶段会改由 app.js 通过后端 API 加载和渲染真实记录。
-      -->
-
-      <article class="message" data-id="1">
-        <div class="bubble bubble-user">
-          <p class="bubble-text">你好，帮我用一句话介绍北京大学。</p>
-        </div>
-        <div class="bubble bubble-reply">
-          <p class="bubble-text">北京大学是中国历史最悠久的现代综合性大学之一。</p>
-        </div>
-        <div class="message-actions">
-          <button type="button" class="btn btn-edit">修改</button>
-          <button type="button" class="btn btn-delete">删除</button>
-        </div>
-      </article>
-
-      <article class="message message-editing" data-id="2">
-        <div class="bubble bubble-user">
-          <p class="bubble-text">今天适合做什么？</p>
-        </div>
-        <div class="bubble bubble-reply">
-          <p class="bubble-text">可以出去走走，也可以读读书。</p>
-        </div>
-
-        <!-- 页面内联编辑区：不使用 prompt()，修改内容直接在页面里输入 -->
-        <div class="edit-area">
-          <label class="edit-label" for="edit-input-2">修改这条提问</label>
-          <textarea id="edit-input-2" class="edit-input" rows="2">今天适合做什么？</textarea>
-          <div class="edit-actions">
-            <button type="button" class="btn btn-primary">保存</button>
-            <button type="button" class="btn btn-cancel">取消</button>
-          </div>
-        </div>
-
-        <div class="message-actions">
-          <button type="button" class="btn btn-edit" disabled>修改</button>
-          <button type="button" class="btn btn-delete">删除</button>
-        </div>
-      </article>
+      <!-- 聊天记录由 app.js 通过 /api/messages 加载后渲染到这里 -->
+      <p class="empty-state" id="empty-state">还没有聊天记录，在下面输入一句话试试。</p>
     </main>
 
     <!-- 页面内的状态与错误提示区域，后续替代 alert() 之类的弹窗 -->

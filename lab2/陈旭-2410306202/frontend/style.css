@@ -187,3 +187,39 @@ body {
   padding: 10px 22px;
   white-space: nowrap;
 }
+
+.empty-state {
+  margin: 0;
+  padding: 24px 8px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.status.is-error {
+  color: #b03030;
+}
+
+.edit-error {
+  margin: 0;
+  font-size: 12px;
+  color: #b03030;
+}
+
+.confirm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.btn-danger {
+  border-color: #e6bcbc;
+  background: #fdf4f4;
+  color: #b03030;
+}
+
+.btn-danger:hover:not(:disabled) {
+  border-color: #d79b9b;
+}
