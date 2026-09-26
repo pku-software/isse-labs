@@ -1,0 +1,72 @@
+# AI 聊天 Web 应用
+
+一个基于 Flask + DeepSeek 的多会话 AI 聊天应用。前端使用 HTML + CSS + JavaScript，后端使用 Python + Flask，通过 DeepSeek API 生成回复。
+
+## 功能
+
+- 支持创建、重命名、删除多个聊天会话；
+- 每个会话内进行多轮对话，模型能记住会话历史；
+- 支持修改、删除单条用户消息；
+- 修改用户消息后会重新生成回复。
+
+## 数据模型
+
+- 会话（conversation）：`{"id": 1, "title": "标题", "messages": [...]}`
+- 消息（message）：`{"id": 1, "role": "user" | "assistant", "content": "文本"}`
+
+## API 设计
+
+- `POST /api/conversations`：创建会话
+- `GET /api/conversations`：列出会话
+- `GET /api/conversations/<id>`：获取单个会话
+- `PATCH /api/conversations/<id>`：重命名会话
+- `DELETE /api/conversations/<id>`：删除会话
+- `POST /api/conversations/<id>/messages`：发送消息（调用 DeepSeek）
+- `PATCH /api/conversations/<id>/messages/<mid>`：修改消息
+- `DELETE /api/conversations/<id>/messages/<mid>`：删除消息
+
+## DeepSeek 上下文
+
+发送消息时，后端会把当前会话的完整历史（所有 user/assistant 消息）作为 `messages` 数组发给 DeepSeek，使模型能够基于前文进行多轮对话。
+
+## 数据持久化
+
+聊天数据保存在 `data/conversations.json` 文件中。Flask 启动时会读取该文件加载到内存；每次创建、修改或删除会话或消息后都会写回该文件。文件不存在或为空时，从空数据开始。
+
+## 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+## 配置
+
+复制 `.env.example` 为 `.env`，并把其中的 `DEEPSEEK_API_KEY` 替换成你的真实 API Key。`.env` 已被 `.gitignore` 忽略，不会提交到 Git。
+
+## 启动
+
+```bash
+python app.py
+```
+
+Flask 默认监听 `5001` 端口。
+
+## 浏览器访问
+
+打开 <http://localhost:5001/>。
+
+## API 测试
+
+健康检查：
+
+```bash
+curl http://localhost:5001/api/hello
+```
+
+创建会话：
+
+```bash
+curl -X POST http://localhost:5001/api/conversations \
+  -H "Content-Type: application/json" \
+  -d '{"title":"测试会话"}'
+```
