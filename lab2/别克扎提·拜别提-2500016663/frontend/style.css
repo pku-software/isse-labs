@@ -75,10 +75,6 @@ body {
   background: #fdfdfe;
 }
 
-.sample-record {
-  opacity: 0.75;
-}
-
 .record-content {
   display: flex;
   flex-direction: column;
@@ -243,4 +239,52 @@ body {
 #send-button:disabled {
   background: #93c5fd;
   cursor: not-allowed;
+}
+
+/* ===== 兜底：保证 hidden 属性始终生效 =====
+   （当作者样式给元素设置了 display 后，会覆盖浏览器对 [hidden] 的默认处理） */
+
+[hidden] {
+  display: none !important;
+}
+
+/* ===== 行内编辑状态 ===== */
+
+.edit-row {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.edit-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  outline: none;
+}
+
+.edit-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.btn-save {
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.btn-save:hover {
+  background: #1d4ed8;
+}
+
+/* 删除按钮的待确认状态 */
+.btn-delete.armed {
+  background: #fee2e2;
+  border-color: #f87171;
+  color: #b91c1c;
 }
