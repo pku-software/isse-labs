@@ -7,8 +7,20 @@ const sendButton = document.querySelector("#send-button");
 const reloadButton = document.querySelector("#reload-button");
 const recordCount = document.querySelector("#record-count");
 const statusMessage = document.querySelector("#status-message");
+const conversationList = document.querySelector("#conversation-list");
+const conversationForm = document.querySelector("#conversation-form");
+const conversationTitle = document.querySelector("#conversation-title");
+const createConversationButton = document.querySelector("#create-conversation-button");
+const renameConversationButton = document.querySelector("#rename-conversation-button");
+const deleteConversationButton = document.querySelector("#delete-conversation-button");
+const conversationEditor = document.querySelector("#conversation-editor");
+const chatHeading = document.querySelector("#chat-heading");
 
 let records = [];
+let conversations = [];
+let activeId = null;
+let conversationMode = null;
+const drafts = new Map();
 let loaded = false;
 let busy = false;
 let editingId = null;
@@ -29,8 +41,14 @@ function showStatus(text, isError = false) {
 
 function updateControls() {
   reloadButton.disabled = busy;
-  messageInput.disabled = busy || !loaded;
-  sendButton.disabled = busy || !loaded;
+  messageInput.disabled = busy || !loaded || activeId === null;
+  sendButton.disabled = busy || !loaded || activeId === null;
+  conversationTitle.disabled = busy || !loaded;
+  createConversationButton.disabled = busy || !loaded;
+  renameConversationButton.disabled = busy || activeId === null;
+  deleteConversationButton.disabled = busy || activeId === null;
+  conversationList.querySelectorAll("button").forEach((control) => { control.disabled = busy; });
+  conversationEditor.querySelectorAll("button, input").forEach((control) => { control.disabled = busy; });
   messageList.setAttribute("aria-busy", String(busy));
   messageList.querySelectorAll("button, textarea").forEach((control) => {
     control.disabled = busy;
@@ -72,7 +90,7 @@ async function runAction(action, successText, progressText = "正在处理…") 
   showStatus(progressText);
   try {
     await action();
-    renderRecords();
+    renderPage();
     showStatus(successText);
     return true;
   } catch (error) {
@@ -89,6 +107,116 @@ function actionButton(label, handler, extraClass = "") {
   button.type = "button";
   button.addEventListener("click", handler);
   return button;
+}
+
+function messagesPath() {
+  return `/api/conversations/${activeId}/messages`;
+}
+
+function selectLoadedConversation(conversation) {
+  if (activeId !== null) drafts.set(activeId, messageInput.value);
+  activeId = conversation?.id ?? null;
+  records = conversation?.messages ?? [];
+  messageInput.value = drafts.get(activeId) ?? "";
+  editingId = null;
+  deletingId = null;
+  conversationMode = null;
+}
+
+function renderConversations() {
+  if (!conversations.length) {
+    conversationList.replaceChildren(element("p", "sidebar-hint", "还没有会话，先为想聊的话题起个名字吧。"));
+  } else {
+    conversationList.replaceChildren(...conversations.map((conversation) => {
+      const selected = conversation.id === activeId;
+      const button = actionButton("", async () => {
+        if (selected || busy) return;
+        await runAction(async () => {
+          const result = await api(`/api/conversations/${conversation.id}`);
+          selectLoadedConversation(result);
+        }, "已切换会话。");
+      });
+      button.className = `conversation-item${selected ? " is-active" : ""}`;
+      button.setAttribute("aria-pressed", String(selected));
+      button.append(
+        element("span", "conversation-name", conversation.title),
+        element("span", "conversation-count", `${selected ? records.length : conversation.message_count} 轮问答`),
+      );
+      return button;
+    }));
+  }
+  chatHeading.textContent = conversations.find((item) => item.id === activeId)?.title ?? "选择或新建会话";
+}
+
+function closeConversationAction() {
+  conversationMode = null;
+  renderConversationEditor();
+  renameConversationButton.focus();
+}
+
+function renderConversationEditor() {
+  conversationEditor.replaceChildren();
+  if (activeId === null || conversationMode === null) return;
+  const conversation = conversations.find((item) => item.id === activeId);
+  if (conversationMode === "rename") {
+    const form = element("form", "edit-form");
+    form.noValidate = true;
+    const label = element("label", "edit-label", "会话名称");
+    const input = element("input", "");
+    input.id = "rename-conversation-input";
+    input.value = conversation.title;
+    input.maxLength = 100;
+    label.htmlFor = input.id;
+    const controls = element("div", "inline-actions");
+    const save = element("button", "send-button", "保存名称");
+    save.type = "submit";
+    controls.append(save, actionButton("取消", closeConversationAction));
+    form.append(label, input, controls);
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (busy) return;
+      const title = input.value.trim();
+      if (!title || title.length > 100) {
+        showStatus("会话名称需为 1 至 100 个字符。", true);
+        input.focus();
+        return;
+      }
+      await runAction(async () => {
+        const result = await api(`/api/conversations/${activeId}`, "PATCH", { title });
+        conversations = conversations.map((item) => item.id === result.id
+          ? { id: result.id, title: result.title, message_count: result.messages.length } : item);
+        selectLoadedConversation(result);
+      }, "会话已重命名。");
+    });
+    conversationEditor.append(form);
+  } else {
+    const box = element("div", "delete-confirmation");
+    box.append(element("p", "", `确定删除“${conversation.title}”和其中的所有问答？删除后无法恢复。`));
+    const controls = element("div", "inline-actions");
+    controls.append(
+      actionButton("确认删除会话", async () => {
+        await runAction(async () => {
+          const removedId = activeId;
+          await api(`/api/conversations/${removedId}`, "DELETE");
+          conversations = conversations.filter((item) => item.id !== removedId);
+          selectLoadedConversation(null);
+          drafts.delete(removedId);
+        }, "会话已删除，可以选择其他会话或新建会话。");
+      }, "danger-button"),
+      actionButton("取消", closeConversationAction),
+    );
+    box.append(controls);
+    conversationEditor.append(box);
+  }
+  updateControls();
+}
+
+function renderPage() {
+  conversations = conversations.map((item) => item.id === activeId
+    ? { ...item, message_count: records.length } : item);
+  renderConversations();
+  renderConversationEditor();
+  renderRecords();
 }
 
 function messageRow(role, text) {
@@ -133,7 +261,9 @@ function editForm(record) {
   const saveButton = element("button", "send-button", "保存修改");
   saveButton.type = "submit";
   controls.append(saveButton, actionButton("取消", closeRecordAction));
-  form.append(label, input, errorText, controls);
+  form.append(label, input,
+    element("p", "edit-help", "修改问题不会重新生成已有回答；后续提问会使用修改后的历史。"),
+    errorText, controls);
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (busy) return;
@@ -145,7 +275,7 @@ function editForm(record) {
     }
     errorText.textContent = "";
     const saved = await runAction(async () => {
-      const updated = await api(`/api/messages/${record.id}`, "PATCH", { message });
+      const updated = await api(`${messagesPath()}/${record.id}`, "PATCH", { message });
       records = records.map((item) => item.id === updated.id ? updated : item);
       editingId = null;
     }, "聊天记录已修改。");
@@ -161,7 +291,7 @@ function deleteConfirmation(record) {
   controls.append(
     actionButton("确认删除", async () => {
       const deleted = await runAction(async () => {
-        await api(`/api/messages/${record.id}`, "DELETE");
+        await api(`${messagesPath()}/${record.id}`, "DELETE");
         records = records.filter((item) => item.id !== record.id);
         deletingId = null;
       }, "聊天记录已删除。");
@@ -206,7 +336,9 @@ function renderRecord(record) {
 
 function renderRecords() {
   recordCount.textContent = `${records.length} 条记录`;
-  if (records.length === 0) {
+  if (activeId === null) {
+    messageList.replaceChildren(element("p", "empty-state", "请选择已有会话，或新建一个会话后开始聊天。"));
+  } else if (records.length === 0) {
     messageList.replaceChildren(element("p", "empty-state", "还没有聊天记录，写下你的第一个问题吧。"));
   } else {
     messageList.replaceChildren(...records.map(renderRecord));
@@ -216,13 +348,14 @@ function renderRecords() {
 
 async function loadRecords() {
   const success = await runAction(async () => {
-    const result = await api("/api/messages");
-    if (!Array.isArray(result)) throw new Error("聊天列表格式不正确，请检查服务后重试。");
-    records = result;
+    const result = await api("/api/conversations");
+    if (!Array.isArray(result)) throw new Error("会话列表格式不正确，请检查服务后重试。");
+    const selected = result.find((item) => item.id === activeId) ?? result[0];
+    const detail = selected ? await api(`/api/conversations/${selected.id}`) : null;
+    conversations = result;
+    selectLoadedConversation(detail);
     loaded = true;
-    editingId = null;
-    deletingId = null;
-  }, "聊天记录已加载。");
+  }, "会话和聊天记录已加载。");
   if (!success && !loaded) {
     messageList.replaceChildren(element("p", "empty-state", "暂时无法加载记录，请点击“刷新列表”重试。"));
   }
@@ -230,7 +363,7 @@ async function loadRecords() {
 
 messageForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (busy || !loaded) return;
+  if (busy || !loaded || activeId === null) return;
   const message = messageInput.value.trim();
   if (!message) {
     showStatus("请先输入问题，内容不能只包含空格。", true);
@@ -238,16 +371,49 @@ messageForm.addEventListener("submit", async (event) => {
     return;
   }
   const sent = await runAction(async () => {
-    const record = await api("/api/messages", "POST", { message });
+    const record = await api(messagesPath(), "POST", { message });
     records.push(record);
     editingId = null;
     deletingId = null;
     messageInput.value = "";
+    drafts.delete(activeId);
   }, "消息已发送，回复已收到。", "正在等待 AI 回复，请稍候…");
   if (sent) {
     messageList.scrollTop = messageList.scrollHeight;
     messageInput.focus();
   }
+});
+
+conversationForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (busy || !loaded) return;
+  const title = conversationTitle.value.trim();
+  if (!title || title.length > 100) {
+    showStatus("请填写 1 至 100 个字符的会话名称。", true);
+    conversationTitle.focus();
+    return;
+  }
+  const created = await runAction(async () => {
+    const result = await api("/api/conversations", "POST", { title });
+    conversations.push({ id: result.id, title: result.title, message_count: 0 });
+    selectLoadedConversation(result);
+    conversationTitle.value = "";
+  }, "会话已创建，可以开始聊天。");
+  if (created) messageInput.focus();
+});
+
+renameConversationButton.addEventListener("click", () => {
+  if (busy || activeId === null) return;
+  conversationMode = "rename";
+  renderConversationEditor();
+  conversationEditor.querySelector("input").focus();
+});
+
+deleteConversationButton.addEventListener("click", () => {
+  if (busy || activeId === null) return;
+  conversationMode = "delete";
+  renderConversationEditor();
+  conversationEditor.querySelector("button").focus();
 });
 
 reloadButton.addEventListener("click", loadRecords);

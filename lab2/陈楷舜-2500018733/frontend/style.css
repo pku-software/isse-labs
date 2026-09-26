@@ -15,7 +15,7 @@ body {
   background: radial-gradient(ellipse at top left, #e1eee6, transparent 65%);
 }
 
-button, textarea { font: inherit; }
+button, textarea, input { font: inherit; }
 
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
@@ -23,7 +23,7 @@ button:disabled { opacity: 0.65; }
 button:focus-visible { outline: 3px solid #b6d8c3; outline-offset: 2px; }
 
 .app-shell {
-  width: min(100% - 40px, 920px);
+  width: min(100% - 40px, 1180px);
   margin: 0 auto;
   padding: 40px 0 24px;
 }
@@ -71,6 +71,7 @@ h2 { margin: 0; font-size: 20px; }
 }
 
 .chat-panel {
+  min-width: 0;
   overflow: hidden;
   border: 1px solid #dbe5dd;
   border-radius: 24px;
@@ -156,6 +157,31 @@ textarea:focus-visible { outline: 3px solid #b6d8c3; outline-offset: 2px; border
 .status-message:empty { display: none; }
 .app-footer { padding-top: 20px; text-align: center; color: #68796e; font-size: 12px; }
 
+.workspace { display: grid; grid-template-columns: 250px minmax(0, 1fr); align-items: start; gap: 20px; }
+.conversation-panel { padding: 22px 18px; border: 1px solid #dbe5dd; border-radius: 20px; background: #ffffffb8; }
+.conversation-panel h2 { font-size: 17px; }
+.conversation-form { display: grid; gap: 10px; margin: 18px 0; }
+.conversation-form label { font-size: 13px; }
+input { width: 100%; min-width: 0; padding: 10px 12px; border: 1px solid #cddbd0; border-radius: 10px; color: #243c36; background: #fff; }
+input:focus-visible { outline: 3px solid #b6d8c3; outline-offset: 2px; }
+.conversation-list { display: grid; gap: 8px; max-height: 55vh; overflow-y: auto; }
+.conversation-item { display: block; width: 100%; border: 1px solid transparent; border-radius: 12px; padding: 12px; text-align: left; color: #243c36; background: #f2f6f1; }
+.conversation-item:hover:not(:disabled) { background: #e6f0e8; }
+.conversation-item.is-active { background: #e2eee5; border-color: #82ac92; }
+.conversation-name { display: block; overflow-wrap: anywhere; font-weight: 600; font-size: 14px; }
+.conversation-count, .sidebar-hint { color: #68796e; font-size: 12px; }
+.conversation-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+#chat-heading { overflow-wrap: anywhere; }
+#conversation-editor .edit-form, #conversation-editor .delete-confirmation { margin: 16px 30px 0; }
+.edit-help { margin: 8px 0 0; color: #68796e; font-size: 12px; }
+
+@media (max-width: 850px) {
+  .workspace { grid-template-columns: minmax(0, 1fr); }
+  .conversation-list { max-height: 210px; }
+  .conversation-form { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .conversation-form label { grid-column: 1 / -1; }
+}
+
 @media (max-width: 560px) {
   .app-shell { width: min(100% - 24px, 920px); padding-top: 22px; }
   .app-header { margin-bottom: 20px; }
@@ -166,6 +192,8 @@ textarea:focus-visible { outline: 3px solid #b6d8c3; outline-offset: 2px; border
   .list-tools { flex-shrink: 1; }
   .list-tools button { white-space: nowrap; }
   .status-message { margin-right: 20px; margin-left: 20px; }
+  #conversation-editor .edit-form, #conversation-editor .delete-confirmation { margin-right: 20px; margin-left: 20px; }
+  .panel-heading { flex-wrap: wrap; }
   .edit-form, .delete-confirmation { margin-left: 0; }
   .message-content { max-width: calc(100% - 47px); }
   .composer-footer { align-items: flex-start; flex-direction: column; gap: 12px; }

@@ -20,11 +20,28 @@
         <span class="preview-badge">DeepSeek 对话</span>
       </header>
 
+      <div class="workspace">
+      <aside class="conversation-panel" aria-labelledby="conversations-heading">
+        <h2 id="conversations-heading">我的会话</h2>
+        <form id="conversation-form" class="conversation-form" novalidate>
+          <label for="conversation-title">新会话名称</label>
+          <input id="conversation-title" name="title" maxlength="100" placeholder="例如：旅行计划" required disabled>
+          <button id="create-conversation-button" class="send-button" type="submit" disabled>新建会话</button>
+        </form>
+        <nav id="conversation-list" class="conversation-list" aria-label="选择聊天会话">
+          <p class="sidebar-hint">正在加载会话…</p>
+        </nav>
+      </aside>
+
       <section class="chat-panel" aria-labelledby="chat-heading">
         <div class="panel-heading">
           <div>
-            <h2 id="chat-heading">从一个问题开始</h2>
-            <p>在这里提问、阅读回答，整理你的思路。</p>
+            <h2 id="chat-heading">选择或新建会话</h2>
+            <p>每个会话独立保存，围绕同一个话题继续聊。</p>
+            <div class="conversation-tools">
+              <button id="rename-conversation-button" class="text-button" type="button" disabled>重命名会话</button>
+              <button id="delete-conversation-button" class="text-button delete-button" type="button" disabled>删除会话</button>
+            </div>
           </div>
           <div class="list-tools">
             <span id="record-count" class="section-label">聊天记录</span>
@@ -32,6 +49,7 @@
           </div>
         </div>
 
+        <div id="conversation-editor"></div>
         <p id="status-message" class="status-message" role="status" aria-atomic="true"></p>
         <div id="message-list" class="message-list" aria-live="polite">
           <p class="empty-state">正在加载聊天记录…</p>
@@ -51,11 +69,12 @@
             disabled
           ></textarea>
           <div class="composer-footer">
-            <p id="composer-help">最多 4000 字；每次提问独立作答。</p>
+            <p id="composer-help">最多 4000 字；回答会参考本会话最近 10 轮问答。</p>
             <button id="send-button" class="send-button" type="submit" disabled>发送消息 <span aria-hidden="true">↗</span></button>
           </div>
         </form>
       </section>
+      </div>
 
       <footer class="app-footer">聊天记录会自动保存，刷新页面或重启服务后仍可查看。</footer>
     </main>
