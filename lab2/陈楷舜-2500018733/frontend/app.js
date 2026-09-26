@@ -65,11 +65,11 @@ async function api(path, method = "GET", data) {
   return result;
 }
 
-async function runAction(action, successText) {
+async function runAction(action, successText, progressText = "正在处理…") {
   if (busy) return false;
   busy = true;
   updateControls();
-  showStatus("正在处理…");
+  showStatus(progressText);
   try {
     await action();
     renderRecords();
@@ -243,7 +243,7 @@ messageForm.addEventListener("submit", async (event) => {
     editingId = null;
     deletingId = null;
     messageInput.value = "";
-  }, "消息已发送，回复已收到。");
+  }, "消息已发送，回复已收到。", "正在等待 AI 回复，请稍候…");
   if (sent) {
     messageList.scrollTop = messageList.scrollHeight;
     messageInput.focus();
