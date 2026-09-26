@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 聊天助手</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="chat-app">
+    <header class="chat-header">
+      <h1>AI 聊天助手</h1>
+      <p class="chat-subtitle">Flask + DeepSeek 的最小 AI 聊天应用</p>
+    </header>
+
+    <!-- 聊天记录区域 -->
+    <main class="chat-messages" id="chat-messages">
+      <p class="empty-hint" id="empty-hint" hidden>暂无聊天记录，发送第一条消息吧</p>
+
+      <!-- 示例记录：仅用于展示界面结构，接入后端后会被真实记录替换 -->
+      <article class="chat-record sample-record" id="sample-record">
+        <div class="record-content">
+          <div class="record-message">
+            <span class="role-label">我</span>
+            <div class="bubble bubble-user">
+              <p class="message-text">你好，请用一句话介绍你自己</p>
+            </div>
+          </div>
+          <div class="record-reply">
+            <span class="role-label">AI</span>
+            <div class="bubble bubble-ai">
+              <p class="reply-text">（示例记录：后端尚未接入，暂无真实回复）</p>
+            </div>
+          </div>
+        </div>
+        <div class="record-actions">
+          <button type="button" class="btn btn-edit">修改</button>
+          <button type="button" class="btn btn-delete">删除</button>
+        </div>
+      </article>
+    </main>
+
+    <!-- 输入区域 -->
+    <footer class="chat-input-bar">
+      <!-- 页面内状态提示：用于错误反馈、操作确认等，替代浏览器弹窗 -->
+      <div class="status-bar" id="status-bar" hidden></div>
+      <div class="input-row">
+        <input
+          type="text"
+          id="message-input"
+          placeholder="输入消息，按 Enter 或点击“发送”"
+          autocomplete="off"
+        >
+        <button type="button" id="send-button">发送</button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
