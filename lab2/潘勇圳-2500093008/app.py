@@ -5,12 +5,14 @@
 - 访问 ``GET /`` 返回 ``frontend/index.html``，样式和脚本也由 Flask 提供；
 - ``GET /api/hello`` 用来确认服务是否正常运行；
 - 聊天记录通过 ``/api/messages`` 完成创建、读取、修改和删除；
-- 数据只保存在内存里，不写文件、不连数据库，重启 Flask 后即丢失；
+- 聊天记录同时保存在内存和 data/messages.json 里，Flask 启动时会先读回这个文件，
+  所以重启之后记录依然存在（不使用数据库）；
 - 回复由 Flask 调用 DeepSeek API 生成，API Key 只保存在本机的 .env 里。
 
 一条聊天记录约定为：``{"id": 1, "message": "用户输入", "reply": "后端回复"}``
 """
 
+import json
 import os
 from pathlib import Path
 
@@ -20,6 +22,8 @@ from flask import Flask, jsonify, request, send_from_directory
 
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR / "frontend"
+DATA_DIR = BASE_DIR / "data"
+MESSAGES_FILE = DATA_DIR / "messages.json"
 
 # 读取项目根目录下的 .env，把里面的键值对放进环境变量，
 # 这样代码里只出现变量名，真实 Key 一直留在 .env 文件中
@@ -36,7 +40,7 @@ app = Flask(__name__, static_folder=str(FRONTEND_DIR), static_url_path="")
 # 让 JSON 响应里的中文直接显示，而不是转义成 \uXXXX
 app.json.ensure_ascii = False
 
-# 聊天记录暂时只保存在这个进程的内存里，Flask 一重启就没了
+# 聊天记录在内存里保存一份，每次改动后同步写回 messages.json
 messages = []
 next_message_id = 1
 
@@ -68,6 +72,47 @@ def read_message_text():
     if not isinstance(text, str) or not text.strip():
         return None
     return text.strip()
+
+
+def load_messages():
+    """把 data/messages.json 里保存的记录读回内存，供 Flask 启动时调用。"""
+    global messages, next_message_id
+
+    if not MESSAGES_FILE.exists():
+        return
+
+    try:
+        with MESSAGES_FILE.open(encoding="utf-8") as file:
+            data = json.load(file)
+    except (OSError, json.JSONDecodeError):
+        # 文件读不了或内容不是合法 JSON 时，从空记录开始，不让服务起不来
+        return
+
+    if not isinstance(data, list):
+        return
+
+    messages = [
+        record
+        for record in data
+        if isinstance(record, dict)
+        and isinstance(record.get("id"), int)
+        and isinstance(record.get("message"), str)
+        and isinstance(record.get("reply"), str)
+    ]
+
+    # 新 id 从已有记录的最大 id 往后接，避免和文件里的记录冲突
+    next_message_id = max((record["id"] for record in messages), default=0) + 1
+
+
+def save_messages():
+    """把当前内存里的记录写回 data/messages.json。"""
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with MESSAGES_FILE.open("w", encoding="utf-8") as file:
+        json.dump(messages, file, ensure_ascii=False, indent=2)
+
+
+# 启动时先把上次保存的记录读回内存
+load_messages()
 
 
 def ask_deepseek(message):
@@ -131,6 +176,7 @@ def create_message():
     record = {"id": next_message_id, "message": text, "reply": reply}
     messages.append(record)
     next_message_id += 1
+    save_messages()
     return jsonify(record), 201
 
 
@@ -152,6 +198,7 @@ def update_message(message_id):
         return jsonify({"error": "请求体需要是 JSON，并且 message 字段不能为空"}), 400
 
     record["message"] = text
+    save_messages()
     return jsonify(record)
 
 
@@ -163,6 +210,7 @@ def delete_message(message_id):
         return jsonify({"error": f"id 为 {message_id} 的聊天记录不存在"}), 404
 
     messages.remove(record)
+    save_messages()
     return jsonify({"deleted_id": message_id})
 
 
