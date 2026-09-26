@@ -7,9 +7,11 @@ Flask 同时承担两件事：
 创建聊天记录时，后端会去调用 DeepSeek 的接口拿真实回复。
 API Key 只保存在后端的 .env 文件里，通过环境变量读取，不会出现在前端代码中。
 
-聊天记录目前只保存在内存列表里，Flask 一重启数据就没了。
+聊天记录保存在内存列表里，同时每次增删改都会写回 data/messages.json，
+所以 Flask 重启后还能把数据读回来。
 """
 
+import json
 import os
 
 import requests
@@ -22,6 +24,8 @@ load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+DATA_DIR = os.path.join(BASE_DIR, "data")
+MESSAGES_FILE = os.path.join(DATA_DIR, "messages.json")
 
 # DeepSeek 的接口地址与模型名，来自官方文档。
 # 如果官方文档更新了接口地址或模型名，只需要改这两行。
@@ -34,12 +38,50 @@ app = Flask(__name__)
 # 让 JSON 响应中的中文直接以中文输出，而不是被转义成 \uXXXX
 app.json.ensure_ascii = False
 
+
+def load_messages():
+    """从 JSON 文件读取聊天记录。
+
+    文件不存在、为空或内容损坏时，都从空列表开始，不让服务启动失败。
+    """
+    if not os.path.exists(MESSAGES_FILE):
+        return []
+
+    try:
+        with open(MESSAGES_FILE, "r", encoding="utf-8") as file:
+            data = json.load(file)
+    except (OSError, ValueError):
+        return []
+
+    if not isinstance(data, list):
+        return []
+
+    records = []
+    for item in data:
+        if isinstance(item, dict) and isinstance(item.get("id"), int):
+            records.append(
+                {
+                    "id": item["id"],
+                    "message": str(item.get("message", "")),
+                    "reply": str(item.get("reply", "")),
+                }
+            )
+    return records
+
+
+def save_messages():
+    """把内存里的聊天记录写回 JSON 文件。"""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(MESSAGES_FILE, "w", encoding="utf-8") as file:
+        json.dump(messages, file, ensure_ascii=False, indent=2)
+
+
 # 聊天记录保存在内存里，一条记录形如
 # {"id": 1, "message": "用户输入", "reply": "后端回复"}
-messages = []
+messages = load_messages()
 
-# 下一条记录的 id。只增不减，保证删除记录后 id 也不会重复使用。
-next_message_id = 1
+# 下一条记录的 id：从文件里已有的最大 id 往后排，保证不和已有记录重复
+next_message_id = max((record["id"] for record in messages), default=0) + 1
 
 
 def find_message(message_id):
@@ -170,6 +212,7 @@ def create_message():
     }
     next_message_id += 1
     messages.append(record)
+    save_messages()
 
     return jsonify(record), 201
 
@@ -196,6 +239,7 @@ def update_message(message_id):
         return jsonify({"error": f"id 为 {message_id} 的聊天记录不存在"}), 404
 
     record["message"] = text.strip()
+    save_messages()
     return jsonify(record)
 
 
@@ -207,6 +251,7 @@ def delete_message(message_id):
         return jsonify({"error": f"id 为 {message_id} 的聊天记录不存在"}), 404
 
     messages.remove(record)
+    save_messages()
     return jsonify({"deleted": message_id})
 
 
