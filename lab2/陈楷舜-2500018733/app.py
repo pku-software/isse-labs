@@ -1,6 +1,8 @@
-"""通过 DeepSeek 回复问题，并在内存中管理聊天记录。"""
+"""通过 DeepSeek 回复问题，并用 JSON 文件保存聊天记录。"""
 
+import json
 import os
+import tempfile
 from itertools import count
 from pathlib import Path
 from threading import Lock
@@ -27,8 +29,69 @@ load_dotenv(Path(__file__).resolve().with_name(".env"), encoding="utf-8-sig")
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 app.json.ensure_ascii = False
 
-messages = {}
-message_ids = count(1)
+DATA_FILE = Path(__file__).resolve().parent / "data" / "messages.json"
+
+
+def load_messages():
+    """启动时恢复记录；损坏的文件不能当作空数据覆盖。"""
+    try:
+        content = DATA_FILE.read_text(encoding="utf-8-sig")
+    except FileNotFoundError:
+        return {}
+    except OSError:
+        raise RuntimeError("无法读取 data/messages.json，请检查文件访问权限") from None
+    if not content.strip():
+        return {}
+    try:
+        records = json.loads(content)
+        if not isinstance(records, list):
+            raise ValueError
+        restored = {}
+        for record in records:
+            if (
+                not isinstance(record, dict)
+                or type(record.get("id")) is not int
+                or record["id"] < 1
+                or record["id"] in restored
+                or not isinstance(record.get("message"), str)
+                or not isinstance(record.get("reply"), str)
+            ):
+                raise ValueError
+            restored[record["id"]] = record
+        return restored
+    except (ValueError, TypeError):
+        raise RuntimeError("data/messages.json 格式不正确，请修复文件后重启；原文件未被覆盖") from None
+
+
+def save_messages(updated):
+    """先完整写入临时文件，再替换原文件；成功后才更新内存。调用时持有锁。"""
+    temporary_path = None
+    try:
+        DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=DATA_FILE.parent,
+            prefix="messages-", suffix=".tmp", delete=False,
+        ) as temporary_file:
+            temporary_path = Path(temporary_file.name)
+            json.dump(list(updated.values()), temporary_file, ensure_ascii=False, indent=2)
+            temporary_file.write("\n")
+            temporary_file.flush()
+            os.fsync(temporary_file.fileno())
+        os.replace(temporary_path, DATA_FILE)
+    except OSError:
+        raise ServiceUnavailable("聊天记录保存失败，本次更改未生效，请检查磁盘空间和文件权限") from None
+    finally:
+        if temporary_path is not None:
+            try:
+                temporary_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+    messages.clear()
+    messages.update(updated)
+
+
+messages = load_messages()
+message_ids = count(max(messages, default=0) + 1)
 messages_lock = Lock()
 MAX_MESSAGE_LENGTH = 4000
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
@@ -123,7 +186,9 @@ def create_message():
     reply = get_ai_reply(message)
     with messages_lock:
         record = {"id": next(message_ids), "message": message, "reply": reply}
-        messages[record["id"]] = record
+        updated = dict(messages)
+        updated[record["id"]] = record
+        save_messages(updated)
         return jsonify(record), 201
 
 
@@ -140,15 +205,21 @@ def update_message(message_id):
         record = messages.get(message_id)
         if record is None:
             raise NotFound("找不到这条聊天记录，请刷新列表后重试")
-        record["message"] = message
+        record = {**record, "message": message}
+        updated = dict(messages)
+        updated[message_id] = record
+        save_messages(updated)
         return jsonify(record)
 
 
 @app.delete("/api/messages/<int:message_id>")
 def delete_message(message_id):
     with messages_lock:
-        if messages.pop(message_id, None) is None:
+        if message_id not in messages:
             raise NotFound("找不到这条聊天记录，请刷新列表后重试")
+        updated = dict(messages)
+        del updated[message_id]
+        save_messages(updated)
     return "", 204
 
 
