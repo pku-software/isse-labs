@@ -4,16 +4,30 @@ Flask 同时承担两件事：
 1. 提供前端页面和静态资源（`/`、`/style.css`、`/app.js`）；
 2. 提供聊天记录相关的 JSON API（`/api/...`）。
 
+创建聊天记录时，后端会去调用 DeepSeek 的接口拿真实回复。
+API Key 只保存在后端的 .env 文件里，通过环境变量读取，不会出现在前端代码中。
+
 聊天记录目前只保存在内存列表里，Flask 一重启数据就没了。
-本阶段还没有接入 DeepSeek，AI 的回复固定为“你好”。
 """
 
 import os
 
+import requests
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
+
+# 把 .env 里的变量读进当前进程的环境变量。
+# 文件不存在时它只是什么都不做，不会报错。
+load_dotenv()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+
+# DeepSeek 的接口地址与模型名，来自官方文档。
+# 如果官方文档更新了接口地址或模型名，只需要改这两行。
+DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
+DEEPSEEK_MODEL = "deepseek-chat"
+DEEPSEEK_TIMEOUT = 60
 
 app = Flask(__name__)
 
@@ -34,6 +48,66 @@ def find_message(message_id):
         if record["id"] == message_id:
             return record
     return None
+
+
+def describe_deepseek_error(response):
+    """从 DeepSeek 的错误响应里取出一句可读的说明，取不到就退回状态码。"""
+    try:
+        body = response.json()
+    except ValueError:
+        text = (response.text or "").strip()
+        return text[:300] if text else f"HTTP {response.status_code}"
+
+    if isinstance(body, dict):
+        error = body.get("error")
+        if isinstance(error, dict) and error.get("message"):
+            return str(error["message"])[:300]
+        if isinstance(error, str) and error:
+            return error[:300]
+
+    return f"HTTP {response.status_code}"
+
+
+def ask_deepseek(question):
+    """把用户的问题发给 DeepSeek，返回模型回复的文本。
+
+    出错时抛出 RuntimeError，由调用方转成 JSON 错误响应。
+    API Key 通过请求头传给 DeepSeek，不会出现在前端代码或响应里。
+    """
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        raise RuntimeError("服务端没有读到 DEEPSEEK_API_KEY，请先按 .env.example 配置 .env")
+
+    payload = {
+        "model": DEEPSEEK_MODEL,
+        "messages": [
+            {"role": "user", "content": question},
+        ],
+        "stream": False,
+    }
+
+    try:
+        response = requests.post(
+            DEEPSEEK_API_URL,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=DEEPSEEK_TIMEOUT,
+        )
+    except requests.RequestException as error:
+        raise RuntimeError(f"无法连接 DeepSeek：{error}") from error
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"DeepSeek 返回错误（HTTP {response.status_code}）：{describe_deepseek_error(response)}"
+        )
+
+    try:
+        return response.json()["choices"][0]["message"]["content"].strip()
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError) as error:
+        raise RuntimeError("DeepSeek 的返回内容无法解析") from error
 
 
 # ---------------------------------------------------------------------------
@@ -72,7 +146,7 @@ def hello():
 
 @app.post("/api/messages")
 def create_message():
-    """创建一条聊天记录，AI 回复暂时固定为“你好”。"""
+    """创建一条聊天记录，reply 来自 DeepSeek 的真实回复。"""
     global next_message_id
 
     data = request.get_json(silent=True)
@@ -83,10 +157,16 @@ def create_message():
     if not isinstance(text, str) or not text.strip():
         return jsonify({"error": "message 必须是非空字符串"}), 400
 
+    try:
+        reply = ask_deepseek(text.strip())
+    except RuntimeError as error:
+        # 调用失败时返回清晰的 JSON 错误，而不是让 Flask 直接崩掉
+        return jsonify({"error": str(error)}), 502
+
     record = {
         "id": next_message_id,
         "message": text.strip(),
-        "reply": "你好",
+        "reply": reply,
     }
     next_message_id += 1
     messages.append(record)
