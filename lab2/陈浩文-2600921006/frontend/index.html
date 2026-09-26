@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 聊天</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <main class="chat-app">
+    <header class="app-header">
+      <h1>AI 聊天</h1>
+      <p>在这里查看和整理你的问答。</p>
+    </header>
+
+    <section class="history" aria-labelledby="history-title">
+      <h2 id="history-title">聊天记录</h2>
+      <div id="message-list" class="message-list">
+        <article class="message-record" aria-label="示例问答">
+          <div class="record-header">
+            <span class="example-label">示例对话</span>
+            <div class="record-actions">
+              <button class="text-button" type="button" aria-label="修改这条示例记录">修改</button>
+              <button class="text-button delete-button" type="button" aria-label="删除这条示例记录">删除</button>
+            </div>
+          </div>
+          <div class="question">
+            <h3>你</h3>
+            <p>你好，我想了解这个聊天应用。</p>
+          </div>
+          <div class="answer">
+            <h3>AI</h3>
+            <p>这是一条示例回复，用来展示一次问答的样式。</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="composer" aria-labelledby="composer-title">
+      <h2 id="composer-title"><label for="message-input">你的消息</label></h2>
+      <textarea id="message-input" name="message" rows="3" placeholder="写下你的问题……"></textarea>
+      <div class="composer-footer">
+        <p id="status-message" role="status" aria-live="polite"></p>
+        <button id="send-button" class="send-button" type="button">发送</button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
