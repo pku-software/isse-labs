@@ -14,12 +14,20 @@ DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEEPSEEK_MODEL = "deepseek-chat"
 
-# 聊天记录保存在内存中，Flask 重启后会清空。
-messages = []
-next_id = 1
+# 会话数据保存在内存中，Flask 重启后会清空。
+conversations = []
+next_conversation_id = 1
+next_message_id = 1
 
 
-def call_deepseek(message):
+def find_conversation(conversation_id):
+    for conv in conversations:
+        if conv["id"] == conversation_id:
+            return conv
+    return None
+
+
+def call_deepseek(messages):
     resp = requests.post(
         f"{DEEPSEEK_BASE_URL}/chat/completions",
         headers={
@@ -28,7 +36,7 @@ def call_deepseek(message):
         },
         json={
             "model": DEEPSEEK_MODEL,
-            "messages": [{"role": "user", "content": message}],
+            "messages": messages,
             "stream": False,
         },
         timeout=60,
@@ -48,9 +56,64 @@ def hello():
     return jsonify({"message": "你好"})
 
 
-@app.route("/api/messages", methods=["POST"])
-def create_message():
-    global next_id
+@app.route("/api/conversations", methods=["POST"])
+def create_conversation():
+    global next_conversation_id
+
+    data = request.get_json(silent=True) or {}
+    title = str(data.get("title", "")).strip() or "新会话"
+
+    conv = {"id": next_conversation_id, "title": title, "messages": []}
+    next_conversation_id += 1
+    conversations.append(conv)
+    return jsonify(conv), 201
+
+
+@app.route("/api/conversations", methods=["GET"])
+def list_conversations():
+    return jsonify([{"id": c["id"], "title": c["title"]} for c in conversations])
+
+
+@app.route("/api/conversations/<int:conversation_id>", methods=["GET"])
+def get_conversation(conversation_id):
+    conv = find_conversation(conversation_id)
+    if conv is None:
+        return jsonify({"error": "会话不存在"}), 404
+    return jsonify(conv)
+
+
+@app.route("/api/conversations/<int:conversation_id>", methods=["PATCH"])
+def update_conversation(conversation_id):
+    conv = find_conversation(conversation_id)
+    if conv is None:
+        return jsonify({"error": "会话不存在"}), 404
+
+    data = request.get_json(silent=True) or {}
+    title = str(data.get("title", "")).strip()
+    if not title:
+        return jsonify({"error": "title 不能为空"}), 400
+
+    conv["title"] = title
+    return jsonify(conv)
+
+
+@app.route("/api/conversations/<int:conversation_id>", methods=["DELETE"])
+def delete_conversation(conversation_id):
+    for index, conv in enumerate(conversations):
+        if conv["id"] == conversation_id:
+            conversations.pop(index)
+            return jsonify({"deleted": conversation_id})
+
+    return jsonify({"error": "会话不存在"}), 404
+
+
+@app.route("/api/conversations/<int:conversation_id>/messages", methods=["POST"])
+def create_message(conversation_id):
+    global next_message_id
+
+    conv = find_conversation(conversation_id)
+    if conv is None:
+        return jsonify({"error": "会话不存在"}), 404
 
     if not DEEPSEEK_API_KEY:
         return jsonify({"error": "缺少 DEEPSEEK_API_KEY，请检查 .env 配置"}), 500
@@ -63,48 +126,86 @@ def create_message():
     if not message:
         return jsonify({"error": "message 不能为空"}), 400
 
+    user_msg = {"id": next_message_id, "role": "user", "content": message}
+    next_message_id += 1
+    conv["messages"].append(user_msg)
+
     try:
-        reply = call_deepseek(message)
+        history = [{"role": m["role"], "content": m["content"]} for m in conv["messages"]]
+        reply = call_deepseek(history)
+    except Exception as exc:
+        conv["messages"].pop()
+        return jsonify({"error": f"调用 DeepSeek 失败：{exc}"}), 502
+
+    assistant_msg = {"id": next_message_id, "role": "assistant", "content": reply}
+    next_message_id += 1
+    conv["messages"].append(assistant_msg)
+
+    return jsonify(assistant_msg), 201
+
+
+@app.route("/api/conversations/<int:conversation_id>/messages/<int:message_id>", methods=["PATCH"])
+def update_message(conversation_id, message_id):
+    global next_message_id
+
+    conv = find_conversation(conversation_id)
+    if conv is None:
+        return jsonify({"error": "会话不存在"}), 404
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or "content" not in data:
+        return jsonify({"error": "缺少 content 字段"}), 400
+
+    content = str(data["content"]).strip()
+    if not content:
+        return jsonify({"error": "content 不能为空"}), 400
+
+    target_index = None
+    for index, msg in enumerate(conv["messages"]):
+        if msg["id"] == message_id:
+            target_index = index
+            break
+
+    if target_index is None:
+        return jsonify({"error": "消息不存在"}), 404
+
+    conv["messages"][target_index]["content"] = content
+
+    if conv["messages"][target_index]["role"] != "user":
+        return jsonify(conv["messages"][target_index])
+
+    del conv["messages"][target_index + 1:]
+
+    if not DEEPSEEK_API_KEY:
+        return jsonify({"error": "缺少 DEEPSEEK_API_KEY，请检查 .env 配置"}), 500
+
+    try:
+        history = [{"role": m["role"], "content": m["content"]} for m in conv["messages"]]
+        reply = call_deepseek(history)
     except Exception as exc:
         return jsonify({"error": f"调用 DeepSeek 失败：{exc}"}), 502
 
-    record = {"id": next_id, "message": message, "reply": reply}
-    next_id += 1
-    messages.append(record)
-    return jsonify(record), 201
+    assistant_msg = {"id": next_message_id, "role": "assistant", "content": reply}
+    next_message_id += 1
+    conv["messages"].append(assistant_msg)
+
+    return jsonify(assistant_msg), 200
 
 
-@app.route("/api/messages", methods=["GET"])
-def list_messages():
-    return jsonify(messages)
+@app.route("/api/conversations/<int:conversation_id>/messages/<int:message_id>", methods=["DELETE"])
+def delete_message(conversation_id, message_id):
+    conv = find_conversation(conversation_id)
+    if conv is None:
+        return jsonify({"error": "会话不存在"}), 404
 
-
-@app.route("/api/messages/<int:message_id>", methods=["PATCH"])
-def update_message(message_id):
-    data = request.get_json(silent=True)
-    if not isinstance(data, dict) or "message" not in data:
-        return jsonify({"error": "缺少 message 字段"}), 400
-
-    message = str(data["message"]).strip()
-    if not message:
-        return jsonify({"error": "message 不能为空"}), 400
-
-    for record in messages:
-        if record["id"] == message_id:
-            record["message"] = message
-            return jsonify(record)
-
-    return jsonify({"error": "记录不存在"}), 404
-
-
-@app.route("/api/messages/<int:message_id>", methods=["DELETE"])
-def delete_message(message_id):
-    for index, record in enumerate(messages):
-        if record["id"] == message_id:
-            messages.pop(index)
+    for index, msg in enumerate(conv["messages"]):
+        if msg["id"] == message_id:
+            removed = conv["messages"].pop(index)
+            if removed["role"] == "user" and index < len(conv["messages"]) and conv["messages"][index]["role"] == "assistant":
+                conv["messages"].pop(index)
             return jsonify({"deleted": message_id})
 
-    return jsonify({"error": "记录不存在"}), 404
+    return jsonify({"error": "消息不存在"}), 404
 
 
 if __name__ == "__main__":
