@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 聊天</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main class="chat-app">
+    <header class="chat-header">
+      <h1>AI 聊天</h1>
+      <p class="chat-subtitle">和 DeepSeek 模型对话，聊天记录可以修改和删除</p>
+    </header>
+
+    <section class="chat-window" id="chat-window" aria-live="polite">
+      <p class="empty-hint" id="empty-hint">暂无聊天记录</p>
+    </section>
+
+    <form class="chat-input" id="chat-form" autocomplete="off">
+      <label class="visually-hidden" for="message-input">消息输入框</label>
+      <textarea
+        id="message-input"
+        rows="2"
+        placeholder="输入消息后按 Enter 发送，Shift+Enter 换行"
+      ></textarea>
+      <div class="chat-input-actions">
+        <span class="status-text" id="status-text" role="status" aria-live="polite"></span>
+        <button type="submit" class="btn btn-send" id="send-button">发送</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
