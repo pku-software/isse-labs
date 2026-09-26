@@ -1,3 +1,4 @@
+import json
 import os
 
 import requests
@@ -14,10 +15,39 @@ DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEEPSEEK_MODEL = "deepseek-chat"
 
-# 会话数据保存在内存中，Flask 重启后会清空。
-conversations = []
-next_conversation_id = 1
-next_message_id = 1
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+CONVERSATIONS_FILE = os.path.join(DATA_DIR, "conversations.json")
+
+
+def load_conversations():
+    if not os.path.exists(CONVERSATIONS_FILE):
+        return [], 1, 1
+    try:
+        with open(CONVERSATIONS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return [], 1, 1
+    if not isinstance(data, list):
+        return [], 1, 1
+
+    next_conversation_id = 1
+    next_message_id = 1
+    for conv in data:
+        if isinstance(conv, dict) and isinstance(conv.get("id"), int):
+            next_conversation_id = max(next_conversation_id, conv["id"] + 1)
+        for msg in conv.get("messages", []):
+            if isinstance(msg, dict) and isinstance(msg.get("id"), int):
+                next_message_id = max(next_message_id, msg["id"] + 1)
+    return data, next_conversation_id, next_message_id
+
+
+def save_conversations():
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(CONVERSATIONS_FILE, "w", encoding="utf-8") as f:
+        json.dump(conversations, f, ensure_ascii=False, indent=2)
+
+
+conversations, next_conversation_id, next_message_id = load_conversations()
 
 
 def find_conversation(conversation_id):
@@ -66,6 +96,7 @@ def create_conversation():
     conv = {"id": next_conversation_id, "title": title, "messages": []}
     next_conversation_id += 1
     conversations.append(conv)
+    save_conversations()
     return jsonify(conv), 201
 
 
@@ -94,6 +125,7 @@ def update_conversation(conversation_id):
         return jsonify({"error": "title 不能为空"}), 400
 
     conv["title"] = title
+    save_conversations()
     return jsonify(conv)
 
 
@@ -102,6 +134,7 @@ def delete_conversation(conversation_id):
     for index, conv in enumerate(conversations):
         if conv["id"] == conversation_id:
             conversations.pop(index)
+            save_conversations()
             return jsonify({"deleted": conversation_id})
 
     return jsonify({"error": "会话不存在"}), 404
@@ -135,11 +168,13 @@ def create_message(conversation_id):
         reply = call_deepseek(history)
     except Exception as exc:
         conv["messages"].pop()
+        save_conversations()
         return jsonify({"error": f"调用 DeepSeek 失败：{exc}"}), 502
 
     assistant_msg = {"id": next_message_id, "role": "assistant", "content": reply}
     next_message_id += 1
     conv["messages"].append(assistant_msg)
+    save_conversations()
 
     return jsonify(assistant_msg), 201
 
@@ -172,22 +207,26 @@ def update_message(conversation_id, message_id):
     conv["messages"][target_index]["content"] = content
 
     if conv["messages"][target_index]["role"] != "user":
+        save_conversations()
         return jsonify(conv["messages"][target_index])
 
     del conv["messages"][target_index + 1:]
 
     if not DEEPSEEK_API_KEY:
+        save_conversations()
         return jsonify({"error": "缺少 DEEPSEEK_API_KEY，请检查 .env 配置"}), 500
 
     try:
         history = [{"role": m["role"], "content": m["content"]} for m in conv["messages"]]
         reply = call_deepseek(history)
     except Exception as exc:
+        save_conversations()
         return jsonify({"error": f"调用 DeepSeek 失败：{exc}"}), 502
 
     assistant_msg = {"id": next_message_id, "role": "assistant", "content": reply}
     next_message_id += 1
     conv["messages"].append(assistant_msg)
+    save_conversations()
 
     return jsonify(assistant_msg), 200
 
@@ -203,6 +242,7 @@ def delete_message(conversation_id, message_id):
             removed = conv["messages"].pop(index)
             if removed["role"] == "user" and index < len(conv["messages"]) and conv["messages"][index]["role"] == "assistant":
                 conv["messages"].pop(index)
+            save_conversations()
             return jsonify({"deleted": message_id})
 
     return jsonify({"error": "消息不存在"}), 404
