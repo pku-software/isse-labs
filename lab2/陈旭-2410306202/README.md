@@ -14,9 +14,33 @@
 
 ## 环境与依赖
 
+- Python 3（建议 3.8 及以上）；
+- 依赖：Flask、python-dotenv、requests，都列在 `requirements.txt` 里。
+
+安装依赖（在本项目目录下执行）：
+
+```bash
+python -m pip install -r requirements.txt
+```
+
 ## 配置
 
+项目需要配置一个 DeepSeek API Key。这个 Key 只保存在后端，不会出现在前端代码里。
+
+1. 把 `.env.example` 复制为同目录下的 `.env`；
+2. 把 `DEEPSEEK_API_KEY` 的值改成你自己的真实 Key，整行形如 `DEEPSEEK_API_KEY=你的Key`（等号两边不要加空格，值不要加引号）。
+
+`.env.example` 是要提交到仓库的模板，里面只有示例值；`.env` 是本机的真实配置，已经被 `.gitignore` 忽略，不会被提交。
+
 ## 启动方式
+
+在本项目目录下启动：
+
+```bash
+python app.py
+```
+
+启动后浏览器访问 `http://localhost:5001/` 即可打开前端页面，按 `Ctrl+C` 停止服务。前端页面和后端 API 由同一个 Flask 服务提供，端口固定为 `5001`。
 
 ## API 说明
 
@@ -103,6 +127,55 @@
 模型接口本身不保存任何对话状态，它只能看到本次请求里的 `messages`。带上当前会话的历史，模型才能接着上下文中回答（比如记住前面提到的信息）；只带当前会话的历史，则保证不同会话之间不会互相影响。
 
 ## API 测试示例
+
+先启动服务，再另开一个终端。最简单的连通性测试：
+
+```bash
+curl http://localhost:5001/api/hello
+```
+
+预期返回 `{"message": "你好"}`。
+
+在默认会话里发一轮问答（会真实调用 DeepSeek，需要已经配置好 `.env`）：
+
+```bash
+curl -X POST http://localhost:5001/api/messages \
+  -H "Content-Type: application/json" \
+  -d '{"message":"请用一句话介绍北京大学"}'
+```
+
+预期返回一条包含 `id`、`message`、`reply` 的记录，其中 `reply` 是模型生成的内容。
+
+会话相关接口的测试：
+
+```bash
+# 新建会话
+curl -X POST http://localhost:5001/api/conversations
+
+# 查看会话列表
+curl http://localhost:5001/api/conversations
+
+# 在 id 为 1 的会话里提问，多轮上下文由后端自动带上
+curl -X POST http://localhost:5001/api/conversations/1/messages \
+  -H "Content-Type: application/json" \
+  -d '{"message":"换个话题，介绍一下杭州"}'
+
+# 重命名会话
+curl -X PATCH http://localhost:5001/api/conversations/1 \
+  -H "Content-Type: application/json" \
+  -d '{"title":"新名字"}'
+
+# 删除会话
+curl -X DELETE http://localhost:5001/api/conversations/1
+```
+
+在 Windows PowerShell 里，如果 `-d` 的 JSON 因为引号被吞掉而报解析错误，可以把内层引号写成转义形式，例如 `-d '{\"message\":\"你好\"}'`，或者改用 `Invoke-RestMethod`：
+
+```bash
+Invoke-RestMethod -Uri http://localhost:5001/api/messages -Method Post -ContentType "application/json" -Body '{"message":"你好"}'
+```
+
+这些操作也都可以直接在网页上完成，curl 只是最简单的验证方式。
 
 ## 选做功能
 
