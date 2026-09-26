@@ -32,3 +32,41 @@
 ## 数据持久化
 
 聊天数据保存在 `data/conversations.json` 文件中。Flask 启动时会读取该文件加载到内存；每次创建、修改或删除会话或消息后都会写回该文件。文件不存在或为空时，从空数据开始。
+
+## 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+## 配置
+
+复制 `.env.example` 为 `.env`，并把其中的 `DEEPSEEK_API_KEY` 替换成你的真实 API Key。`.env` 已被 `.gitignore` 忽略，不会提交到 Git。
+
+## 启动
+
+```bash
+python app.py
+```
+
+Flask 默认监听 `5001` 端口。
+
+## 浏览器访问
+
+打开 <http://localhost:5001/>。
+
+## API 测试
+
+健康检查：
+
+```bash
+curl http://localhost:5001/api/hello
+```
+
+创建会话：
+
+```bash
+curl -X POST http://localhost:5001/api/conversations \
+  -H "Content-Type: application/json" \
+  -d '{"title":"测试会话"}'
+```
