@@ -10,26 +10,53 @@
   <div class="app">
     <header class="app-header">
       <h1>AI 聊天</h1>
-      <p class="app-subtitle">每一轮问答都会成为一条聊天记录</p>
+      <p class="app-subtitle">每个会话单独保存自己的多轮对话</p>
     </header>
 
-    <main class="chat-list" id="chat-list">
-      <!-- 聊天记录由 app.js 通过 /api/messages 加载后渲染到这里 -->
-      <p class="empty-state" id="empty-state">还没有聊天记录，在下面输入一句话试试。</p>
-    </main>
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="sidebar-head">
+          <h2 class="sidebar-title">会话</h2>
+          <button type="button" class="btn btn-primary" id="new-conversation-button">新建</button>
+        </div>
+        <ul class="conversation-list" id="conversation-list"></ul>
+        <p class="sidebar-empty" id="sidebar-empty">还没有会话，点“新建”开始。</p>
+      </aside>
 
-    <!-- 页面内的状态与错误提示区域，后续替代 alert() 之类的弹窗 -->
-    <p class="status" id="status" role="status" aria-live="polite"></p>
+      <section class="chat-panel">
+        <div class="chat-head">
+          <div class="title-area" id="title-area">
+            <h2 class="chat-title" id="conversation-title">未选择会话</h2>
+          </div>
+          <div class="chat-head-actions">
+            <button type="button" class="btn" id="rename-conversation-button" disabled>重命名</button>
+            <button type="button" class="btn btn-danger" id="delete-conversation-button" disabled>删除会话</button>
+          </div>
+        </div>
 
-    <footer class="composer">
-      <textarea
-        class="composer-input"
-        id="message-input"
-        rows="2"
-        placeholder="输入你的问题，按发送添加一条聊天记录"
-      ></textarea>
-      <button type="button" class="btn btn-primary btn-send" id="send-button">发送</button>
-    </footer>
+        <!-- 会话级别的确认操作显示在这里，不使用 confirm() 之类的弹窗 -->
+        <div class="chat-head-extra" id="chat-head-extra"></div>
+
+        <main class="chat-list" id="chat-list">
+          <!-- 问答内容由 app.js 通过会话接口加载后渲染到这里 -->
+          <p class="empty-state" id="empty-state">先新建或选择一个会话。</p>
+        </main>
+
+        <!-- 页面内的状态与错误提示区域，替代 alert() 之类的弹窗 -->
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+
+        <footer class="composer">
+          <textarea
+            class="composer-input"
+            id="message-input"
+            rows="2"
+            placeholder="先新建或选择一个会话"
+            disabled
+          ></textarea>
+          <button type="button" class="btn btn-primary btn-send" id="send-button" disabled>发送</button>
+        </footer>
+      </section>
+    </div>
   </div>
 
   <script src="app.js"></script>

@@ -1,15 +1,25 @@
-// 前端逻辑：用 fetch() 调用同一个 Flask 服务提供的 API。
-// 所有请求都写成相对 URL（例如 "/api/messages"），浏览器会自动把它接到当前页面的地址上，
-// 所以这里不需要（也不应该）写死 http://localhost:5001。
+// 前端逻辑：用 fetch() 调用同一个 Flask 服务提供的会话 API。
+// 所有请求都写成相对 URL（例如 "/api/conversations"），
+// 浏览器会自动把它接到当前页面的地址上，所以不需要写死 http://localhost:5001。
 
+const statusEl = document.getElementById("status");
+const conversationListEl = document.getElementById("conversation-list");
+const sidebarEmptyEl = document.getElementById("sidebar-empty");
+const newConversationButton = document.getElementById("new-conversation-button");
+const titleAreaEl = document.getElementById("title-area");
+const renameButton = document.getElementById("rename-conversation-button");
+const deleteConversationButton = document.getElementById("delete-conversation-button");
+const chatHeadExtraEl = document.getElementById("chat-head-extra");
 const chatList = document.getElementById("chat-list");
 const emptyState = document.getElementById("empty-state");
 const messageInput = document.getElementById("message-input");
 const sendButton = document.getElementById("send-button");
-const statusEl = document.getElementById("status");
 
-// 当前页面里的聊天记录，内容来自后端 GET /api/messages
-let messages = [];
+// 侧边栏用的会话摘要列表：[{id, title, turn_count}]
+let conversations = [];
+
+// 当前选中会话的完整内容：{id, title, turns: [{id, message, reply}]}
+let current = null;
 
 // ---------- 小工具 ----------
 
@@ -37,19 +47,6 @@ async function request(url, options = {}) {
   return data;
 }
 
-function createBubble(className, text) {
-  const bubble = document.createElement("div");
-  bubble.className = `bubble ${className}`;
-
-  const paragraph = document.createElement("p");
-  paragraph.className = "bubble-text";
-  // 用 textContent 而不是 innerHTML：用户输入的内容只作为文本显示，不会被当成 HTML 执行
-  paragraph.textContent = text;
-
-  bubble.appendChild(paragraph);
-  return bubble;
-}
-
 function createButton(className, text) {
   const button = document.createElement("button");
   button.type = "button";
@@ -58,38 +55,121 @@ function createButton(className, text) {
   return button;
 }
 
+function createBubble(className, text) {
+  const bubble = document.createElement("div");
+  bubble.className = `bubble ${className}`;
+
+  const paragraph = document.createElement("p");
+  paragraph.className = "bubble-text";
+  // 用 textContent 而不是 innerHTML：内容只作为文本显示，不会被当成 HTML 执行
+  paragraph.textContent = text;
+
+  bubble.appendChild(paragraph);
+  return bubble;
+}
+
 // ---------- 渲染 ----------
 
-function renderMessages() {
+function renderConversationList() {
+  conversationListEl.innerHTML = "";
+
+  if (conversations.length === 0) {
+    sidebarEmptyEl.hidden = false;
+    return;
+  }
+
+  sidebarEmptyEl.hidden = true;
+
+  conversations.forEach((item) => {
+    const listItem = document.createElement("li");
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "conversation-item";
+    if (current && current.id === item.id) {
+      button.classList.add("is-active");
+    }
+
+    const title = document.createElement("span");
+    title.className = "conversation-item-title";
+    title.textContent = item.title;
+
+    const meta = document.createElement("span");
+    meta.className = "conversation-item-meta";
+    meta.textContent = `${item.turn_count} 轮对话`;
+
+    button.appendChild(title);
+    button.appendChild(meta);
+    button.addEventListener("click", () => selectConversation(item.id));
+
+    listItem.appendChild(button);
+    conversationListEl.appendChild(listItem);
+  });
+}
+
+function renderTitleArea() {
+  titleAreaEl.innerHTML = "";
+
+  const heading = document.createElement("h2");
+  heading.className = "chat-title";
+  heading.id = "conversation-title";
+  heading.textContent = current ? current.title : "未选择会话";
+
+  titleAreaEl.appendChild(heading);
+}
+
+function renderChat() {
+  const hasConversation = current !== null;
+
+  renderTitleArea();
+
+  renameButton.disabled = !hasConversation;
+  deleteConversationButton.disabled = !hasConversation;
+  sendButton.disabled = !hasConversation;
+  messageInput.disabled = !hasConversation;
+
+  if (hasConversation) {
+    messageInput.placeholder = "输入你的问题，按发送加入当前会话";
+  } else {
+    messageInput.placeholder = "先新建或选择一个会话";
+  }
+
   chatList.querySelectorAll(".message").forEach((node) => node.remove());
 
-  if (messages.length === 0) {
+  if (!hasConversation) {
     emptyState.hidden = false;
+    emptyState.textContent = "先新建或选择一个会话。";
+    return;
+  }
+
+  if (current.turns.length === 0) {
+    emptyState.hidden = false;
+    emptyState.textContent = "这个会话还没有对话，在下面输入一句话试试。";
     return;
   }
 
   emptyState.hidden = true;
-  messages.forEach((record) => {
-    chatList.appendChild(createMessageElement(record));
+  current.turns.forEach((turn) => {
+    chatList.appendChild(createTurnElement(turn));
   });
 }
 
-function createMessageElement(record) {
+function createTurnElement(turn) {
   const article = document.createElement("article");
   article.className = "message";
-  article.dataset.id = record.id;
+  article.dataset.id = turn.id;
 
-  article.appendChild(createBubble("bubble-user", record.message));
-  article.appendChild(createBubble("bubble-reply", record.reply));
+  article.appendChild(createBubble("bubble-user", turn.message));
+  article.appendChild(createBubble("bubble-reply", turn.reply));
 
   const actions = document.createElement("div");
   actions.className = "message-actions";
 
   const editButton = createButton("btn-edit", "修改");
-  editButton.addEventListener("click", () => startEdit(article, record));
+  editButton.addEventListener("click", () => startEditTurn(article, turn));
 
   const deleteButton = createButton("btn-delete", "删除");
-  deleteButton.addEventListener("click", () => startDelete(article, record, actions));
+  deleteButton.addEventListener("click", () => startDeleteTurn(article, turn, actions));
 
   actions.appendChild(editButton);
   actions.appendChild(deleteButton);
@@ -98,9 +178,211 @@ function createMessageElement(record) {
   return article;
 }
 
-// ---------- 修改：改成页面内的编辑区，不用 prompt() ----------
+// 用后端返回的最新会话刷新页面，并同步侧边栏的标题和轮数
+function applyConversation(conversation) {
+  current = conversation;
+  chatHeadExtraEl.innerHTML = "";
 
-function startEdit(article, record) {
+  conversations = conversations.map((item) =>
+    item.id === conversation.id
+      ? { ...item, title: conversation.title, turn_count: conversation.turns.length }
+      : item
+  );
+
+  renderConversationList();
+  renderChat();
+}
+
+// ---------- 会话操作 ----------
+
+async function loadConversations(preferredId = null) {
+  setStatus("正在加载会话列表…");
+
+  try {
+    conversations = await request("/api/conversations");
+  } catch (error) {
+    setStatus(`加载会话列表失败：${error.message}`, true);
+    return;
+  }
+
+  let targetId = preferredId;
+  if (targetId === null) {
+    if (current && conversations.some((item) => item.id === current.id)) {
+      targetId = current.id;
+    } else if (conversations.length > 0) {
+      targetId = conversations[conversations.length - 1].id;
+    }
+  }
+
+  if (targetId === null) {
+    current = null;
+    renderConversationList();
+    renderChat();
+    setStatus("");
+    return;
+  }
+
+  await selectConversation(targetId);
+}
+
+async function selectConversation(conversationId) {
+  setStatus("正在加载会话…");
+
+  try {
+    current = await request(`/api/conversations/${conversationId}`);
+    chatHeadExtraEl.innerHTML = "";
+    renderConversationList();
+    renderChat();
+    setStatus("");
+  } catch (error) {
+    setStatus(`加载会话失败：${error.message}`, true);
+  }
+}
+
+async function createConversation() {
+  setStatus("正在新建会话…");
+
+  try {
+    const conversation = await request("/api/conversations", { method: "POST" });
+    await loadConversations(conversation.id);
+    setStatus(`已新建会话「${conversation.title}」`);
+  } catch (error) {
+    setStatus(`新建会话失败：${error.message}`, true);
+  }
+}
+
+function startRenameConversation() {
+  if (!current) {
+    return;
+  }
+
+  titleAreaEl.innerHTML = "";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "title-input";
+  input.value = current.title;
+  input.setAttribute("aria-label", "会话名称");
+
+  const saveButton = createButton("btn-primary", "保存");
+  const cancelButton = createButton("btn-cancel", "取消");
+
+  cancelButton.addEventListener("click", () => {
+    renderTitleArea();
+    setStatus("");
+  });
+
+  saveButton.addEventListener("click", async () => {
+    const title = input.value.trim();
+    if (!title) {
+      setStatus("会话名称不能为空", true);
+      return;
+    }
+
+    saveButton.disabled = true;
+    setStatus("正在保存会话名称…");
+
+    try {
+      const conversation = await request(`/api/conversations/${current.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      applyConversation(conversation);
+      setStatus("会话名称已更新");
+    } catch (error) {
+      saveButton.disabled = false;
+      setStatus(`重命名失败：${error.message}`, true);
+    }
+  });
+
+  titleAreaEl.appendChild(input);
+  titleAreaEl.appendChild(saveButton);
+  titleAreaEl.appendChild(cancelButton);
+
+  input.focus();
+  input.select();
+}
+
+function startDeleteConversation() {
+  if (!current) {
+    return;
+  }
+
+  chatHeadExtraEl.innerHTML = "";
+
+  const row = document.createElement("div");
+  row.className = "confirm-row";
+
+  const question = document.createElement("span");
+  question.textContent = `确定删除会话「${current.title}」及其全部对话吗？`;
+
+  const confirmButton = createButton("btn-danger", "确定删除");
+  const cancelButton = createButton("btn-cancel", "取消");
+
+  cancelButton.addEventListener("click", () => {
+    chatHeadExtraEl.innerHTML = "";
+  });
+
+  confirmButton.addEventListener("click", async () => {
+    confirmButton.disabled = true;
+    setStatus("正在删除会话…");
+
+    try {
+      await request(`/api/conversations/${current.id}`, { method: "DELETE" });
+      chatHeadExtraEl.innerHTML = "";
+      current = null;
+      await loadConversations();
+      setStatus("会话已删除");
+    } catch (error) {
+      confirmButton.disabled = false;
+      setStatus(`删除会话失败：${error.message}`, true);
+    }
+  });
+
+  row.appendChild(question);
+  row.appendChild(confirmButton);
+  row.appendChild(cancelButton);
+  chatHeadExtraEl.appendChild(row);
+}
+
+// ---------- 发送新问题：带上当前会话的历史一起发给后端 ----------
+
+async function sendMessage() {
+  if (!current) {
+    setStatus("请先新建或选择一个会话", true);
+    return;
+  }
+
+  const text = messageInput.value.trim();
+  if (!text) {
+    setStatus("请先输入内容再发送", true);
+    return;
+  }
+
+  sendButton.disabled = true;
+  setStatus("正在等待模型回复…");
+
+  try {
+    const conversation = await request(`/api/conversations/${current.id}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text }),
+    });
+
+    messageInput.value = "";
+    applyConversation(conversation);
+    setStatus("已收到模型回复");
+  } catch (error) {
+    setStatus(`发送失败：${error.message}`, true);
+  } finally {
+    sendButton.disabled = !current;
+  }
+}
+
+// ---------- 修改某一轮提问：页面内编辑区，不用 prompt() ----------
+
+function startEditTurn(article, turn) {
   const actions = article.querySelector(".message-actions");
   actions.hidden = true;
 
@@ -109,14 +391,14 @@ function startEdit(article, record) {
 
   const label = document.createElement("label");
   label.className = "edit-label";
-  label.textContent = "修改这条提问";
-  label.htmlFor = `edit-input-${record.id}`;
+  label.textContent = "修改这一轮提问";
+  label.htmlFor = `edit-input-${turn.id}`;
 
   const textarea = document.createElement("textarea");
-  textarea.id = `edit-input-${record.id}`;
+  textarea.id = `edit-input-${turn.id}`;
   textarea.className = "edit-input";
   textarea.rows = 2;
-  textarea.value = record.message;
+  textarea.value = turn.message;
 
   const errorLine = document.createElement("p");
   errorLine.className = "edit-error";
@@ -140,18 +422,19 @@ function startEdit(article, record) {
     }
 
     saveButton.disabled = true;
-    setStatus("正在保存…");
+    setStatus("正在保存修改…");
 
     try {
-      const updated = await request(`/api/messages/${record.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
-      });
-
-      messages = messages.map((item) => (item.id === updated.id ? updated : item));
-      renderMessages();
-      setStatus(`已修改第 ${updated.id} 条记录`);
+      const conversation = await request(
+        `/api/conversations/${current.id}/turns/${turn.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        }
+      );
+      applyConversation(conversation);
+      setStatus("已修改这一轮提问");
     } catch (error) {
       saveButton.disabled = false;
       errorLine.textContent = error.message;
@@ -170,16 +453,16 @@ function startEdit(article, record) {
   textarea.focus();
 }
 
-// ---------- 删除：改成页面内的确认行，不用 confirm() ----------
+// ---------- 删除某一轮问答：页面内确认行，不用 confirm() ----------
 
-function startDelete(article, record, actions) {
+function startDeleteTurn(article, turn, actions) {
   actions.hidden = true;
 
   const row = document.createElement("div");
   row.className = "confirm-row";
 
   const question = document.createElement("span");
-  question.textContent = `确定删除第 ${record.id} 条记录吗？`;
+  question.textContent = `确定删除这一轮对话吗？（第 ${turn.id} 轮）`;
 
   const confirmButton = createButton("btn-danger", "确定删除");
   const cancelButton = createButton("btn-cancel", "取消");
@@ -194,10 +477,12 @@ function startDelete(article, record, actions) {
     setStatus("正在删除…");
 
     try {
-      await request(`/api/messages/${record.id}`, { method: "DELETE" });
-      messages = messages.filter((item) => item.id !== record.id);
-      renderMessages();
-      setStatus(`已删除第 ${record.id} 条记录`);
+      const conversation = await request(
+        `/api/conversations/${current.id}/turns/${turn.id}`,
+        { method: "DELETE" }
+      );
+      applyConversation(conversation);
+      setStatus("已删除这一轮对话");
     } catch (error) {
       confirmButton.disabled = false;
       setStatus(`删除失败：${error.message}`, true);
@@ -210,49 +495,12 @@ function startDelete(article, record, actions) {
   article.appendChild(row);
 }
 
-// ---------- 发送：调用 POST /api/messages ----------
+// ---------- 启动 ----------
 
-async function sendMessage() {
-  const text = messageInput.value.trim();
-  if (!text) {
-    setStatus("请先输入内容再发送", true);
-    return;
-  }
-
-  sendButton.disabled = true;
-  setStatus("发送中…");
-
-  try {
-    const record = await request("/api/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text }),
-    });
-
-    messages.push(record);
-    messageInput.value = "";
-    renderMessages();
-    setStatus(`已添加第 ${record.id} 条记录`);
-  } catch (error) {
-    setStatus(`发送失败：${error.message}`, true);
-  } finally {
-    sendButton.disabled = false;
-  }
-}
-
-// ---------- 页面打开时加载已有记录 ----------
-
-async function loadMessages() {
-  setStatus("正在加载聊天记录…");
-
-  try {
-    messages = await request("/api/messages");
-    renderMessages();
-    setStatus("");
-  } catch (error) {
-    setStatus(`加载失败：${error.message}`, true);
-  }
-}
-
+newConversationButton.addEventListener("click", createConversation);
+renameButton.addEventListener("click", startRenameConversation);
+deleteConversationButton.addEventListener("click", startDeleteConversation);
 sendButton.addEventListener("click", sendMessage);
-loadMessages();
+
+renderChat();
+loadConversations();
