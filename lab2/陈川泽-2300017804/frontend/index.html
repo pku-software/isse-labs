@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI 聊天</title>
-    <link rel="stylesheet" href="style.css" />
-    <script src="app.js" defer></script>
+    <link rel="stylesheet" href="/frontend/style.css" />
+    <script src="/frontend/app.js" defer></script>
   </head>
   <body>
     <main class="app-shell">
@@ -15,45 +15,25 @@
           <h1>AI 聊天</h1>
           <p class="subtitle">在这里开启一段对话</p>
         </div>
-        <span class="status-badge">页面预览</span>
+        <span class="status-badge">本地聊天</span>
       </header>
 
       <section class="conversation" aria-label="聊天记录">
         <div class="conversation-heading">
           <h2>聊天记录</h2>
-          <span>示例对话</span>
+          <span>每次问答保存为一条记录</span>
         </div>
 
-        <div id="message-list" class="message-list" aria-live="polite">
-          <article class="exchange">
-            <div class="message-row user-row">
-              <div class="message-content">
-                <span class="speaker">你</span>
-                <p class="bubble user-bubble">你好，可以介绍一下自己吗？</p>
-              </div>
-            </div>
-            <div class="message-row assistant-row">
-              <div class="avatar" aria-hidden="true">AI</div>
-              <div class="message-content">
-                <span class="speaker">助手</span>
-                <p class="bubble assistant-bubble">你好！很高兴和你聊天。</p>
-              </div>
-            </div>
-            <div class="record-actions" aria-label="聊天记录操作">
-              <button type="button" class="text-button">修改</button>
-              <button type="button" class="text-button danger-button">删除</button>
-            </div>
-          </article>
-        </div>
+        <div id="message-list" class="message-list" aria-live="polite"></div>
       </section>
 
       <form class="composer" id="message-form">
         <label for="message-input">发送消息</label>
         <div class="composer-row">
-          <textarea id="message-input" name="message" rows="2" placeholder="输入你想说的话……"></textarea>
-          <button class="send-button" type="button">发送</button>
+          <textarea id="message-input" name="message" rows="2" placeholder="输入你想说的话……" required></textarea>
+          <button class="send-button" type="submit">发送</button>
         </div>
-        <p class="composer-hint">当前展示的是静态界面，交互功能将在后续加入。</p>
+        <p id="feedback" class="composer-hint" role="status" aria-live="polite"></p>
       </form>
     </main>
   </body>

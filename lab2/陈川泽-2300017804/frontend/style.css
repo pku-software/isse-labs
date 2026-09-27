@@ -113,6 +113,12 @@ h1 {
   gap: 28px;
 }
 
+.empty-state {
+  margin: 56px 0;
+  color: #8590a5;
+  text-align: center;
+}
+
 .exchange {
   display: grid;
   gap: 18px;
@@ -181,6 +187,56 @@ h1 {
   gap: 16px;
 }
 
+.inline-panel {
+  display: grid;
+  gap: 12px;
+  margin-left: auto;
+  padding: 14px;
+  width: min(100%, 500px);
+  background: #f7f9fd;
+  border: 1px solid #e5e9f1;
+  border-radius: 12px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.inline-panel label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.inline-panel textarea {
+  width: 100%;
+}
+
+.inline-panel p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.inline-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.small-button {
+  padding: 8px 12px;
+  color: #fff;
+  background: #536dcc;
+  border: 0;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.delete-confirm {
+  background: #c95568;
+}
+
 .text-button {
   padding: 0;
   color: #536dcc;
@@ -237,6 +293,15 @@ textarea {
 .composer-hint {
   margin: 10px 0 0;
   font-size: 12px;
+}
+
+.feedback-error {
+  color: #bd4054;
+}
+
+.send-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 @media (max-width: 600px) {
