@@ -11,12 +11,58 @@ load_dotenv()
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 app.json.ensure_ascii = False
 
-messages = []
+conversations = []
+next_conversation_id = 1
 next_message_id = 1
 
 
-def find_message(message_id: int):
-    return next((message for message in messages if message["id"] == message_id), None)
+def find_conversation(conversation_id: int):
+    return next(
+        (conversation for conversation in conversations if conversation["id"] == conversation_id),
+        None,
+    )
+
+
+def find_message(conversation, message_id: int):
+    return next(
+        (message for message in conversation["messages"] if message["id"] == message_id),
+        None,
+    )
+
+
+def conversation_summary(conversation):
+    return {
+        "id": conversation["id"],
+        "title": conversation["title"],
+        "message_count": len(conversation["messages"]),
+    }
+
+
+def get_json_object():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return None, (jsonify(error="请求体必须是 JSON 对象"), 400)
+    return data, None
+
+
+def get_deepseek_reply(history):
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        raise RuntimeError("服务器尚未配置 DeepSeek API Key")
+
+    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+    completion = client.chat.completions.create(
+        model="deepseek-flash",
+        messages=[
+            {"role": message["role"], "content": message["content"]}
+            for message in history
+        ],
+        stream=False,
+    )
+    reply = completion.choices[0].message.content
+    if not reply:
+        raise ValueError("DeepSeek API 未返回有效回复")
+    return reply
 
 
 @app.get("/")
@@ -29,80 +75,154 @@ def hello():
     return jsonify(message="你好")
 
 
-@app.post("/api/messages")
-def create_message():
+@app.post("/api/conversations")
+def create_conversation():
+    global next_conversation_id
+
+    data, error = get_json_object()
+    if error:
+        return error
+
+    title = data.get("title", "")
+    if title is not None and not isinstance(title, str):
+        return jsonify(error="title 必须是字符串"), 400
+
+    title = title.strip() if title else f"新会话 {next_conversation_id}"
+    conversation = {
+        "id": next_conversation_id,
+        "title": title,
+        "messages": [],
+    }
+    conversations.append(conversation)
+    next_conversation_id += 1
+    return jsonify(conversation), 201
+
+
+@app.get("/api/conversations")
+def list_conversations():
+    return jsonify([conversation_summary(item) for item in conversations])
+
+
+@app.get("/api/conversations/<int:conversation_id>")
+def get_conversation(conversation_id: int):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify(error="会话不存在"), 404
+    return jsonify(conversation)
+
+
+@app.patch("/api/conversations/<int:conversation_id>")
+def update_conversation(conversation_id: int):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify(error="会话不存在"), 404
+
+    data, error = get_json_object()
+    if error:
+        return error
+
+    title = data.get("title")
+    if not isinstance(title, str) or not title.strip():
+        return jsonify(error="title 必须是非空字符串"), 400
+
+    conversation["title"] = title.strip()
+    return jsonify(conversation_summary(conversation))
+
+
+@app.delete("/api/conversations/<int:conversation_id>")
+def delete_conversation(conversation_id: int):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify(error="会话不存在"), 404
+
+    conversations.remove(conversation)
+    return "", 204
+
+
+@app.post("/api/conversations/<int:conversation_id>/messages")
+def create_conversation_message(conversation_id: int):
     global next_message_id
 
-    data = request.get_json(silent=True)
-    if not isinstance(data, dict):
-        return jsonify(error="请求体必须是 JSON 对象"), 400
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify(error="会话不存在"), 404
+
+    data, error = get_json_object()
+    if error:
+        return error
 
     message_text = data.get("message")
     if not isinstance(message_text, str) or not message_text.strip():
         return jsonify(error="message 必须是非空字符串"), 400
 
-    api_key = os.getenv("DEEPSEEK_API_KEY")
-    if not api_key:
-        return jsonify(error="服务器尚未配置 DeepSeek API Key"), 500
+    user_message = {
+        "id": next_message_id,
+        "turn_id": next_message_id,
+        "role": "user",
+        "content": message_text.strip(),
+    }
 
     try:
-        client = OpenAI(
-            api_key=api_key,
-            base_url="https://api.deepseek.com",
-        )
-        completion = client.chat.completions.create(
-            model="deepseek-flash",
-            messages=[{"role": "user", "content": message_text.strip()}],
-            stream=False,
-        )
-        reply = completion.choices[0].message.content
-        if not reply:
-            return jsonify(error="DeepSeek API 未返回有效回复"), 502
-    except (OpenAIError, IndexError, AttributeError) as error:
+        reply = get_deepseek_reply([*conversation["messages"], user_message])
+    except RuntimeError as error:
+        return jsonify(error=str(error)), 500
+    except (OpenAIError, IndexError, AttributeError, ValueError) as error:
         app.logger.error("DeepSeek API request failed: %s", type(error).__name__)
         return jsonify(error="调用 DeepSeek API 失败，请稍后重试"), 502
 
-    record = {
+    next_message_id += 1
+    assistant_message = {
         "id": next_message_id,
-        "message": message_text.strip(),
-        "reply": reply,
+        "turn_id": user_message["turn_id"],
+        "role": "assistant",
+        "content": reply,
     }
-    messages.append(record)
     next_message_id += 1
 
-    return jsonify(record), 201
+    conversation["messages"].extend([user_message, assistant_message])
+    return jsonify(
+        {"user_message": user_message, "assistant_message": assistant_message}
+    ), 201
 
 
-@app.get("/api/messages")
-def list_messages():
-    return jsonify(messages)
+@app.patch("/api/conversations/<int:conversation_id>/messages/<int:message_id>")
+def update_conversation_message(conversation_id: int, message_id: int):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify(error="会话不存在"), 404
 
+    message = find_message(conversation, message_id)
+    if message is None:
+        return jsonify(error="消息不存在"), 404
+    if message["role"] != "user":
+        return jsonify(error="只支持修改用户消息"), 400
 
-@app.patch("/api/messages/<int:message_id>")
-def update_message(message_id: int):
-    record = find_message(message_id)
-    if record is None:
-        return jsonify(error="聊天记录不存在"), 404
+    data, error = get_json_object()
+    if error:
+        return error
 
-    data = request.get_json(silent=True)
-    if not isinstance(data, dict):
-        return jsonify(error="请求体必须是 JSON 对象"), 400
-
-    message_text = data.get("message")
-    if not isinstance(message_text, str) or not message_text.strip():
+    content = data.get("message")
+    if not isinstance(content, str) or not content.strip():
         return jsonify(error="message 必须是非空字符串"), 400
 
-    record["message"] = message_text.strip()
-    return jsonify(record)
+    message["content"] = content.strip()
+    return jsonify(message)
 
 
-@app.delete("/api/messages/<int:message_id>")
-def delete_message(message_id: int):
-    record = find_message(message_id)
-    if record is None:
-        return jsonify(error="聊天记录不存在"), 404
+@app.delete("/api/conversations/<int:conversation_id>/messages/<int:message_id>")
+def delete_conversation_message(conversation_id: int, message_id: int):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify(error="会话不存在"), 404
 
-    messages.remove(record)
+    message = find_message(conversation, message_id)
+    if message is None:
+        return jsonify(error="消息不存在"), 404
+
+    turn_id = message["turn_id"]
+    conversation["messages"] = [
+        item for item in conversation["messages"] if item["turn_id"] != turn_id
+    ]
     return "", 204
 
 

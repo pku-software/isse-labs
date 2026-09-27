@@ -12,41 +12,64 @@
         <div>
           <p class="eyebrow">个人实验项目</p>
           <h1>AI 聊天室</h1>
-          <p class="subtitle">记录问题与回答，集中查看每一次交流。</p>
+          <p class="subtitle">创建多个会话，在各自的上下文中继续交流。</p>
         </div>
-        <span class="stage-badge">本地聊天记录</span>
+        <span class="stage-badge">多会话聊天</span>
       </header>
 
-      <section class="chat-panel" aria-labelledby="history-title">
-        <div class="panel-heading">
-          <div>
-            <h2 id="history-title">聊天记录</h2>
-            <p>每条记录都可以修改或删除。</p>
+      <div class="workspace-grid">
+        <aside class="conversation-panel" aria-labelledby="conversation-title">
+          <div class="panel-heading compact-heading">
+            <div>
+              <h2 id="conversation-title">聊天会话</h2>
+              <p>选择一个会话继续聊天。</p>
+            </div>
           </div>
-          <span class="record-count" id="record-count">0 条记录</span>
-        </div>
 
-        <div class="message-list" id="message-list" aria-live="polite">
-          <p class="empty-state">正在加载聊天记录……</p>
-        </div>
-      </section>
+          <form class="conversation-form" id="conversation-form">
+            <label class="sr-only" for="conversation-input">新会话名称</label>
+            <input id="conversation-input" type="text" placeholder="输入新会话名称" maxlength="60" />
+            <button type="submit" class="button button-primary">创建会话</button>
+          </form>
 
-      <section class="composer-panel" aria-labelledby="composer-title">
-        <div class="panel-heading compact-heading">
-          <div>
-            <h2 id="composer-title">发送新消息</h2>
-            <p>输入内容后发送，聊天记录会显示在上方。</p>
+          <div class="conversation-list" id="conversation-list" aria-live="polite">
+            <p class="empty-state">正在加载会话……</p>
           </div>
+        </aside>
+
+        <div class="chat-workspace">
+          <section class="chat-panel" aria-labelledby="history-title">
+            <div class="panel-heading">
+              <div>
+                <h2 id="history-title">请选择一个会话</h2>
+                <p id="history-description">创建或选择会话后即可开始聊天。</p>
+              </div>
+              <span class="record-count" id="record-count">0 轮对话</span>
+            </div>
+
+            <div class="message-list" id="message-list" aria-live="polite">
+              <p class="empty-state">当前没有选中的会话。</p>
+            </div>
+          </section>
+
+          <section class="composer-panel" aria-labelledby="composer-title">
+            <div class="panel-heading compact-heading">
+              <div>
+                <h2 id="composer-title">发送新消息</h2>
+                <p>后端会把当前会话历史连同新问题发送给模型。</p>
+              </div>
+            </div>
+            <form class="composer-form" id="message-form">
+              <label class="sr-only" for="message-input">消息内容</label>
+              <textarea id="message-input" name="message" rows="4" placeholder="先创建或选择一个会话" disabled></textarea>
+              <div class="composer-footer">
+                <span class="form-note" id="form-status" role="status">请先创建或选择会话。</span>
+                <button type="submit" class="button button-primary" id="send-button" disabled>发送消息</button>
+              </div>
+            </form>
+          </section>
         </div>
-        <form class="composer-form" id="message-form">
-          <label class="sr-only" for="message-input">消息内容</label>
-          <textarea id="message-input" name="message" rows="4" placeholder="输入你想聊的内容"></textarea>
-          <div class="composer-footer">
-            <span class="form-note" id="form-status" role="status">输入消息后即可创建聊天记录。</span>
-            <button type="submit" class="button button-primary" id="send-button">发送消息</button>
-          </div>
-        </form>
-      </section>
+      </div>
     </main>
     <script src="app.js"></script>
   </body>
