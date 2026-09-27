@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "message": "test",
+    "reply": "Hello! I see you're testing the system. Everything seems to be working fine on my end. How can I help you today?"
+  },
+  {
+    "id": 2,
+    "message": "1",
+    "reply": "你好！👋 有什么我可以帮你的吗？请随时告诉我你的问题或需求，我会尽力协助你！"
+  }
+]
