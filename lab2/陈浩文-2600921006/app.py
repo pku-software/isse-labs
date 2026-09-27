@@ -1,6 +1,8 @@
+import json
 import os
 from itertools import count
 from pathlib import Path
+from threading import Lock
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request
@@ -11,9 +13,68 @@ load_dotenv(Path(__file__).with_name(".env"))
 app = Flask(__name__, static_folder="frontend", static_url_path="/static")
 app.json.ensure_ascii = False
 
-# 数据只存在于当前 Flask 进程，重启后会清空。
-messages = []
-message_ids = count(1)
+DATA_FILE = Path(__file__).resolve().parent / "data" / "messages.json"
+messages_lock = Lock()
+
+
+class StorageError(Exception):
+    pass
+
+
+def load_messages():
+    try:
+        contents = DATA_FILE.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return []
+
+    if not contents.strip():
+        return []
+
+    try:
+        records = json.loads(contents)
+    except json.JSONDecodeError:
+        raise ValueError("聊天记录 JSON 格式错误，请检查 data/messages.json") from None
+
+    if not isinstance(records, list):
+        raise ValueError("data/messages.json 必须保存聊天记录数组")
+
+    seen_ids = set()
+    for record in records:
+        if (
+            not isinstance(record, dict)
+            or type(record.get("id")) is not int
+            or record["id"] < 1
+            or record["id"] in seen_ids
+            or not isinstance(record.get("message"), str)
+            or not isinstance(record.get("reply"), str)
+        ):
+            raise ValueError("聊天记录数据无效，请检查 data/messages.json")
+        seen_ids.add(record["id"])
+    return records
+
+
+messages = load_messages()
+message_ids = count(max((record["id"] for record in messages), default=0) + 1)
+
+
+def save_messages(updated_messages):
+    # 调用方持有锁；先保存成功，再更新内存中的记录。
+    temporary_file = DATA_FILE.with_suffix(".tmp")
+    try:
+        DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+        temporary_file.write_text(
+            json.dumps(updated_messages, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        temporary_file.replace(DATA_FILE)
+    except (OSError, UnicodeError):
+        raise StorageError from None
+    messages[:] = updated_messages
+
+
+@app.errorhandler(StorageError)
+def handle_storage_error(error):
+    return jsonify({"error": "聊天记录保存失败，请检查 data 目录的写入权限和磁盘空间"}), 500
 
 
 def read_message_text():
@@ -85,38 +146,46 @@ def create_message():
     if not isinstance(reply, str) or not reply.strip():
         return jsonify({"error": "DeepSeek 未返回有效的文本回复，请重试"}), 502
 
-    record = {"id": next(message_ids), "message": text, "reply": reply.strip()}
-    messages.append(record)
-    return jsonify(record), 201
+    with messages_lock:
+        record = {"id": next(message_ids), "message": text, "reply": reply.strip()}
+        save_messages([*messages, record])
+        return jsonify(record), 201
 
 
 @app.get("/api/messages")
 def list_messages():
-    return jsonify(messages)
+    with messages_lock:
+        return jsonify(messages)
 
 
 @app.patch("/api/messages/<int:message_id>")
 def update_message(message_id):
-    record = next((item for item in messages if item["id"] == message_id), None)
-    if record is None:
-        return jsonify({"error": "聊天记录不存在"}), 404
-
     text, error = read_message_text()
     if error:
         return jsonify({"error": error}), 400
 
-    record["message"] = text
-    return jsonify(record)
+    with messages_lock:
+        record = next((item for item in messages if item["id"] == message_id), None)
+        if record is None:
+            return jsonify({"error": "聊天记录不存在"}), 404
+
+        updated_record = {**record, "message": text}
+        save_messages([
+            updated_record if item["id"] == message_id else item
+            for item in messages
+        ])
+        return jsonify(updated_record)
 
 
 @app.delete("/api/messages/<int:message_id>")
 def delete_message(message_id):
-    record = next((item for item in messages if item["id"] == message_id), None)
-    if record is None:
-        return jsonify({"error": "聊天记录不存在"}), 404
+    with messages_lock:
+        record = next((item for item in messages if item["id"] == message_id), None)
+        if record is None:
+            return jsonify({"error": "聊天记录不存在"}), 404
 
-    messages.remove(record)
-    return jsonify({"id": message_id, "deleted": True})
+        save_messages([item for item in messages if item["id"] != message_id])
+        return jsonify({"id": message_id, "deleted": True})
 
 
 if __name__ == "__main__":
