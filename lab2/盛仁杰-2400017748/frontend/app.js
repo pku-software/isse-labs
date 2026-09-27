@@ -1,110 +1,71 @@
-const messagesElement = document.querySelector(".messages");
+const list = document.querySelector("#conversation-list");
+const messages = document.querySelector(".messages");
 const composer = document.querySelector(".composer");
 const input = document.querySelector("#message-input");
-const statusElement = document.querySelector(".status");
+const title = document.querySelector("#conversation-title");
+const status = document.querySelector(".status");
+let conversations = [];
+let activeId = null;
 
-function setStatus(message, isError = false) {
-  statusElement.textContent = message;
-  statusElement.style.color = isError ? "#b91c1c" : "#6b7280";
+function setStatus(text, error = false) {
+  status.textContent = text;
+  status.style.color = error ? "#b91c1c" : "#6b7280";
 }
 
-function renderMessages(messages) {
-  messagesElement.replaceChildren();
-  for (const record of messages) {
-    const userMessage = document.createElement("article");
-    userMessage.className = "message user-message";
-    userMessage.innerHTML = `
-      <div class="message-role">用户</div>
-      <p></p>
-      <div class="message-actions">
-        <button type="button" data-action="edit" data-id="${record.id}">修改</button>
-        <button type="button" data-action="delete" data-id="${record.id}">删除</button>
-      </div>`;
-    userMessage.querySelector("p").textContent = record.message;
+function render() {
+  list.replaceChildren();
+  conversations.forEach((conversation) => {
+    const item = document.createElement("div");
+    item.className = `conversation-item${conversation.id === activeId ? " active" : ""}`;
+    item.innerHTML = `<button type="button" data-id="${conversation.id}"></button><button type="button" data-delete="${conversation.id}">删除</button>`;
+    item.querySelector("[data-id]").textContent = conversation.title;
+    list.append(item);
+  });
+  const active = conversations.find((item) => item.id === activeId);
+  title.textContent = active?.title || "AI 聊天助手";
+  messages.replaceChildren();
+  (active?.messages || []).forEach((item) => {
+    const article = document.createElement("article");
+    article.className = `message ${item.role === "user" ? "user-message" : "assistant-message"}`;
+    article.innerHTML = `<div class="message-role">${item.role === "user" ? "用户" : "AI"}</div><p></p>`;
+    article.querySelector("p").textContent = item.content;
+    messages.append(article);
+  });
+}
 
-    const assistantMessage = document.createElement("article");
-    assistantMessage.className = "message assistant-message";
-    assistantMessage.innerHTML = '<div class="message-role">AI</div><p></p>';
-    assistantMessage.querySelector("p").textContent = record.reply;
-    messagesElement.append(userMessage, assistantMessage);
+async function load() {
+  conversations = await (await fetch("/api/conversations")).json();
+  if (!conversations.length) {
+    const response = await fetch("/api/conversations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: "新会话" }) });
+    conversations = [await response.json()];
   }
+  if (!conversations.some((item) => item.id === activeId)) activeId = conversations[0].id;
+  render();
 }
 
-async function loadMessages() {
-  const response = await fetch("/api/messages");
-  if (!response.ok) throw new Error("加载聊天记录失败");
-  renderMessages(await response.json());
-}
+document.querySelector("#new-conversation").addEventListener("click", async () => {
+  const response = await fetch("/api/conversations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title: "新会话" }) });
+  const conversation = await response.json();
+  conversations.push(conversation); activeId = conversation.id; render();
+});
+
+list.addEventListener("click", async (event) => {
+  const deleteButton = event.target.closest("[data-delete]");
+  if (deleteButton) await fetch(`/api/conversations/${deleteButton.dataset.delete}`, { method: "DELETE" });
+  else {
+    const selectButton = event.target.closest("[data-id]");
+    if (selectButton) activeId = Number(selectButton.dataset.id);
+  }
+  await load();
+});
 
 composer.addEventListener("submit", async (event) => {
   event.preventDefault();
   const message = input.value.trim();
-  if (!message) {
-    setStatus("请输入消息", true);
-    return;
-  }
-
-  const response = await fetch("/api/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
-  });
-  if (!response.ok) {
-    setStatus("发送失败", true);
-    return;
-  }
-  input.value = "";
-  setStatus("发送成功");
-  await loadMessages();
+  if (!message || activeId === null) return setStatus("请选择会话并输入消息", true);
+  const response = await fetch(`/api/conversations/${activeId}/messages`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message }) });
+  if (!response.ok) return setStatus("发送失败", true);
+  input.value = ""; setStatus("发送成功"); await load();
 });
 
-messagesElement.addEventListener("click", async (event) => {
-  const button = event.target.closest("button[data-action]");
-  if (!button) return;
-  const id = button.dataset.id;
-
-  if (button.dataset.action === "edit") {
-    const card = button.closest(".message");
-    const paragraph = card.querySelector("p");
-    const editor = document.createElement("textarea");
-    editor.rows = 2;
-    editor.value = paragraph.textContent;
-    const save = document.createElement("button");
-    save.type = "button";
-    save.textContent = "保存";
-    save.dataset.action = "save";
-    save.dataset.id = id;
-    const cancel = document.createElement("button");
-    cancel.type = "button";
-    cancel.textContent = "取消";
-    cancel.dataset.action = "cancel";
-    paragraph.replaceWith(editor);
-    button.replaceWith(save);
-    save.after(cancel);
-    return;
-  }
-
-  if (button.dataset.action === "save") {
-    const card = button.closest(".message");
-    const message = card.querySelector("textarea").value.trim();
-    if (!message) {
-      setStatus("消息不能为空", true);
-      return;
-    }
-    const response = await fetch(`/api/messages/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message }),
-    });
-    if (!response.ok) setStatus("修改失败", true);
-  } else if (button.dataset.action === "cancel") {
-    await loadMessages();
-    return;
-  } else {
-    const response = await fetch(`/api/messages/${id}`, { method: "DELETE" });
-    if (!response.ok) setStatus("删除失败", true);
-  }
-  await loadMessages();
-});
-
-loadMessages().catch(() => setStatus("无法连接后端", true));
+load().catch(() => setStatus("无法连接后端", true));

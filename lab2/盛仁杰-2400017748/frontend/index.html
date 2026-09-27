@@ -8,36 +8,13 @@
   </head>
   <body>
     <main class="chat-app">
-      <header class="app-header">
-        <h1>AI 聊天助手</h1>
-        <p>与 AI 开始一段对话</p>
-      </header>
-
-      <section class="messages" aria-label="聊天记录">
-        <article class="message user-message">
-          <div class="message-role">用户</div>
-          <p>你好！</p>
-          <div class="message-actions">
-            <button type="button">修改</button>
-            <button type="button">删除</button>
-          </div>
-        </article>
-        <article class="message assistant-message">
-          <div class="message-role">AI</div>
-          <p>你好！我是 AI 助手。</p>
-          <div class="message-actions">
-            <button type="button">修改</button>
-            <button type="button">删除</button>
-          </div>
-        </article>
+      <aside class="sidebar"><button id="new-conversation" type="button">新建会话</button><div id="conversation-list"></div></aside>
+      <section class="chat-panel">
+        <header class="app-header"><h1 id="conversation-title">AI 聊天助手</h1></header>
+        <section class="messages" aria-label="聊天记录"></section>
+        <form class="composer"><label for="message-input">输入消息</label><textarea id="message-input" rows="3" placeholder="请输入你的问题"></textarea><button type="submit">发送</button></form>
+        <p class="status" aria-live="polite"></p>
       </section>
-
-      <form class="composer">
-        <label for="message-input">输入消息</label>
-        <textarea id="message-input" rows="3" placeholder="请输入你的问题"></textarea>
-        <button type="submit">发送</button>
-      </form>
-      <p class="status" aria-live="polite"></p>
     </main>
     <script src="app.js"></script>
   </body>

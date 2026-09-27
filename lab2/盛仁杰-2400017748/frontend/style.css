@@ -13,6 +13,7 @@ body {
 }
 
 .chat-app {
+  display: flex;
   width: min(760px, calc(100% - 32px));
   margin: 48px auto;
   padding: 28px;
@@ -20,6 +21,14 @@ body {
   border-radius: 16px;
   box-shadow: 0 12px 32px rgb(15 23 42 / 10%);
 }
+
+.sidebar { width: 190px; padding-right: 20px; border-right: 1px solid #e5e7eb; }
+.chat-panel { flex: 1; padding-left: 20px; }
+.sidebar > button { width: 100%; margin-bottom: 16px; }
+.conversation-item { display: flex; gap: 4px; margin-bottom: 8px; }
+.conversation-item button:first-child { flex: 1; overflow: hidden; color: #374151; background: #e5e7eb; text-overflow: ellipsis; white-space: nowrap; }
+.conversation-item.active button:first-child { color: #fff; background: #2563eb; }
+.conversation-item button:last-child { padding: 4px 6px; background: #9ca3af; }
 
 .app-header {
   margin-bottom: 24px;

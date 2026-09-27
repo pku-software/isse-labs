@@ -11,3 +11,4 @@ __MACOSX/
 
 # Local chat data
 data/messages.json
+data/conversations.json
