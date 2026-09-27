@@ -1,5 +1,6 @@
-"""Chat page and JSON API with in-memory records."""
+"""Chat page and JSON API with local JSON persistence."""
 
+import json
 import os
 from pathlib import Path
 from itertools import count
@@ -15,9 +16,60 @@ load_dotenv(Path(__file__).resolve().parent / ".env")
 app = Flask(__name__, static_folder="frontend", static_url_path="/static")
 app.json.ensure_ascii = False
 
-messages = []
-message_ids = count(1)
+DATA_FILE = Path(__file__).resolve().parent / "data" / "messages.json"
+
+
+def load_messages():
+    try:
+        raw = DATA_FILE.read_text(encoding="utf-8-sig")
+    except FileNotFoundError:
+        return []
+    except (OSError, UnicodeError):
+        raise RuntimeError("无法读取 data/messages.json，请检查文件权限和编码") from None
+    if not raw.strip():
+        return []
+    try:
+        records = json.loads(raw)
+    except ValueError:
+        raise RuntimeError("data/messages.json 不是有效的 JSON，请修复文件后再启动") from None
+    if not isinstance(records, list):
+        raise RuntimeError("data/messages.json 最外层必须是数组")
+    seen_ids = set()
+    for record in records:
+        if (
+            not isinstance(record, dict)
+            or type(record.get("id")) is not int
+            or record["id"] < 1
+            or record["id"] in seen_ids
+            or not isinstance(record.get("message"), str)
+            or not isinstance(record.get("reply"), str)
+        ):
+            raise RuntimeError("data/messages.json 中存在无效记录或重复 ID")
+        seen_ids.add(record["id"])
+    return records
+
+
+messages = load_messages()
+message_ids = count(max((record["id"] for record in messages), default=0) + 1)
 messages_lock = Lock()
+
+
+def save_messages(updated):
+    """Called under messages_lock; update memory only after the file is saved."""
+    temporary_file = DATA_FILE.with_suffix(".json.tmp")
+    try:
+        DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with temporary_file.open("w", encoding="utf-8") as file:
+            json.dump(updated, file, ensure_ascii=False, indent=2)
+            file.write("\n")
+            file.flush()
+            os.fsync(file.fileno())
+        # Replace the complete file in one operation to avoid partial JSON.
+        os.replace(temporary_file, DATA_FILE)
+    except OSError:
+        return jsonify(error="聊天记录写入失败，请检查 data 目录权限和磁盘空间；本次修改未保存"), 500
+    messages[:] = updated
+    return None
 
 
 @app.get("/")
@@ -97,7 +149,9 @@ def create_message():
         return error
     with messages_lock:
         record = {"id": next(message_ids), "message": text, "reply": reply}
-        messages.append(record)
+        error = save_messages([*messages, record])
+        if error is not None:
+            return error
         return jsonify(record), 201
 
 
@@ -115,17 +169,23 @@ def update_message(id):
     with messages_lock:
         for record in messages:
             if record["id"] == id:
-                record["message"] = text
-                return jsonify(record)
+                updated_record = {**record, "message": text}
+                updated = [updated_record if item["id"] == id else item for item in messages]
+                error = save_messages(updated)
+                if error is not None:
+                    return error
+                return jsonify(updated_record)
     return jsonify(error="聊天记录不存在，请刷新记录列表"), 404
 
 
 @app.delete("/api/messages/<int:id>")
 def delete_message(id):
     with messages_lock:
-        for position, record in enumerate(messages):
+        for record in messages:
             if record["id"] == id:
-                del messages[position]
+                error = save_messages([item for item in messages if item["id"] != id])
+                if error is not None:
+                    return error
                 return jsonify(id=id, deleted=True)
     return jsonify(error="聊天记录不存在，请刷新记录列表"), 404
 
