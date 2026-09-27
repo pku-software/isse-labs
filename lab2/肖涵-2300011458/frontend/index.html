@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 聊天室</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">个人实验项目</p>
+          <h1>AI 聊天室</h1>
+          <p class="subtitle">记录问题与回答，集中查看每一次交流。</p>
+        </div>
+        <span class="stage-badge">静态界面</span>
+      </header>
+
+      <section class="chat-panel" aria-labelledby="history-title">
+        <div class="panel-heading">
+          <div>
+            <h2 id="history-title">聊天记录</h2>
+            <p>每条记录都可以修改或删除。</p>
+          </div>
+          <span class="record-count">示例记录 1 条</span>
+        </div>
+
+        <div class="message-list" aria-live="polite">
+          <article class="message-card">
+            <div class="message-content">
+              <div class="message-line">
+                <span class="message-label">你</span>
+                <p>你好，今天有什么值得关注的事情？</p>
+              </div>
+              <div class="message-line reply-line">
+                <span class="message-label assistant-label">AI</span>
+                <p>这是一个静态示例回复，后续会接入 Flask API。</p>
+              </div>
+            </div>
+            <div class="message-actions" aria-label="聊天记录操作">
+              <button type="button" class="button button-secondary" data-action="edit">修改</button>
+              <button type="button" class="button button-danger" data-action="delete">删除</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="composer-panel" aria-labelledby="composer-title">
+        <div class="panel-heading compact-heading">
+          <div>
+            <h2 id="composer-title">发送新消息</h2>
+            <p>输入内容后发送，聊天记录会显示在上方。</p>
+          </div>
+        </div>
+        <form class="composer-form">
+          <label class="sr-only" for="message-input">消息内容</label>
+          <textarea id="message-input" name="message" rows="4" placeholder="输入你想聊的内容"></textarea>
+          <div class="composer-footer">
+            <span class="form-note">当前为静态界面，按钮功能将在后续接入。</span>
+            <button type="submit" class="button button-primary">发送消息</button>
+          </div>
+        </form>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
