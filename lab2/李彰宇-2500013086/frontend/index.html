@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 聊天助手</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="chat-app">
+      <header class="app-header">
+        <div>
+          <h1>AI 聊天助手</h1>
+          <p>在这里记录你的问题与 AI 回复</p>
+        </div>
+        <span class="status" aria-label="服务状态">静态预览</span>
+      </header>
+
+      <section class="chat-panel" aria-label="聊天记录">
+        <div id="message-list" class="message-list">
+          <article class="message-card">
+            <div class="message-content">
+              <p class="message-role">你</p>
+              <p>这是一个聊天记录示例。</p>
+              <p class="message-role assistant">AI</p>
+              <p>后续接通后端后，我会在这里回复。</p>
+            </div>
+            <div class="message-actions">
+              <button type="button" class="text-button">修改</button>
+              <button type="button" class="text-button danger">删除</button>
+            </div>
+          </article>
+        </div>
+
+        <p id="feedback" class="feedback" aria-live="polite"></p>
+
+        <form id="message-form" class="composer">
+          <label for="message-input">输入消息</label>
+          <div class="composer-row">
+            <textarea
+              id="message-input"
+              name="message"
+              rows="2"
+              placeholder="向 AI 提问……"
+              required
+            ></textarea>
+            <button type="submit" class="send-button">发送</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
