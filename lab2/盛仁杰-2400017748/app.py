@@ -1,4 +1,6 @@
 import os
+import json
+from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
@@ -9,7 +11,29 @@ app = Flask(__name__)
 app.json.ensure_ascii = False
 messages = []
 next_id = 1
+DATA_FILE = Path(__file__).parent / "data" / "messages.json"
 load_dotenv()
+
+
+def load_messages():
+    if not DATA_FILE.exists() or not DATA_FILE.read_text(encoding="utf-8").strip():
+        return []
+    try:
+        return json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+
+
+def save_messages():
+    DATA_FILE.parent.mkdir(exist_ok=True)
+    DATA_FILE.write_text(
+        json.dumps(messages, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+
+
+messages.extend(load_messages())
+if messages:
+    next_id = max(record["id"] for record in messages) + 1
 
 
 @app.get("/")
@@ -57,6 +81,7 @@ def create_message():
     record = {"id": next_id, "message": message.strip(), "reply": reply}
     messages.append(record)
     next_id += 1
+    save_messages()
     return jsonify(record), 201
 
 
@@ -75,6 +100,7 @@ def update_message(message_id):
     for record in messages:
         if record["id"] == message_id:
             record["message"] = message.strip()
+            save_messages()
             return jsonify(record)
     return jsonify(error="聊天记录不存在"), 404
 
@@ -84,6 +110,7 @@ def delete_message(message_id):
     for index, record in enumerate(messages):
         if record["id"] == message_id:
             messages.pop(index)
+            save_messages()
             return jsonify(message="删除成功")
     return jsonify(error="聊天记录不存在"), 404
 

@@ -1,0 +1,13 @@
+.env
+__pycache__/
+.venv/
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+__MACOSX/
+
+# Local chat data
+data/messages.json
