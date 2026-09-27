@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI 聊天室</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="chat-shell">
+    <header class="chat-header">
+      <div class="brand-mark" aria-hidden="true">AI</div>
+      <div>
+        <p class="eyebrow">PERSONAL ASSISTANT</p>
+        <h1>AI 聊天室</h1>
+      </div>
+      <span class="connection-status"><span class="status-dot"></span>准备就绪</span>
+    </header>
+
+    <section class="chat-panel" aria-labelledby="conversation-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">CONVERSATION</p>
+          <h2 id="conversation-title">聊天记录</h2>
+        </div>
+        <span class="record-count">0 条记录</span>
+      </div>
+
+      <div class="message-list" aria-live="polite">
+        <div class="empty-state">
+          <div class="empty-icon" aria-hidden="true">✳</div>
+          <h3>从一个问题开始</h3>
+          <p>发送消息后，聊天记录会显示在这里。</p>
+        </div>
+      </div>
+
+      <template id="message-template">
+        <article class="message-card">
+          <div class="message-copy">
+            <p class="message-label">你</p>
+            <p class="message-text"></p>
+            <p class="message-label assistant-label">AI 助手</p>
+            <p class="reply-text"></p>
+          </div>
+          <div class="message-actions" aria-label="聊天记录操作">
+            <button type="button" class="edit-button">修改</button>
+            <button type="button" class="delete-button">删除</button>
+          </div>
+        </article>
+      </template>
+
+      <form class="composer">
+        <label class="visually-hidden" for="message-input">输入消息</label>
+        <textarea id="message-input" rows="2" placeholder="输入你的消息…"></textarea>
+        <div class="composer-footer">
+          <span class="composer-hint">按下发送按钮开始对话</span>
+          <button class="send-button" type="button">
+            <span>发送消息</span><span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </form>
+    </section>
+    <footer class="page-footer">你的对话工作台</footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
