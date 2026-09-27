@@ -11,24 +11,62 @@
   <main class="chat-app">
     <header class="app-header">
       <h1>AI 聊天</h1>
-      <p>在这里查看和整理你的问答。</p>
+      <p>按主题整理对话，在各自的会话中继续提问。</p>
     </header>
 
-    <section class="history" aria-labelledby="history-title">
-      <h2 id="history-title">聊天记录</h2>
-      <div id="message-list" class="message-list" aria-busy="true">
-        <p id="empty-state" class="empty-state" role="status">正在加载聊天记录……</p>
-      </div>
-    </section>
+    <div class="workspace">
+      <aside class="sidebar" aria-labelledby="conversations-title">
+        <h2 id="conversations-title">我的会话</h2>
+        <ul id="conversation-list" class="conversation-list"></ul>
+        <form id="new-conversation-form" class="new-conversation-form" novalidate>
+          <label for="new-conversation-title">新会话名称</label>
+          <input id="new-conversation-title" type="text" maxlength="80" placeholder="例如：天文学习">
+          <button class="send-button" type="submit">建立会话</button>
+        </form>
+        <p id="sidebar-status" class="status-message" role="status" aria-live="polite"></p>
+      </aside>
 
-    <form id="message-form" class="composer" aria-labelledby="composer-title" novalidate>
-      <h2 id="composer-title"><label for="message-input">你的消息</label></h2>
-      <textarea id="message-input" name="message" rows="3" placeholder="写下你的问题……"></textarea>
-      <div class="composer-footer">
-        <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
-        <button id="send-button" class="send-button" type="submit" disabled>发送</button>
+      <div class="conversation-panel">
+        <div class="conversation-header">
+          <h2 id="conversation-title">请选择一个会话</h2>
+          <div class="record-actions conversation-tools">
+            <button id="rename-start" class="text-button" type="button" disabled>重新命名</button>
+            <button id="delete-conversation-start" class="text-button delete-button" type="button" disabled>删除会话</button>
+          </div>
+        </div>
+        <form id="rename-form" class="conversation-editor" hidden novalidate>
+          <label for="rename-input">会话名称</label>
+          <input id="rename-input" type="text" maxlength="80">
+          <div class="record-actions">
+            <button class="text-button" type="submit">保存名称</button>
+            <button id="rename-cancel" class="text-button" type="button">取消</button>
+          </div>
+        </form>
+        <div id="delete-conversation-panel" class="conversation-editor" hidden>
+          <p>确定删除当前会话及其中的全部聊天记录？此操作无法撤销。</p>
+          <div class="record-actions">
+            <button id="delete-conversation-confirm" class="text-button delete-button" type="button">确认删除会话</button>
+            <button id="delete-conversation-cancel" class="text-button" type="button">取消</button>
+          </div>
+        </div>
+        <p id="conversation-status" class="status-message" role="status" aria-live="polite"></p>
+
+        <section class="history" aria-labelledby="conversation-title">
+          <div id="message-list" class="message-list" aria-busy="true">
+            <p id="empty-state" class="empty-state" role="status">正在加载会话……</p>
+          </div>
+        </section>
+
+        <form id="message-form" class="composer" aria-labelledby="composer-title" novalidate>
+          <h2 id="composer-title"><label for="message-input">你的消息</label></h2>
+          <textarea id="message-input" name="message" rows="3" placeholder="在当前会话中继续提问……" disabled></textarea>
+          <div class="composer-footer">
+            <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
+            <button id="send-button" class="send-button" type="submit" disabled>发送</button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   </main>
 
   <template id="message-template">

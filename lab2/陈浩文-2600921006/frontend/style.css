@@ -15,6 +15,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   padding: 40px 20px;
@@ -22,6 +26,7 @@ body {
 }
 
 button,
+input,
 textarea {
   font: inherit;
 }
@@ -31,14 +36,122 @@ button {
 }
 
 button:focus-visible,
+input:focus-visible,
 textarea:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 4px;
 }
 
 .chat-app {
-  width: min(100%, 800px);
+  width: min(100%, 1120px);
   margin: 0 auto;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 32px;
+}
+
+.sidebar {
+  padding-right: 24px;
+  border-right: 1px solid var(--border);
+}
+
+.conversation-panel {
+  min-width: 0;
+}
+
+.conversation-list {
+  display: grid;
+  gap: 8px;
+  max-height: 360px;
+  margin: 12px 0 24px;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.conversation-select {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.conversation-select:hover,
+.conversation-select[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+
+.conversation-count {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.new-conversation-form label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.new-conversation-form .send-button {
+  width: 100%;
+  margin-top: 12px;
+}
+
+input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.conversation-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.conversation-header h2 {
+  flex: 1;
+  min-width: 0;
+  padding-top: 8px;
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.conversation-tools {
+  flex-wrap: wrap;
+}
+
+.conversation-editor {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.conversation-editor .record-actions {
+  margin-top: 10px;
+}
+
+#sidebar-status:not(:empty),
+#conversation-status:not(:empty) {
+  margin-top: 12px;
 }
 
 .app-header {
@@ -204,8 +317,9 @@ textarea::placeholder {
 }
 
 button:disabled,
+input:disabled,
 textarea:disabled {
-  cursor: wait;
+  cursor: not-allowed;
   opacity: 0.6;
 }
 
@@ -220,6 +334,24 @@ textarea:disabled {
 
 .send-button:hover {
   background: #00534f;
+}
+
+@media (max-width: 760px) {
+  .workspace {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .sidebar {
+    padding-right: 0;
+    padding-bottom: 24px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .conversation-list {
+    max-height: 220px;
+  }
 }
 
 @media (max-width: 480px) {
