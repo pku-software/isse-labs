@@ -17,14 +17,13 @@ app.json.ensure_ascii = False
 api_key = os.getenv("DEEPSEEK_API_KEY")
 client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com") if api_key else None
 
-# 聊天记录持久化：启动时从 data/messages.json 读入内存，
-# 每次增删改后写回文件，这样 Flask 重启后记录依然存在。
+# 会话持久化：启动时从 data/conversations.json 读入内存，每次变更后写回文件。
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-DATA_FILE = os.path.join(DATA_DIR, "messages.json")
+DATA_FILE = os.path.join(DATA_DIR, "conversations.json")
 
 
-def load_messages():
-    """启动时读取 data/messages.json；文件不存在或内容异常时从空列表开始"""
+def load_conversations():
+    """启动时读取 data/conversations.json；文件不存在或内容异常时从空列表开始"""
     if not os.path.exists(DATA_FILE):
         return []
     try:
@@ -37,32 +36,42 @@ def load_messages():
     return []
 
 
-def save_messages():
-    """把内存中的聊天记录写回 data/messages.json"""
+def save_conversations():
+    """把内存中的会话列表写回 data/conversations.json"""
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(messages, f, ensure_ascii=False, indent=2)
+        json.dump(conversations, f, ensure_ascii=False, indent=2)
 
 
-# 每条记录格式：{"id": 1, "message": "用户输入", "reply": "后端回复"}
-messages = load_messages()
-# 新记录 id 从已有最大 id + 1 开始，避免与已有记录冲突
-next_id = max((m["id"] for m in messages), default=0) + 1
+# 每个会话的结构：
+# {"id": 1, "title": "会话标题", "messages": [{"id": 1, "message": "用户输入", "reply": "AI 回复"}]}
+conversations = load_conversations()
+# 新会话 id 从已有最大 id + 1 开始，避免冲突
+next_conversation_id = max((c["id"] for c in conversations), default=0) + 1
+# 消息 id 在所有会话之间全局唯一递增
+next_message_id = max(
+    (m["id"] for c in conversations for m in c.get("messages", [])), default=0
+) + 1
 
 
-def find_message(message_id):
-    """在内存列表中查找指定 id 的记录，找不到返回 None"""
-    for msg in messages:
-        if msg["id"] == message_id:
-            return msg
+def find_conversation(conversation_id):
+    """在会话列表中查找指定 id 的会话，找不到返回 None"""
+    for conv in conversations:
+        if conv["id"] == conversation_id:
+            return conv
     return None
 
 
-def call_deepseek(text):
-    """调用 DeepSeek 模型，返回模型回复文本；失败时抛出异常"""
+def call_deepseek_with_history(history_messages, new_text):
+    """携带该会话的历史消息调用 DeepSeek，返回模型回复文本；失败时抛出异常"""
+    api_messages = []
+    for m in history_messages:
+        api_messages.append({"role": "user", "content": m["message"]})
+        api_messages.append({"role": "assistant", "content": m["reply"]})
+    api_messages.append({"role": "user", "content": new_text})
     response = client.chat.completions.create(
         model="deepseek-chat",
-        messages=[{"role": "user", "content": text}],
+        messages=api_messages,
     )
     return response.choices[0].message.content
 
@@ -78,56 +87,81 @@ def hello():
     return jsonify({"message": "你好"})
 
 
-@app.route("/api/messages", methods=["POST"])
-def create_message():
-    """创建一条聊天记录：调用 DeepSeek 获得真实回复"""
-    global next_id
+@app.route("/api/conversations", methods=["POST"])
+def create_conversation():
+    """创建一个新会话"""
+    global next_conversation_id
+    data = request.get_json(silent=True) or {}
+    title = data.get("title") or "新会话"
+    conv = {"id": next_conversation_id, "title": title, "messages": []}
+    conversations.append(conv)
+    next_conversation_id += 1
+    save_conversations()
+    return jsonify(conv), 201
+
+
+@app.route("/api/conversations", methods=["GET"])
+def list_conversations():
+    """返回全部会话"""
+    return jsonify(conversations)
+
+
+@app.route("/api/conversations/<int:conversation_id>", methods=["GET"])
+def get_conversation(conversation_id):
+    """返回指定会话（含消息历史）"""
+    conv = find_conversation(conversation_id)
+    if conv is None:
+        return jsonify({"error": f"ID 为 {conversation_id} 的会话不存在"}), 404
+    return jsonify(conv)
+
+
+@app.route("/api/conversations/<int:conversation_id>", methods=["PATCH"])
+def update_conversation(conversation_id):
+    """重命名指定会话"""
+    conv = find_conversation(conversation_id)
+    if conv is None:
+        return jsonify({"error": f"ID 为 {conversation_id} 的会话不存在"}), 404
+    data = request.get_json(silent=True)
+    if not data or not data.get("title"):
+        return jsonify({"error": "缺少 title 字段"}), 400
+    conv["title"] = data["title"]
+    save_conversations()
+    return jsonify(conv)
+
+
+@app.route("/api/conversations/<int:conversation_id>", methods=["DELETE"])
+def delete_conversation(conversation_id):
+    """删除指定会话"""
+    conv = find_conversation(conversation_id)
+    if conv is None:
+        return jsonify({"error": f"ID 为 {conversation_id} 的会话不存在"}), 404
+    conversations.remove(conv)
+    save_conversations()
+    return jsonify({"deleted": conv})
+
+
+@app.route("/api/conversations/<int:conversation_id>/messages", methods=["POST"])
+def create_conversation_message(conversation_id):
+    """在指定会话中发送一条消息：携带历史调用 DeepSeek，返回更新后的会话"""
+    global next_message_id
+    conv = find_conversation(conversation_id)
+    if conv is None:
+        return jsonify({"error": f"ID 为 {conversation_id} 的会话不存在"}), 404
     data = request.get_json(silent=True)
     if not data or not data.get("message"):
         return jsonify({"error": "缺少 message 字段"}), 400
     if client is None:
         return jsonify({"error": "未配置 DEEPSEEK_API_KEY，请检查 .env 文件"}), 500
     try:
-        reply = call_deepseek(data["message"])
+        reply = call_deepseek_with_history(conv["messages"], data["message"])
     except Exception as e:
         # 模型调用失败时返回清晰的 JSON 错误，不让 Flask 直接崩溃
         return jsonify({"error": f"调用 DeepSeek API 失败：{e}"}), 502
-    record = {"id": next_id, "message": data["message"], "reply": reply}
-    messages.append(record)
-    next_id += 1
-    save_messages()
-    return jsonify(record), 201
-
-
-@app.route("/api/messages", methods=["GET"])
-def list_messages():
-    """返回全部聊天记录"""
-    return jsonify(messages)
-
-
-@app.route("/api/messages/<int:message_id>", methods=["PATCH"])
-def update_message(message_id):
-    """修改指定聊天记录的 message 字段"""
-    record = find_message(message_id)
-    if record is None:
-        return jsonify({"error": f"ID 为 {message_id} 的记录不存在"}), 404
-    data = request.get_json(silent=True)
-    if not data or not data.get("message"):
-        return jsonify({"error": "缺少 message 字段"}), 400
-    record["message"] = data["message"]
-    save_messages()
-    return jsonify(record)
-
-
-@app.route("/api/messages/<int:message_id>", methods=["DELETE"])
-def delete_message(message_id):
-    """删除指定聊天记录"""
-    record = find_message(message_id)
-    if record is None:
-        return jsonify({"error": f"ID 为 {message_id} 的记录不存在"}), 404
-    messages.remove(record)
-    save_messages()
-    return jsonify({"deleted": record})
+    record = {"id": next_message_id, "message": data["message"], "reply": reply}
+    conv["messages"].append(record)
+    next_message_id += 1
+    save_conversations()
+    return jsonify(conv), 201
 
 
 if __name__ == "__main__":

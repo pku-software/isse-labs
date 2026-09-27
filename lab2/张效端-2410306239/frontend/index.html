@@ -8,20 +8,35 @@
 </head>
 <body>
   <main class="chat-app">
-    <header class="chat-header">
-      <h1>AI 聊天</h1>
-    </header>
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <button id="new-conversation" type="button">＋ 新建会话</button>
+      </div>
+      <ul id="conversation-list" class="conversation-list">
+        <!-- 会话列表由 app.js 加载并渲染到这里 -->
+      </ul>
+    </aside>
 
-    <section id="chat-area" class="chat-area">
-      <!-- 聊天记录由 app.js 从后端加载并渲染到这里 -->
+    <section class="main-panel">
+      <header class="chat-header">
+        <h1 id="conversation-title">选择或新建一个会话</h1>
+        <div class="header-actions">
+          <button id="rename-conversation" type="button">重命名</button>
+          <button id="delete-conversation" type="button">删除</button>
+        </div>
+      </header>
+
+      <section id="chat-area" class="chat-area">
+        <!-- 当前会话的消息由 app.js 渲染到这里 -->
+      </section>
+
+      <div id="status-bar" class="status"></div>
+
+      <form id="chat-form" class="chat-input">
+        <input type="text" id="message-input" placeholder="输入消息…" autocomplete="off">
+        <button type="submit">发送</button>
+      </form>
     </section>
-
-    <div id="status-bar" class="status"></div>
-
-    <form id="chat-form" class="chat-input">
-      <input type="text" id="message-input" placeholder="输入消息…" autocomplete="off">
-      <button type="submit">发送</button>
-    </form>
   </main>
 
   <script src="app.js"></script>
