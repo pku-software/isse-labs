@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -11,9 +12,45 @@ load_dotenv(Path(__file__).with_name(".env"))
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 app.json.ensure_ascii = False
 
-conversations = []
-next_conversation_id = 1
-next_message_id = 1
+DATA_FILE = Path(__file__).parent / "data" / "conversations.json"
+
+
+def load_conversations():
+    if not DATA_FILE.exists() or DATA_FILE.stat().st_size == 0:
+        return []
+
+    try:
+        with DATA_FILE.open("r", encoding="utf-8") as file:
+            data = json.load(file)
+    except (OSError, json.JSONDecodeError):
+        app.logger.error("无法读取 conversations.json，将使用空数据")
+        return []
+
+    if not isinstance(data, list):
+        app.logger.error("conversations.json 顶层不是数组，将使用空数据")
+        return []
+    return data
+
+
+def save_conversations():
+    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with DATA_FILE.open("w", encoding="utf-8") as file:
+        json.dump(conversations, file, ensure_ascii=False, indent=2)
+
+
+conversations = load_conversations()
+next_conversation_id = max(
+    (conversation.get("id", 0) for conversation in conversations),
+    default=0,
+) + 1
+next_message_id = max(
+    (
+        message.get("id", 0)
+        for conversation in conversations
+        for message in conversation.get("messages", [])
+    ),
+    default=0,
+) + 1
 
 
 def find_conversation(conversation_id):
@@ -60,6 +97,7 @@ def create_conversation():
     }
     conversations.append(conversation)
     next_conversation_id += 1
+    save_conversations()
     return jsonify(conversation), 201
 
 
@@ -91,6 +129,7 @@ def update_conversation(conversation_id):
         return jsonify({"error": "title 不能为空"}), 400
 
     conversation["title"] = title.strip()
+    save_conversations()
     return jsonify(conversation_summary(conversation))
 
 
@@ -101,6 +140,7 @@ def delete_conversation(conversation_id):
         return jsonify({"error": "会话不存在"}), 404
 
     conversations.remove(conversation)
+    save_conversations()
     return "", 204
 
 
@@ -161,6 +201,7 @@ def create_conversation_message(conversation_id):
     }
     next_message_id += 1
     conversation["messages"].extend([user_message, assistant_message])
+    save_conversations()
 
     return jsonify(
         {
