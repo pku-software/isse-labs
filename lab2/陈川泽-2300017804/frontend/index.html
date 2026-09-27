@@ -13,28 +13,43 @@
         <div>
           <p class="eyebrow">CHAT SPACE</p>
           <h1>AI 聊天</h1>
-          <p class="subtitle">在这里开启一段对话</p>
+          <p class="subtitle">在不同会话中继续你的对话</p>
         </div>
         <span class="status-badge">本地聊天</span>
       </header>
 
-      <section class="conversation" aria-label="聊天记录">
-        <div class="conversation-heading">
-          <h2>聊天记录</h2>
-          <span>每次问答保存为一条记录</span>
-        </div>
+      <div class="workspace">
+        <aside class="sidebar" aria-label="会话列表">
+          <h2>会话</h2>
+          <form id="conversation-form" class="conversation-form">
+            <label for="conversation-title">新建会话</label>
+            <div class="conversation-form-row">
+              <input id="conversation-title" type="text" placeholder="输入会话名称" required />
+              <button type="submit" class="small-button">创建</button>
+            </div>
+          </form>
+          <div id="conversation-list" class="conversation-list" aria-live="polite"></div>
+        </aside>
 
-        <div id="message-list" class="message-list" aria-live="polite"></div>
-      </section>
+        <div class="chat-panel">
+          <section class="conversation" aria-label="聊天记录">
+            <div class="conversation-heading">
+              <h2 id="active-title">请选择或创建会话</h2>
+              <span id="active-count"></span>
+            </div>
+            <div id="message-list" class="message-list" aria-live="polite"></div>
+          </section>
 
-      <form class="composer" id="message-form">
-        <label for="message-input">发送消息</label>
-        <div class="composer-row">
-          <textarea id="message-input" name="message" rows="2" placeholder="输入你想说的话……" required></textarea>
-          <button class="send-button" type="submit">发送</button>
+          <form class="composer" id="message-form">
+            <label for="message-input">发送消息</label>
+            <div class="composer-row">
+              <textarea id="message-input" name="message" rows="2" placeholder="输入你想说的话……" required disabled></textarea>
+              <button class="send-button" type="submit" disabled>发送</button>
+            </div>
+            <p id="feedback" class="composer-hint" role="status" aria-live="polite"></p>
+          </form>
         </div>
-        <p id="feedback" class="composer-hint" role="status" aria-live="polite"></p>
-      </form>
+      </div>
     </main>
   </body>
 </html>
