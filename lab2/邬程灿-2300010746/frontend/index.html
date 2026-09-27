@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 聊天</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">本地聊天</p>
+        <h1>AI 聊天</h1>
+      </div>
+      <p id="status" class="status">页面已打开。发送、修改和删除还没有接到后端。</p>
+    </header>
+
+    <section id="chat" class="chat" aria-label="聊天记录">
+      <article class="record">
+        <div class="record-main">
+          <p class="role">你</p>
+          <p class="text">这是一条写在页面里的示例记录，用来看一条问答长什么样。</p>
+          <p class="role">回复</p>
+          <p class="text reply">这里会显示后端返回的回复。</p>
+        </div>
+        <div class="record-actions">
+          <button type="button">修改</button>
+          <button type="button" class="danger">删除</button>
+        </div>
+      </article>
+    </section>
+
+    <form id="composer" class="composer">
+      <label class="composer-label" for="message-input">消息</label>
+      <textarea id="message-input" rows="3" placeholder="输入要发送的内容"></textarea>
+      <div class="composer-bar">
+        <p id="feedback" class="feedback"></p>
+        <button type="submit">发送</button>
+      </div>
+    </form>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
