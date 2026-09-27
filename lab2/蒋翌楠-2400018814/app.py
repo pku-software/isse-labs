@@ -1,5 +1,7 @@
+import json
 import os
 from pathlib import Path
+from threading import Lock
 
 import requests
 from dotenv import load_dotenv
@@ -9,8 +11,28 @@ load_dotenv(Path(__file__).with_name(".env"))
 
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 app.json.ensure_ascii = False
-messages = []
-next_id = 1
+data_file = Path(__file__).parent / "data" / "messages.json"
+saved_text = data_file.read_text(encoding="utf-8") if data_file.exists() else ""
+messages = json.loads(saved_text) if saved_text.strip() else []
+next_id = max((item["id"] for item in messages), default=0) + 1
+messages_lock = Lock()
+
+
+def save_messages(updated):
+    # 先写入文件，再更新内存；写入失败时保留原数据。
+    data_file.parent.mkdir(parents=True, exist_ok=True)
+    temporary_file = data_file.with_suffix(".tmp")
+    temporary_file.write_text(
+        json.dumps(updated, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    temporary_file.replace(data_file)
+    messages[:] = updated
+
+
+@app.errorhandler(OSError)
+def storage_error(error):
+    return jsonify(error="无法保存聊天记录，请检查 data 目录权限和磁盘空间"), 500
 
 
 @app.get("/")
@@ -73,35 +95,40 @@ def create_message():
         return jsonify(error="无法连接模型服务，请检查网络后重试"), 502
     except (ValueError, TypeError, AttributeError, KeyError):
         return jsonify(error="模型服务返回的数据格式不符合 Responses API"), 502
-    record = {"id": next_id, "message": message, "reply": reply}
-    next_id += 1
-    messages.append(record)
+    with messages_lock:
+        record = {"id": next_id, "message": message, "reply": reply}
+        save_messages(messages + [record])
+        next_id += 1
     return jsonify(record), 201
 
 
 @app.get("/api/messages")
 def list_messages():
-    return jsonify(messages)
+    with messages_lock:
+        return jsonify(messages)
 
 
 @app.patch("/api/messages/<int:id>")
 def update_message(id):
-    record = next((item for item in messages if item["id"] == id), None)
-    if record is None:
-        return jsonify(error="聊天记录不存在"), 404
-    message = read_message()
-    if not message:
-        return jsonify(error="请提供非空的 message 字符串"), 400
-    record["message"] = message
+    with messages_lock:
+        record = next((item for item in messages if item["id"] == id), None)
+        if record is None:
+            return jsonify(error="聊天记录不存在"), 404
+        message = read_message()
+        if not message:
+            return jsonify(error="请提供非空的 message 字符串"), 400
+        record = {**record, "message": message}
+        save_messages([record if item["id"] == id else item for item in messages])
     return jsonify(record)
 
 
 @app.delete("/api/messages/<int:id>")
 def delete_message(id):
-    record = next((item for item in messages if item["id"] == id), None)
-    if record is None:
-        return jsonify(error="聊天记录不存在"), 404
-    messages.remove(record)
+    with messages_lock:
+        record = next((item for item in messages if item["id"] == id), None)
+        if record is None:
+            return jsonify(error="聊天记录不存在"), 404
+        save_messages([item for item in messages if item["id"] != id])
     return jsonify(message="已删除聊天记录")
 
 
