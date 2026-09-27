@@ -1,14 +1,54 @@
 from pathlib import Path
+import os
 
+import requests
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
+
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(BASE_DIR / ".env")
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
 
-FRONTEND_DIR = str(Path(__file__).resolve().parent / "frontend")
+FRONTEND_DIR = str(BASE_DIR / "frontend")
+
+DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
+DEEPSEEK_MODEL = "deepseek-chat"
 
 messages = []
 next_id = 1
+
+
+def get_deepseek_reply(message):
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        raise RuntimeError("DeepSeek API Key 未配置")
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": DEEPSEEK_MODEL,
+        "messages": [{"role": "user", "content": message}],
+        "stream": False,
+    }
+
+    response = requests.post(
+        DEEPSEEK_API_URL,
+        headers=headers,
+        json=payload,
+        timeout=30,
+    )
+    if response.status_code != 200:
+        raise RuntimeError("DeepSeek 模型调用失败")
+
+    try:
+        data = response.json()
+        return data["choices"][0]["message"]["content"].strip()
+    except (KeyError, IndexError, TypeError):
+        raise RuntimeError("DeepSeek 返回格式异常")
 
 
 @app.get("/")
@@ -39,10 +79,19 @@ def create_message():
     if not isinstance(data, dict) or not str(data.get("message", "")).strip():
         return jsonify({"error": "message 不能为空"}), 400
 
+    user_message = str(data["message"]).strip()
+
+    try:
+        reply = get_deepseek_reply(user_message)
+    except RuntimeError as exc:
+        return jsonify({"error": str(exc)}), 502
+    except Exception:
+        return jsonify({"error": "DeepSeek 模型调用失败"}), 502
+
     record = {
         "id": next_id,
-        "message": str(data["message"]).strip(),
-        "reply": "你好",
+        "message": user_message,
+        "reply": reply,
     }
     messages.append(record)
     next_id += 1
