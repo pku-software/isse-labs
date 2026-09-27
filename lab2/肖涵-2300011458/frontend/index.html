@@ -14,7 +14,7 @@
           <h1>AI 聊天室</h1>
           <p class="subtitle">记录问题与回答，集中查看每一次交流。</p>
         </div>
-        <span class="stage-badge">静态界面</span>
+        <span class="stage-badge">本地聊天记录</span>
       </header>
 
       <section class="chat-panel" aria-labelledby="history-title">
@@ -23,26 +23,11 @@
             <h2 id="history-title">聊天记录</h2>
             <p>每条记录都可以修改或删除。</p>
           </div>
-          <span class="record-count">示例记录 1 条</span>
+          <span class="record-count" id="record-count">0 条记录</span>
         </div>
 
-        <div class="message-list" aria-live="polite">
-          <article class="message-card">
-            <div class="message-content">
-              <div class="message-line">
-                <span class="message-label">你</span>
-                <p>你好，今天有什么值得关注的事情？</p>
-              </div>
-              <div class="message-line reply-line">
-                <span class="message-label assistant-label">AI</span>
-                <p>这是一个静态示例回复，后续会接入 Flask API。</p>
-              </div>
-            </div>
-            <div class="message-actions" aria-label="聊天记录操作">
-              <button type="button" class="button button-secondary" data-action="edit">修改</button>
-              <button type="button" class="button button-danger" data-action="delete">删除</button>
-            </div>
-          </article>
+        <div class="message-list" id="message-list" aria-live="polite">
+          <p class="empty-state">正在加载聊天记录……</p>
         </div>
       </section>
 
@@ -53,12 +38,12 @@
             <p>输入内容后发送，聊天记录会显示在上方。</p>
           </div>
         </div>
-        <form class="composer-form">
+        <form class="composer-form" id="message-form">
           <label class="sr-only" for="message-input">消息内容</label>
           <textarea id="message-input" name="message" rows="4" placeholder="输入你想聊的内容"></textarea>
           <div class="composer-footer">
-            <span class="form-note">当前为静态界面，按钮功能将在后续接入。</span>
-            <button type="submit" class="button button-primary">发送消息</button>
+            <span class="form-note" id="form-status" role="status">输入消息后即可创建聊天记录。</span>
+            <button type="submit" class="button button-primary" id="send-button">发送消息</button>
           </div>
         </form>
       </section>
