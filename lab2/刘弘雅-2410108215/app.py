@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 import os
 
 import requests
@@ -13,11 +14,37 @@ app.json.ensure_ascii = False
 
 FRONTEND_DIR = str(BASE_DIR / "frontend")
 
+DATA_DIR = BASE_DIR / "data"
+DATA_FILE = DATA_DIR / "messages.json"
+
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 DEEPSEEK_MODEL = "deepseek-chat"
 
-messages = []
-next_id = 1
+
+def load_messages():
+    if not DATA_FILE.exists():
+        return []
+
+    try:
+        with DATA_FILE.open("r", encoding="utf-8") as file:
+            data = json.load(file)
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    if not isinstance(data, list):
+        return []
+
+    return [record for record in data if isinstance(record, dict)]
+
+
+def save_messages():
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with DATA_FILE.open("w", encoding="utf-8") as file:
+        json.dump(messages, file, ensure_ascii=False, indent=2)
+
+
+messages = load_messages()
+next_id = max((int(record.get("id", 0)) for record in messages), default=0) + 1
 
 
 def get_deepseek_reply(message):
@@ -95,6 +122,7 @@ def create_message():
     }
     messages.append(record)
     next_id += 1
+    save_messages()
     return jsonify(record), 201
 
 
@@ -112,6 +140,7 @@ def update_message(message_id):
     for record in messages:
         if record["id"] == message_id:
             record["message"] = str(data["message"]).strip()
+            save_messages()
             return jsonify(record)
 
     return jsonify({"error": "消息不存在"}), 404
@@ -122,6 +151,7 @@ def delete_message(message_id):
     for index, record in enumerate(messages):
         if record["id"] == message_id:
             del messages[index]
+            save_messages()
             return jsonify({"deleted": message_id})
 
     return jsonify({"error": "消息不存在"}), 404
