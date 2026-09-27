@@ -1,11 +1,16 @@
 import os
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
+from openai import OpenAI
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
 
-FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
 messages = []
 next_id = 1
@@ -16,6 +21,24 @@ def find_message(message_id):
         if item["id"] == message_id:
             return item
     return None
+
+
+def request_reply(user_message):
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        return None, (jsonify({"error": "缺少 DEEPSEEK_API_KEY"}), 500)
+    try:
+        client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+        response = client.chat.completions.create(
+            model="deepseek-flash",
+            messages=[{"role": "user", "content": user_message}],
+        )
+        reply = response.choices[0].message.content
+    except Exception:
+        return None, (jsonify({"error": "模型调用失败"}), 502)
+    if not isinstance(reply, str) or not reply.strip():
+        return None, (jsonify({"error": "模型没有返回文本"}), 502)
+    return reply.strip(), None
 
 
 def read_message_text():
@@ -54,7 +77,10 @@ def create_message():
     text, error = read_message_text()
     if error is not None:
         return error
-    record = {"id": next_id, "message": text, "reply": "你好"}
+    reply, error = request_reply(text)
+    if error is not None:
+        return error
+    record = {"id": next_id, "message": text, "reply": reply}
     next_id += 1
     messages.append(record)
     return jsonify(record), 201
