@@ -1,4 +1,6 @@
+import json
 import os
+from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
@@ -9,9 +11,40 @@ load_dotenv()
 app = Flask(__name__, template_folder="frontend", static_folder="frontend", static_url_path="/static")
 app.json.ensure_ascii = False
 
-# 当前阶段只保存在 Flask 进程内存中，重启后记录会清空。
-messages = []
-next_message_id = 1
+DATA_FILE = Path(__file__).resolve().parent / "data" / "messages.json"
+
+
+def load_messages():
+    if not DATA_FILE.exists():
+        return []
+    content = DATA_FILE.read_text(encoding="utf-8")
+    if not content.strip():
+        return []
+    try:
+        stored_messages = json.loads(content)
+    except json.JSONDecodeError as error:
+        raise RuntimeError("data/messages.json 不是有效的 JSON 文件。") from error
+    if not isinstance(stored_messages, list) or any(not isinstance(item, dict) for item in stored_messages):
+        raise RuntimeError("data/messages.json 的格式应为聊天记录对象组成的数组。")
+    return stored_messages
+
+
+# 启动时从 JSON 文件恢复；文件不存在或为空时从空列表开始。
+messages = load_messages()
+existing_ids = [
+    item["id"]
+    for item in messages
+    if isinstance(item.get("id"), int) and not isinstance(item.get("id"), bool)
+]
+next_message_id = max(existing_ids, default=0) + 1
+
+
+def save_messages():
+    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    temporary_file = DATA_FILE.with_suffix(".tmp")
+    serialized = json.dumps(messages, ensure_ascii=False, indent=2) + "\n"
+    temporary_file.write_text(serialized, encoding="utf-8")
+    temporary_file.replace(DATA_FILE)
 
 
 @app.get("/")
@@ -88,8 +121,14 @@ def create_message():
         "message": clean_message,
         "reply": reply,
     }
-    next_message_id += 1
     messages.append(record)
+    try:
+        save_messages()
+    except OSError:
+        messages.pop()
+        return jsonify({"error": "聊天记录写入文件失败，请检查文件权限。"}), 500
+
+    next_message_id += 1
     return jsonify(record), 201
 
 
@@ -112,7 +151,13 @@ def update_message(message_id):
     if record is None:
         return jsonify({"error": "聊天记录不存在。"}), 404
 
+    old_message = record["message"]
     record["message"] = message.strip()
+    try:
+        save_messages()
+    except OSError:
+        record["message"] = old_message
+        return jsonify({"error": "聊天记录写入文件失败，请检查文件权限。"}), 500
     return jsonify(record)
 
 
@@ -123,6 +168,11 @@ def delete_message(message_id):
         return jsonify({"error": "聊天记录不存在。"}), 404
 
     deleted = messages.pop(index)
+    try:
+        save_messages()
+    except OSError:
+        messages.insert(index, deleted)
+        return jsonify({"error": "聊天记录写入文件失败，请检查文件权限。"}), 500
     return jsonify({"message": "聊天记录已删除。", "id": deleted["id"]})
 
 
