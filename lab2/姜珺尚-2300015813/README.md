@@ -1,16 +1,105 @@
 # AI 聊天 Web 应用
 
-基于 HTML、CSS、JavaScript 与 Python Flask 的 AI 聊天 Web 项目。
+基于 HTML、CSS、JavaScript 与 Python Flask 的聊天应用，后端调用 DeepSeek 生成回复，支持多会话和 JSON 文件持久化。
 
 ## 项目功能
 
+- 创建、查看、修改和删除问答记录。
+- 创建、切换、重命名和删除会话。
+- 根据当前会话历史进行多轮对话，各会话上下文独立。
+- 自动保存到本地 JSON 文件，重启后恢复会话及问答。
+- API Key 仅由后端从环境配置读取。
+- 输入、删除确认、加载状态和错误反馈均显示在页面内。
+
 ## 安装依赖
+
+需要 Python 3.10 或更高版本。本项目已在 Windows、Python 3.14 环境运行。以下命令均在本 README 所在的个人项目目录执行。
+
+Windows PowerShell：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+macOS / Linux：
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+```
+
+若本机配置的包镜像不可用，可以在 pip 安装命令后加上 `--index-url https://pypi.org/simple` 使用官方 PyPI。
 
 ## 环境配置
 
+复制 `.env.example` 为同目录的 `.env`，将占位值替换为自己在 DeepSeek 开放平台创建的 Key：
+
+```dotenv
+DEEPSEEK_API_KEY=your_api_key_here
+```
+
+`.env` 被 Git 忽略，不要将真实 Key 写入源码或提交。后端通过 `load_dotenv()` 读取配置，已有同名系统环境变量优先；变更配置后重启 Flask。
+
+后端使用 `https://api.deepseek.com/chat/completions`，模型为 `deepseek-flash`，采用非流式、非思考模式。模型调用需要有效 Key、可用账户余额和网络连接。
+
 ## 启动与访问
 
-## API 用法
+Windows PowerShell：
+
+```powershell
+.\.venv\Scripts\python.exe app.py
+```
+
+macOS / Linux：
+
+```bash
+.venv/bin/python app.py
+```
+
+保持终端运行，浏览器访问 `http://localhost:5001/`。页面、样式、脚本及 API 均由 Flask 提供，不再直接打开 HTML 文件。停止服务使用 `Ctrl+C`。入口使用 Flask 开发服务器和调试模式，适合本机开发。
+
+在页面中创建一个会话后即可发送消息；选择已有会话可以继续追问。修改问题只更新文本，不会重新生成回答。
+
+## 最小 API 测试
+
+保持 Flask 运行，在第二个 PowerShell 终端执行。测试内容不包含 API Key。
+
+```powershell
+curl.exe http://localhost:5001/api/hello
+
+# 保证通过管道发送的 JSON 使用 UTF-8。
+$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+
+# 创建会话，自动取得返回的 ID。
+$createdConversation = '{"title":"API 测试"}' | curl.exe -sS -X POST http://localhost:5001/api/conversations -H "Content-Type: application/json" --data-binary '@-'
+$conversationId = ($createdConversation | ConvertFrom-Json).id
+
+# 向新会话发送消息：预期返回 id、message、reply。
+'{"message":"请用一句话介绍北京大学"}' | curl.exe -sS -X POST "http://localhost:5001/api/conversations/$conversationId/messages" -H "Content-Type: application/json" --data-binary '@-'
+
+# 查看会话列表和当前会话完整记录。
+curl.exe http://localhost:5001/api/conversations
+curl.exe "http://localhost:5001/api/conversations/$conversationId"
+```
+
+请先确认每一步成功；如果响应包含 `error`，应先解决错误再继续。真实模型请求可能需要等待。页面验证可覆盖创建、修改、删除、跨会话切换、继续追问，以及重启后的数据恢复。
+
+## 文件结构
+
+```text
+app.py                    Flask 页面、API、模型调用和持久化
+frontend/index.html       页面结构
+frontend/style.css        页面样式
+frontend/app.js           会话管理与消息交互
+requirements.txt          Python 依赖
+.env.example              配置占位示例
+.gitignore                本地配置、环境和运行数据的忽略规则
+data/conversations.json   运行时自动生成的会话数据
+data/messages.json        升级前数据（如存在则保留为备份）
+```
+
+实际聊天数据和写入临时文件仅保留在本机，不提交 Git。新检出项目会自动创建空数据文件；需要备份聊天时，应在停止服务后自行备份 `data/conversations.json`。
 
 ## 会话和数据持久化
 
