@@ -13,18 +13,10 @@
     </header>
 
     <section id="chat-area" class="chat-area">
-      <!-- 聊天记录显示在这里。以下是一条示例记录，展示每条记录应有的结构 -->
-      <article class="chat-record" data-id="example">
-        <div class="record-body">
-          <div class="record-message">你好，这是一条示例消息</div>
-          <div class="record-reply">后端回复（本阶段暂无）</div>
-        </div>
-        <div class="record-actions">
-          <button class="btn-edit" type="button">修改</button>
-          <button class="btn-delete" type="button">删除</button>
-        </div>
-      </article>
+      <!-- 聊天记录由 app.js 从后端加载并渲染到这里 -->
     </section>
+
+    <div id="status-bar" class="status"></div>
 
     <form id="chat-form" class="chat-input">
       <input type="text" id="message-input" placeholder="输入消息…" autocomplete="off">
