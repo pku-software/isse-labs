@@ -1,3 +1,4 @@
+import json
 import os
 
 from dotenv import load_dotenv
@@ -16,10 +17,37 @@ app.json.ensure_ascii = False
 api_key = os.getenv("DEEPSEEK_API_KEY")
 client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com") if api_key else None
 
-# 聊天记录全部保存在内存中（Flask 重启后数据会丢失）
+# 聊天记录持久化：启动时从 data/messages.json 读入内存，
+# 每次增删改后写回文件，这样 Flask 重启后记录依然存在。
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+DATA_FILE = os.path.join(DATA_DIR, "messages.json")
+
+
+def load_messages():
+    """启动时读取 data/messages.json；文件不存在或内容异常时从空列表开始"""
+    if not os.path.exists(DATA_FILE):
+        return []
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, list):
+            return data
+    except (json.JSONDecodeError, OSError):
+        pass
+    return []
+
+
+def save_messages():
+    """把内存中的聊天记录写回 data/messages.json"""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
+        json.dump(messages, f, ensure_ascii=False, indent=2)
+
+
 # 每条记录格式：{"id": 1, "message": "用户输入", "reply": "后端回复"}
-messages = []
-next_id = 1
+messages = load_messages()
+# 新记录 id 从已有最大 id + 1 开始，避免与已有记录冲突
+next_id = max((m["id"] for m in messages), default=0) + 1
 
 
 def find_message(message_id):
@@ -67,6 +95,7 @@ def create_message():
     record = {"id": next_id, "message": data["message"], "reply": reply}
     messages.append(record)
     next_id += 1
+    save_messages()
     return jsonify(record), 201
 
 
@@ -86,6 +115,7 @@ def update_message(message_id):
     if not data or not data.get("message"):
         return jsonify({"error": "缺少 message 字段"}), 400
     record["message"] = data["message"]
+    save_messages()
     return jsonify(record)
 
 
@@ -96,6 +126,7 @@ def delete_message(message_id):
     if record is None:
         return jsonify({"error": f"ID 为 {message_id} 的记录不存在"}), 404
     messages.remove(record)
+    save_messages()
     return jsonify({"deleted": record})
 
 
