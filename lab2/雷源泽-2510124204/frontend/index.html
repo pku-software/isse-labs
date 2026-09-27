@@ -16,7 +16,13 @@
             <p>连接 Flask API 与 DeepSeek</p>
           </div>
         </div>
-        <span class="connection-status">界面预览</span>
+        <span
+          class="connection-status"
+          id="connection-status"
+          data-state="pending"
+        >
+          正在连接
+        </span>
       </header>
 
       <main class="chat-panel">
@@ -34,22 +40,6 @@
           aria-label="聊天记录"
           aria-live="polite"
         >
-          <article class="message-card" data-message-id="demo">
-            <div class="message-row">
-              <span class="message-author">你</span>
-              <p class="message-text">这是一条用于展示页面布局的示例消息。</p>
-              <div class="message-actions">
-                <button class="text-button" type="button">修改</button>
-                <button class="text-button text-button--danger" type="button">
-                  删除
-                </button>
-              </div>
-            </div>
-            <div class="message-row message-row--reply">
-              <span class="message-author message-author--assistant">AI</span>
-              <p class="message-text">你好</p>
-            </div>
-          </article>
         </section>
       </main>
 

@@ -117,6 +117,24 @@ h1 {
   font-weight: 700;
 }
 
+.connection-status[data-state="online"] {
+  color: var(--accent-strong);
+  background: #e4f3f0;
+  border-color: #bfddd8;
+}
+
+.connection-status[data-state="pending"] {
+  color: #7a5a13;
+  background: #fbf3dc;
+  border-color: #ead59b;
+}
+
+.connection-status[data-state="offline"] {
+  color: var(--danger);
+  background: #f7e7e4;
+  border-color: #ebc4bc;
+}
+
 .chat-panel {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -167,6 +185,10 @@ h1 {
   border-top: 1px solid var(--line);
 }
 
+.message-row--editing {
+  grid-template-columns: 38px minmax(0, 1fr);
+}
+
 .message-author {
   display: grid;
   min-height: 30px;
@@ -196,6 +218,43 @@ h1 {
   gap: 4px;
 }
 
+.empty-state {
+  padding: 52px 20px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.edit-form,
+.delete-confirmation {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.edit-input {
+  min-height: 84px;
+}
+
+.edit-actions,
+.delete-confirmation {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.delete-confirmation {
+  flex-wrap: wrap;
+}
+
+.confirmation-text {
+  margin-right: auto;
+  color: var(--danger);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
 .text-button {
   padding: 6px 8px;
   color: var(--accent-strong);
@@ -218,6 +277,46 @@ h1 {
   background: #f7e7e4;
 }
 
+.secondary-button,
+.save-button,
+.danger-button {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 7px;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.secondary-button {
+  color: var(--ink);
+  background: #ffffff;
+  border: 1px solid #cbd6d2;
+}
+
+.secondary-button:hover {
+  background: #edf2f0;
+}
+
+.save-button {
+  color: #ffffff;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.save-button:hover {
+  background: var(--accent-strong);
+}
+
+.danger-button {
+  color: #ffffff;
+  background: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+.danger-button:hover {
+  background: #9e3c2e;
+}
+
 .composer-area {
   padding: 14px 24px 20px;
   background: var(--surface);
@@ -233,6 +332,10 @@ h1 {
 
 .feedback[data-tone="error"] {
   color: var(--danger);
+}
+
+.feedback[data-tone="success"] {
+  color: var(--accent-strong);
 }
 
 .composer {
@@ -280,6 +383,11 @@ button:focus-visible {
 .send-button:hover {
   background: var(--accent-strong);
   border-color: var(--accent-strong);
+}
+
+.send-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .sr-only {
