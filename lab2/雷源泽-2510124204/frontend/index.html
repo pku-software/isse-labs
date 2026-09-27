@@ -13,7 +13,7 @@
           <span class="brand-mark" aria-hidden="true">AI</span>
           <div>
             <h1>聊天助手</h1>
-            <p>连接 Flask API 与 DeepSeek</p>
+            <p>Flask + DeepSeek 多会话聊天</p>
           </div>
         </div>
         <span
@@ -25,21 +25,40 @@
         </span>
       </header>
 
-      <main class="chat-panel">
-        <div class="panel-heading">
-          <div>
-            <h2>对话</h2>
-            <p>每条消息对应一条独立记录</p>
+      <main class="workspace">
+        <aside class="conversation-sidebar">
+          <div class="sidebar-heading">
+            <div>
+              <p class="sidebar-kicker">会话</p>
+              <h2>聊天记录</h2>
+            </div>
+            <button class="new-conversation-button" id="new-conversation-button" type="button">
+              新建
+            </button>
           </div>
-          <span class="message-count" id="message-count">1 条记录</span>
-        </div>
+          <div
+            class="conversation-list"
+            id="conversation-list"
+            aria-label="会话列表"
+            aria-live="polite"
+          ></div>
+        </aside>
 
-        <section
-          class="message-list"
-          id="message-list"
-          aria-label="聊天记录"
-          aria-live="polite"
-        >
+        <section class="chat-panel">
+          <div class="panel-heading">
+            <div>
+              <h2 id="active-conversation-title">未选择会话</h2>
+              <p id="active-conversation-subtitle">选择或新建一个会话</p>
+            </div>
+            <span class="message-count" id="message-count">0 条消息</span>
+          </div>
+
+          <section
+            class="message-list"
+            id="message-list"
+            aria-label="聊天记录"
+            aria-live="polite"
+          ></section>
         </section>
       </main>
 
@@ -57,10 +76,11 @@
             name="message"
             rows="2"
             maxlength="2000"
-            placeholder="输入消息..."
+            placeholder="选择会话后输入消息..."
+            disabled
             required
           ></textarea>
-          <button class="send-button" id="send-button" type="submit">
+          <button class="send-button" id="send-button" type="submit" disabled>
             发送
           </button>
         </form>
