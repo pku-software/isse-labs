@@ -35,7 +35,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-参照 `.env.example` 在同目录创建本地 `.env`，填入自己的 `DEEPSEEK_API_KEY`。不要提交或分享 `.env`；`.gitignore` 已将其忽略。
+将同目录的 `.env.example` 复制为 `.env`，把其中的 `your_api_key_here` 换成自己的 DeepSeek API Key。不要提交或分享 `.env`；`.gitignore` 已将其忽略。
 
 ## 启动
 
@@ -70,4 +70,10 @@ curl -X POST http://localhost:5001/api/conversations \
   -d '{"title":"测试会话"}'
 ```
 
-创建会话后，从响应中取得实际 `id`，再将其填入 `/api/conversations/<id>/messages`，通过 POST 发送 `{"message":"你好"}`。
+创建会话后，从响应中取得实际 `id`。例如返回 `id` 为 3 时，可继续测试发送消息：
+
+```bash
+curl -X POST http://localhost:5001/api/conversations/3/messages \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"你好"}'
+```
