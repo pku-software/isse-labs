@@ -44,7 +44,7 @@ h2 { margin: 0; font-size: 17px; }
 .section-heading { margin-bottom: 20px; }
 .count { color: #71838d; font-size: 13px; }
 .messages { min-height: 180px; }
-.message-card { border: 1px solid #e0e9e9; border-radius: 14px; overflow: hidden; }
+.message-card { border: 1px solid #e0e9e9; border-radius: 14px; overflow: hidden; margin-bottom: 12px; }
 .message-row { padding: 16px 18px; }
 .assistant-row { background: #f5faf8; border-top: 1px solid #e0e9e9; }
 .label { display: block; margin-bottom: 6px; color: #16826b; font-size: 12px; font-weight: 700; }
@@ -58,6 +58,10 @@ textarea { width: 100%; resize: vertical; padding: 12px; border: 1px solid #cbda
 .composer-footer { margin-top: 12px; }
 .composer-footer p { margin: 0; font-size: 12px; }
 .primary-button { padding: 10px 22px; border: 0; border-radius: 9px; background: #16826b; color: #fff; font-weight: 700; cursor: pointer; }
+.primary-button:disabled, .text-button:disabled { opacity: .55; cursor: wait; }
+.inline-editor { min-width: min(300px, 100%); flex: 1; }
+.empty-state { color: #71838d; text-align: center; padding: 55px 12px; }
+.error { color: #b64b53 !important; }
 
 @media (max-width: 520px) {
   .app-shell { margin: 24px auto; }
