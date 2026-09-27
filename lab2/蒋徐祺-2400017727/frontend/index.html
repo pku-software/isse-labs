@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -9,12 +10,12 @@
   <div class="app">
     <header class="app-header">
       <h1>AI 聊天</h1>
-      <p class="app-subtitle">本页目前只有界面结构，还没有真实交互。</p>
+      <p class="app-subtitle">记录保存在后端内存中，Flask 重启后会清空。</p>
     </header>
 
-    <main id="message-list" class="message-list" aria-live="polite">
-      <!-- 聊天记录由 frontend/app.js 渲染 -->
-    </main>
+    <main id="message-list" class="message-list" aria-live="polite"></main>
+
+    <p id="status" class="status" role="status" hidden></p>
 
     <form id="composer" class="composer" autocomplete="off">
       <input
