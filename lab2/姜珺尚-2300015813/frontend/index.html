@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI 聊天室</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="app.js" defer></script>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
 </head>
 <body>
   <main class="chat-shell">
@@ -15,44 +15,30 @@
         <h1>给想法一个回应。</h1>
         <p class="subtitle">从一个问题开始，记录每一次灵感与交流。</p>
       </div>
-      <span class="status-badge">静态预览</span>
+      <span class="status-badge">演示回复</span>
     </header>
-
     <section class="chat-panel" aria-labelledby="history-title">
       <div class="panel-header">
         <h2 id="history-title">聊天记录</h2>
-        <span class="muted">以下为界面示例</span>
+        <div class="record-actions">
+          <span id="record-count" class="muted">加载中</span>
+          <button id="reload-button" type="button" class="text-button">刷新记录</button>
+        </div>
       </div>
       <div id="messages" class="messages" aria-live="polite">
-        <!-- Static example only; it is not a saved chat record. -->
-        <article class="chat-record">
-          <div class="record-header">
-            <span class="record-label">示例问答</span>
-            <div class="record-actions" aria-label="示例记录操作">
-              <button type="button" class="text-button">修改</button>
-              <button type="button" class="text-button delete-button">删除</button>
-            </div>
-          </div>
-          <div class="message-block user-message">
-            <span class="speaker">你</span>
-            <p>你好，可以介绍一下这个聊天室吗？</p>
-          </div>
-          <div class="message-block assistant-message">
-            <span class="speaker">AI 助手</span>
-            <p>欢迎！这里将展示你的问题与 AI 的回复。</p>
-          </div>
-        </article>
+        <p class="empty-state">正在加载聊天记录…</p>
       </div>
-      <div class="composer">
+      <form id="message-form" class="composer">
         <label for="message-input">写下你的问题</label>
         <textarea id="message-input" name="message" rows="3" placeholder="今天想聊些什么？" aria-describedby="page-status"></textarea>
         <div class="composer-footer">
-          <p id="page-status" role="status">当前仅展示界面，按钮尚未接入交互。</p>
-          <button id="send-button" type="button" class="primary-button">发送消息 <span aria-hidden="true">↗</span></button>
+          <p id="page-status" role="status">正在连接…</p>
+          <button id="send-button" type="submit" class="primary-button">发送消息 <span aria-hidden="true">↗</span></button>
         </div>
-      </div>
+      </form>
+      <noscript><p class="empty-state">请启用 JavaScript 后使用聊天功能。</p></noscript>
     </section>
-    <footer class="page-footer">让每一个问题，都成为新的开始。</footer>
+    <footer class="page-footer">当前回复固定为“你好”；记录仅在本次服务运行期间保留。</footer>
   </main>
 </body>
 </html>

@@ -51,3 +51,15 @@ button:focus-visible, textarea:focus-visible { outline: 3px solid #85b8a4; outli
   .composer-footer { align-items: flex-start; flex-direction: column; }
   .primary-button { align-self: flex-end; }
 }
+
+.chat-record + .chat-record { margin-top: 18px; }
+.message-block p { white-space: pre-wrap; }
+.empty-state { color: #65756f; text-align: center; line-height: 1.8; padding: 38px 12px; }
+.panel-header .record-actions { align-items: center; flex-wrap: wrap; }
+.inline-panel { padding: 18px; border-top: 1px solid #e3e9e4; background: #fafcf9; }
+.inline-panel label { display: block; margin-bottom: 10px; font-size: 13px; font-weight: 600; }
+.inline-panel p { margin: 0; line-height: 1.7; font-size: 14px; }
+.inline-actions { margin-top: 12px; }
+#page-status.is-error { color: #a03c30; }
+button:disabled { cursor: wait; opacity: 0.55; }
+textarea:disabled { opacity: 0.7; }
