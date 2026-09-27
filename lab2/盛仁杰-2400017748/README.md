@@ -31,3 +31,12 @@ python app.py
 - `POST /api/conversations`、`GET /api/conversations`：创建和读取会话。
 - `PATCH /api/conversations/<id>`、`DELETE /api/conversations/<id>`：修改和删除会话。
 - `POST /api/conversations/<id>/messages`：在指定会话中发送消息。
+
+## API 测试示例
+
+```bash
+curl http://localhost:5001/api/hello
+curl http://localhost:5001/api/conversations
+```
+
+项目同时完成了 JSON 文件持久化和多个聊天会话功能。
