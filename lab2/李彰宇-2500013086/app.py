@@ -8,12 +8,27 @@ from openai import OpenAI
 
 load_dotenv(Path(__file__).with_name(".env"))
 
-
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 app.json.ensure_ascii = False
 
-messages = []
+conversations = []
+next_conversation_id = 1
 next_message_id = 1
+
+
+def find_conversation(conversation_id):
+    return next(
+        (item for item in conversations if item["id"] == conversation_id),
+        None,
+    )
+
+
+def conversation_summary(conversation):
+    return {
+        "id": conversation["id"],
+        "title": conversation["title"],
+        "message_count": len(conversation["messages"]),
+    }
 
 
 @app.get("/")
@@ -26,9 +41,76 @@ def hello():
     return jsonify({"message": "你好"})
 
 
-@app.post("/api/messages")
-def create_message():
+@app.post("/api/conversations")
+def create_conversation():
+    global next_conversation_id
+
+    data = request.get_json(silent=True) or {}
+    if not isinstance(data, dict):
+        return jsonify({"error": "请求体必须是 JSON 对象"}), 400
+
+    title = data.get("title", "新对话")
+    if not isinstance(title, str) or not title.strip():
+        return jsonify({"error": "title 不能为空"}), 400
+
+    conversation = {
+        "id": next_conversation_id,
+        "title": title.strip(),
+        "messages": [],
+    }
+    conversations.append(conversation)
+    next_conversation_id += 1
+    return jsonify(conversation), 201
+
+
+@app.get("/api/conversations")
+def list_conversations():
+    return jsonify([conversation_summary(item) for item in conversations])
+
+
+@app.get("/api/conversations/<int:conversation_id>")
+def get_conversation(conversation_id):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify({"error": "会话不存在"}), 404
+    return jsonify(conversation)
+
+
+@app.patch("/api/conversations/<int:conversation_id>")
+def update_conversation(conversation_id):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify({"error": "会话不存在"}), 404
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "请求体必须是 JSON 对象"}), 400
+
+    title = data.get("title")
+    if not isinstance(title, str) or not title.strip():
+        return jsonify({"error": "title 不能为空"}), 400
+
+    conversation["title"] = title.strip()
+    return jsonify(conversation_summary(conversation))
+
+
+@app.delete("/api/conversations/<int:conversation_id>")
+def delete_conversation(conversation_id):
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify({"error": "会话不存在"}), 404
+
+    conversations.remove(conversation)
+    return "", 204
+
+
+@app.post("/api/conversations/<int:conversation_id>/messages")
+def create_conversation_message(conversation_id):
     global next_message_id
+
+    conversation = find_conversation(conversation_id)
+    if conversation is None:
+        return jsonify({"error": "会话不存在"}), 404
 
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
@@ -42,6 +124,13 @@ def create_message():
     if not api_key:
         return jsonify({"error": "服务器未配置 DeepSeek API Key"}), 500
 
+    user_content = message_text.strip()
+    model_messages = [
+        {"role": message["role"], "content": message["content"]}
+        for message in conversation["messages"]
+    ]
+    model_messages.append({"role": "user", "content": user_content})
+
     try:
         client = OpenAI(
             api_key=api_key,
@@ -49,7 +138,7 @@ def create_message():
         )
         completion = client.chat.completions.create(
             model="deepseek-flash",
-            messages=[{"role": "user", "content": message_text.strip()}],
+            messages=model_messages,
             stream=False,
         )
         reply = completion.choices[0].message.content
@@ -59,47 +148,27 @@ def create_message():
         app.logger.error("DeepSeek API 调用失败")
         return jsonify({"error": "DeepSeek API 调用失败，请稍后重试"}), 502
 
-    message = {
+    user_message = {
         "id": next_message_id,
-        "message": message_text.strip(),
-        "reply": reply,
+        "role": "user",
+        "content": user_content,
     }
-    messages.append(message)
     next_message_id += 1
-    return jsonify(message), 201
+    assistant_message = {
+        "id": next_message_id,
+        "role": "assistant",
+        "content": reply,
+    }
+    next_message_id += 1
+    conversation["messages"].extend([user_message, assistant_message])
 
-
-@app.get("/api/messages")
-def list_messages():
-    return jsonify(messages)
-
-
-@app.patch("/api/messages/<int:message_id>")
-def update_message(message_id):
-    message = next((item for item in messages if item["id"] == message_id), None)
-    if message is None:
-        return jsonify({"error": "聊天记录不存在"}), 404
-
-    data = request.get_json(silent=True)
-    if not isinstance(data, dict):
-        return jsonify({"error": "请求体必须是 JSON 对象"}), 400
-
-    message_text = data.get("message")
-    if not isinstance(message_text, str) or not message_text.strip():
-        return jsonify({"error": "message 不能为空"}), 400
-
-    message["message"] = message_text.strip()
-    return jsonify(message)
-
-
-@app.delete("/api/messages/<int:message_id>")
-def delete_message(message_id):
-    message = next((item for item in messages if item["id"] == message_id), None)
-    if message is None:
-        return jsonify({"error": "聊天记录不存在"}), 404
-
-    messages.remove(message)
-    return "", 204
+    return jsonify(
+        {
+            "conversation": conversation_summary(conversation),
+            "user_message": user_message,
+            "assistant_message": assistant_message,
+        }
+    ), 201
 
 
 if __name__ == "__main__":

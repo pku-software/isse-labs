@@ -1,12 +1,19 @@
+const conversationList = document.querySelector("#conversation-list");
+const newConversationButton = document.querySelector("#new-conversation-button");
+const conversationTitle = document.querySelector("#conversation-title");
+const conversationMeta = document.querySelector("#conversation-meta");
+const conversationActions = document.querySelector("#conversation-actions");
+const renameButton = document.querySelector("#rename-button");
+const deleteButton = document.querySelector("#delete-button");
+const inlinePanel = document.querySelector("#inline-panel");
 const messageList = document.querySelector("#message-list");
 const messageForm = document.querySelector("#message-form");
 const messageInput = document.querySelector("#message-input");
-const feedback = document.querySelector("#feedback");
 const sendButton = messageForm.querySelector("button[type='submit']");
+const feedback = document.querySelector("#feedback");
 
-let messages = [];
-let editingId = null;
-let deletingId = null;
+let conversations = [];
+let activeConversation = null;
 
 function setFeedback(text = "", type = "error") {
   feedback.textContent = text;
@@ -16,11 +23,9 @@ function setFeedback(text = "", type = "error") {
 async function requestJson(url, options = {}) {
   const response = await fetch(url, options);
   const data = response.status === 204 ? null : await response.json();
-
   if (!response.ok) {
     throw new Error(data?.error || "请求失败，请稍后重试");
   }
-
   return data;
 }
 
@@ -33,180 +38,241 @@ function createButton(label, className, onClick) {
   return button;
 }
 
-function renderMessages() {
-  messageList.replaceChildren();
-
-  if (messages.length === 0) {
-    const emptyState = document.createElement("p");
-    emptyState.className = "empty-state";
-    emptyState.textContent = "还没有聊天记录，发送第一条消息吧。";
-    messageList.append(emptyState);
+function renderConversationList() {
+  conversationList.replaceChildren();
+  if (conversations.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "sidebar-empty";
+    empty.textContent = "还没有会话";
+    conversationList.append(empty);
     return;
   }
 
-  messages.forEach((item) => {
-    const card = document.createElement("article");
-    card.className = "message-card";
-
-    if (editingId === item.id) {
-      renderEditPanel(card, item);
-    } else if (deletingId === item.id) {
-      renderDeletePanel(card, item);
-    } else {
-      renderMessageCard(card, item);
-    }
-
-    messageList.append(card);
+  conversations.forEach((conversation) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "conversation-item";
+    button.classList.toggle("active", activeConversation?.id === conversation.id);
+    const title = document.createElement("span");
+    title.textContent = conversation.title;
+    const count = document.createElement("small");
+    count.textContent = `${conversation.message_count} 条消息`;
+    button.append(title, count);
+    button.addEventListener("click", () => selectConversation(conversation.id));
+    conversationList.append(button);
   });
 }
 
-function renderMessageCard(card, item) {
-  const content = document.createElement("div");
-  content.className = "message-content";
+function renderMessages() {
+  messageList.replaceChildren();
+  if (!activeConversation) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "从左侧选择一个会话，或创建新会话。";
+    messageList.append(empty);
+    return;
+  }
 
-  const userRole = document.createElement("p");
-  userRole.className = "message-role";
-  userRole.textContent = "你";
-  const userMessage = document.createElement("p");
-  userMessage.textContent = item.message;
-  const assistantRole = document.createElement("p");
-  assistantRole.className = "message-role assistant";
-  assistantRole.textContent = "AI";
-  const assistantReply = document.createElement("p");
-  assistantReply.textContent = item.reply;
-  content.append(userRole, userMessage, assistantRole, assistantReply);
+  if (activeConversation.messages.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "这个会话还是空的，发送第一条消息吧。";
+    messageList.append(empty);
+    return;
+  }
 
-  const actions = document.createElement("div");
-  actions.className = "message-actions";
-  actions.append(
-    createButton("修改", "text-button", () => {
-      editingId = item.id;
-      deletingId = null;
-      setFeedback();
-      renderMessages();
-    }),
-    createButton("删除", "text-button danger", () => {
-      deletingId = item.id;
-      editingId = null;
-      setFeedback();
-      renderMessages();
-    }),
-  );
-
-  card.append(content, actions);
+  activeConversation.messages.forEach((message) => {
+    const article = document.createElement("article");
+    article.className = `chat-message ${message.role}`;
+    const role = document.createElement("p");
+    role.className = "message-role";
+    role.textContent = message.role === "user" ? "你" : "AI";
+    const content = document.createElement("p");
+    content.textContent = message.content;
+    article.append(role, content);
+    messageList.append(article);
+  });
+  messageList.scrollTop = messageList.scrollHeight;
 }
 
-function renderEditPanel(card, item) {
-  const panel = document.createElement("form");
-  panel.className = "edit-panel";
+function renderActiveConversation() {
+  const hasConversation = Boolean(activeConversation);
+  conversationTitle.textContent = hasConversation
+    ? activeConversation.title
+    : "请选择或新建会话";
+  conversationMeta.textContent = hasConversation
+    ? `${activeConversation.messages.length} 条消息`
+    : "不同会话的历史消息彼此独立";
+  conversationActions.hidden = !hasConversation;
+  messageInput.disabled = !hasConversation;
+  sendButton.disabled = !hasConversation;
+  hideInlinePanel();
+  renderConversationList();
+  renderMessages();
+}
 
+function hideInlinePanel() {
+  inlinePanel.hidden = true;
+  inlinePanel.replaceChildren();
+}
+
+function showTitleForm(heading, initialValue, onSubmit) {
+  inlinePanel.replaceChildren();
+  inlinePanel.hidden = false;
+  const form = document.createElement("form");
+  form.className = "inline-form";
   const label = document.createElement("label");
-  label.textContent = "修改消息";
-  const input = document.createElement("textarea");
-  input.value = item.message;
+  label.textContent = heading;
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = initialValue;
   input.required = true;
   label.append(input);
-
   const actions = document.createElement("div");
   actions.className = "inline-actions";
-  actions.append(
-    createButton("取消", "secondary-button", () => {
-      editingId = null;
-      renderMessages();
-    }),
-  );
-  const saveButton = document.createElement("button");
-  saveButton.type = "submit";
-  saveButton.className = "send-button";
-  saveButton.textContent = "保存";
-  actions.append(saveButton);
-
-  panel.addEventListener("submit", async (event) => {
+  actions.append(createButton("取消", "secondary-button", hideInlinePanel));
+  const submit = document.createElement("button");
+  submit.type = "submit";
+  submit.className = "primary-button compact";
+  submit.textContent = "保存";
+  actions.append(submit);
+  form.append(label, actions);
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    saveButton.disabled = true;
+    submit.disabled = true;
     try {
-      const updated = await requestJson(`/api/messages/${item.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input.value }),
-      });
-      messages = messages.map((message) =>
-        message.id === updated.id ? updated : message,
-      );
-      editingId = null;
-      setFeedback("聊天记录已修改。", "success");
-      renderMessages();
+      await onSubmit(input.value);
+      hideInlinePanel();
     } catch (error) {
       setFeedback(error.message);
-      saveButton.disabled = false;
+      submit.disabled = false;
     }
   });
-
-  panel.append(label, actions);
-  card.append(panel);
+  inlinePanel.append(form);
   input.focus();
+  input.select();
 }
 
-function renderDeletePanel(card, item) {
-  const panel = document.createElement("div");
-  panel.className = "delete-panel";
-  const question = document.createElement("p");
-  question.textContent = `确定删除“${item.message}”吗？`;
-
-  const actions = document.createElement("div");
-  actions.className = "inline-actions";
-  const cancelButton = createButton("取消", "secondary-button", () => {
-    deletingId = null;
-    renderMessages();
-  });
-  const deleteButton = createButton("确认删除", "danger-button", async () => {
-    deleteButton.disabled = true;
-    try {
-      await requestJson(`/api/messages/${item.id}`, { method: "DELETE" });
-      messages = messages.filter((message) => message.id !== item.id);
-      deletingId = null;
-      setFeedback("聊天记录已删除。", "success");
-      renderMessages();
-    } catch (error) {
-      setFeedback(error.message);
-      deleteButton.disabled = false;
-    }
-  });
-  actions.append(cancelButton, deleteButton);
-  panel.append(question, actions);
-  card.append(panel);
-}
-
-async function loadMessages() {
+async function loadConversations() {
   try {
-    messages = await requestJson("/api/messages");
-    renderMessages();
+    conversations = await requestJson("/api/conversations");
+    if (conversations.length > 0) {
+      await selectConversation(conversations[0].id);
+    } else {
+      renderActiveConversation();
+    }
   } catch (error) {
     setFeedback(error.message);
   }
 }
 
-messageForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  sendButton.disabled = true;
-  setFeedback();
-
+async function selectConversation(id) {
   try {
-    const created = await requestJson("/api/messages", {
+    activeConversation = await requestJson(`/api/conversations/${id}`);
+    setFeedback();
+    renderActiveConversation();
+  } catch (error) {
+    setFeedback(error.message);
+  }
+}
+
+newConversationButton.addEventListener("click", () => {
+  showTitleForm("新会话名称", "新对话", async (title) => {
+    const created = await requestJson("/api/conversations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: messageInput.value }),
+      body: JSON.stringify({ title }),
     });
-    messages.push(created);
+    conversations.push({ ...created, message_count: 0 });
+    activeConversation = created;
+    setFeedback("会话已创建。", "success");
+    renderActiveConversation();
+  });
+});
+
+renameButton.addEventListener("click", () => {
+  if (!activeConversation) return;
+  showTitleForm("重命名会话", activeConversation.title, async (title) => {
+    const updated = await requestJson(
+      `/api/conversations/${activeConversation.id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      },
+    );
+    activeConversation.title = updated.title;
+    conversations = conversations.map((conversation) =>
+      conversation.id === updated.id ? updated : conversation,
+    );
+    setFeedback("会话已重命名。", "success");
+    renderActiveConversation();
+  });
+});
+
+deleteButton.addEventListener("click", () => {
+  if (!activeConversation) return;
+  inlinePanel.replaceChildren();
+  inlinePanel.hidden = false;
+  const question = document.createElement("p");
+  question.textContent = `确定删除会话“${activeConversation.title}”及其全部消息吗？`;
+  const actions = document.createElement("div");
+  actions.className = "inline-actions";
+  actions.append(createButton("取消", "secondary-button", hideInlinePanel));
+  const confirmDelete = createButton("确认删除", "danger-button", async () => {
+    confirmDelete.disabled = true;
+    try {
+      const deletedId = activeConversation.id;
+      await requestJson(`/api/conversations/${deletedId}`, { method: "DELETE" });
+      conversations = conversations.filter((item) => item.id !== deletedId);
+      activeConversation = null;
+      setFeedback("会话已删除。", "success");
+      if (conversations.length > 0) {
+        await selectConversation(conversations[0].id);
+      } else {
+        renderActiveConversation();
+      }
+    } catch (error) {
+      setFeedback(error.message);
+      confirmDelete.disabled = false;
+    }
+  });
+  actions.append(confirmDelete);
+  inlinePanel.append(question, actions);
+});
+
+messageForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!activeConversation) return;
+
+  sendButton.disabled = true;
+  messageInput.disabled = true;
+  setFeedback("正在等待 AI 回复……", "success");
+  try {
+    const result = await requestJson(
+      `/api/conversations/${activeConversation.id}/messages`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: messageInput.value }),
+      },
+    );
+    activeConversation.messages.push(result.user_message, result.assistant_message);
+    conversations = conversations.map((conversation) =>
+      conversation.id === result.conversation.id
+        ? result.conversation
+        : conversation,
+    );
     messageInput.value = "";
-    setFeedback("消息已发送。", "success");
-    renderMessages();
+    setFeedback("回复已收到。", "success");
+    renderActiveConversation();
   } catch (error) {
     setFeedback(error.message);
   } finally {
     sendButton.disabled = false;
+    messageInput.disabled = false;
     messageInput.focus();
   }
 });
 
-loadMessages();
+loadConversations();
