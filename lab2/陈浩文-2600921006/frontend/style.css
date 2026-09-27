@@ -98,7 +98,7 @@ h2 {
   justify-content: space-between;
 }
 
-.example-label {
+.record-label {
   color: var(--muted);
   font-size: 13px;
 }
@@ -164,11 +164,49 @@ textarea::placeholder {
   margin-top: 12px;
 }
 
-#status-message {
-  flex: 1;
+.status-message {
   color: var(--muted);
   font-size: 14px;
   overflow-wrap: anywhere;
+}
+
+#status-message {
+  flex: 1;
+}
+
+.error {
+  color: #a12f42;
+}
+
+.empty-state {
+  padding: 28px 0;
+}
+
+.question-text,
+.reply-text {
+  white-space: pre-wrap;
+}
+
+.edit-form,
+.delete-confirmation {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.edit-form .record-actions,
+.delete-confirmation .record-actions {
+  margin-top: 10px;
+}
+
+.record-status:not(:empty) {
+  margin-top: 12px;
+}
+
+button:disabled,
+textarea:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 
 .send-button {

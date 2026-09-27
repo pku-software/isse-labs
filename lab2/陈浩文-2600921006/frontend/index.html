@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI 聊天</title>
-  <link rel="stylesheet" href="./style.css">
-  <script src="./app.js" defer></script>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
 </head>
 <body>
   <main class="chat-app">
@@ -16,35 +16,54 @@
 
     <section class="history" aria-labelledby="history-title">
       <h2 id="history-title">聊天记录</h2>
-      <div id="message-list" class="message-list">
-        <article class="message-record" aria-label="示例问答">
-          <div class="record-header">
-            <span class="example-label">示例对话</span>
-            <div class="record-actions">
-              <button class="text-button" type="button" aria-label="修改这条示例记录">修改</button>
-              <button class="text-button delete-button" type="button" aria-label="删除这条示例记录">删除</button>
-            </div>
-          </div>
-          <div class="question">
-            <h3>你</h3>
-            <p>你好，我想了解这个聊天应用。</p>
-          </div>
-          <div class="answer">
-            <h3>AI</h3>
-            <p>这是一条示例回复，用来展示一次问答的样式。</p>
-          </div>
-        </article>
+      <div id="message-list" class="message-list" aria-busy="true">
+        <p id="empty-state" class="empty-state" role="status">正在加载聊天记录……</p>
       </div>
     </section>
 
-    <section class="composer" aria-labelledby="composer-title">
+    <form id="message-form" class="composer" aria-labelledby="composer-title" novalidate>
       <h2 id="composer-title"><label for="message-input">你的消息</label></h2>
       <textarea id="message-input" name="message" rows="3" placeholder="写下你的问题……"></textarea>
       <div class="composer-footer">
-        <p id="status-message" role="status" aria-live="polite"></p>
-        <button id="send-button" class="send-button" type="button">发送</button>
+        <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
+        <button id="send-button" class="send-button" type="submit" disabled>发送</button>
       </div>
-    </section>
+    </form>
   </main>
+
+  <template id="message-template">
+    <article class="message-record">
+      <div class="record-header">
+        <span class="record-label"></span>
+        <div class="record-actions">
+          <button class="text-button edit-start" type="button">修改</button>
+          <button class="text-button delete-button delete-start" type="button">删除</button>
+        </div>
+      </div>
+      <div class="question">
+        <h3>你</h3>
+        <p class="question-text"></p>
+      </div>
+      <div class="answer">
+        <h3>AI</h3>
+        <p class="reply-text"></p>
+      </div>
+      <form class="edit-form" hidden novalidate>
+        <label>修改消息<textarea name="message" rows="3"></textarea></label>
+        <div class="record-actions">
+          <button class="text-button" type="submit">保存</button>
+          <button class="text-button edit-cancel" type="button">取消</button>
+        </div>
+      </form>
+      <div class="delete-confirmation" hidden>
+        <p>确定删除这条记录？删除后无法恢复。</p>
+        <div class="record-actions">
+          <button class="text-button delete-button delete-confirm" type="button">确认删除</button>
+          <button class="text-button delete-cancel" type="button">取消</button>
+        </div>
+      </div>
+      <p class="record-status status-message" role="status" aria-live="polite"></p>
+    </article>
+  </template>
 </body>
 </html>
