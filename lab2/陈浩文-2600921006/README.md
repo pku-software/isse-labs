@@ -4,11 +4,47 @@
 
 ## 项目功能
 
+- 在同一个 Flask 服务中提供聊天页面和 JSON API，浏览器使用相对 URL 与后端通信。
+- 由 Flask 调用 DeepSeek 获得真实 AI 回复，API Key 只由后端读取。
+- 以一次问题和回答为一条记录，支持创建、查看、修改问题和删除记录；修改问题不重新生成已有回答。
+- 支持创建、切换、重命名和删除多个会话，每个会话独立维护聊天历史并支持连续追问。
+- 使用 JSON 文件保存会话与聊天记录，重启 Flask 后可以恢复。
+- 修改输入、删除确认、请求状态和错误提示均显示在页面内。
+
 ## 环境与依赖
+
+使用 Python 3.12、uv 和现代浏览器。所有命令均在包含 `app.py` 的项目根目录执行；以下命令适用于 macOS / Linux。
+
+创建虚拟环境并安装依赖：
+
+```bash
+uv venv --python 3.12
+uv pip install --python .venv/bin/python -r requirements.txt
+```
+
+依赖包括 Flask、python-dotenv 和用于调用 DeepSeek 兼容接口的 OpenAI Python SDK。前端使用原生 HTML、CSS 和 JavaScript，无需 Node.js 或构建步骤。
 
 ## 配置
 
+在 [DeepSeek 开放平台](https://platform.deepseek.com/) 创建 API Key。将项目根目录的 `.env.example` 复制为同目录下的 `.env`，把其中的示例值替换为自己的 Key：
+
+```dotenv
+DEEPSEEK_API_KEY=your_api_key_here
+```
+
+`.env.example` 只保留示例值，供其他使用者了解配置项；真实 `.env` 已由 `.gitignore` 忽略，不应加入版本控制。后端会自动读取与 `app.py` 同目录的 `.env`。修改配置后需要重启 Flask，前端无需配置 API Key。
+
 ## 启动方式
+
+在项目根目录启动本地开发服务：
+
+```bash
+uv run --no-project --python .venv/bin/python python app.py
+```
+
+保持该终端运行，在浏览器访问 [http://localhost:5001/](http://localhost:5001/)。Flask 监听端口 5001 并开启调试模式，同时提供前端页面、静态资源和 API；通过 Flask 地址访问页面即可使用聊天功能。
+
+在左侧建立或选择会话，再输入问题并发送。等待回复后，可继续追问、修改或删除问答记录，也可以重命名或删除当前会话。停止服务时，在运行 Flask 的终端按 `Ctrl+C`；再次运行相同命令即可启动并加载已保存的数据。
 
 ## API 用法
 
@@ -30,6 +66,39 @@
 保留兼容接口 `GET /api/messages`、`POST /api/messages`、`PATCH /api/messages/<message_id>` 和 `DELETE /api/messages/<message_id>`，请求体与对应的会话内接口相同。这些接口固定操作 ID 为 1 的会话；如果该会话已被删除，则返回 404。前端使用带有明确会话 ID 的接口。
 
 `title` 和 `message` 必须是去除首尾空白后非空的字符串，`title` 最多 80 个字符。错误响应统一为 `{"error":"错误说明"}`；无效输入返回 400，资源不存在返回 404，生成回复期间聊天历史改变返回 409，文件保存失败返回 500，模型调用或配置问题返回 502、503 或 504。
+
+## 简单 API 测试
+
+保持 Flask 运行，在另一个终端执行：
+
+```bash
+curl http://localhost:5001/api/hello
+```
+
+预期返回 `{"message":"你好"}`，此请求不调用模型。接着创建一个测试会话：
+
+```bash
+curl -X POST http://localhost:5001/api/conversations \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"API 测试"}'
+```
+
+响应包含新会话的 `id`、`title` 和空的 `messages` 数组。将下面的 `2` 替换为实际返回的会话 ID，再发送问题：
+
+```bash
+chat_conversation_id=2
+curl -X POST "http://localhost:5001/api/conversations/$chat_conversation_id/messages" \
+  -H 'Content-Type: application/json' \
+  -d '{"message":"请用一句话介绍北京大学"}'
+```
+
+成功时返回包含 `id`、`message`、`reply` 的问答记录，`reply` 是模型生成的文本。这一步需要有效的后端 Key、可用余额和网络连接。在同一终端查看该会话的全部内容：
+
+```bash
+curl "http://localhost:5001/api/conversations/$chat_conversation_id"
+```
+
+浏览器刷新后也能看到这个会话和问答记录。请求失败时，读取响应中的 `error` 说明；认证或配置错误需检查本地 `.env` 并重启服务，余额不足需检查平台账户，超时或限流可稍后重试。
 
 ## 会话与 JSON 数据保存
 
