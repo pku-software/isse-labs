@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 聊天助手</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="conversation-sidebar">
+        <header class="brand-block">
+          <p class="eyebrow">AI CHAT</p>
+          <h1>AI 聊天助手</h1>
+          <p>创建不同会话，让每段对话拥有独立上下文。</p>
+        </header>
+
+        <form class="new-conversation-form" id="new-conversation-form">
+          <label for="new-conversation-title">新会话名称</label>
+          <div class="compact-form-row">
+            <input
+              id="new-conversation-title"
+              type="text"
+              maxlength="60"
+              placeholder="例如：旅行计划"
+            >
+            <button type="submit" class="primary-button">创建</button>
+          </div>
+        </form>
+
+        <nav class="conversation-list" id="conversation-list" aria-label="会话列表"></nav>
+      </aside>
+
+      <section class="workspace">
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow">CONVERSATION</p>
+            <h2 id="current-conversation-title">请选择一个会话</h2>
+          </div>
+          <span class="status-badge" id="connection-status">正在连接</span>
+        </header>
+
+        <div class="conversation-controls hidden" id="conversation-controls">
+          <button type="button" class="secondary-button" id="rename-conversation-button">
+            重命名会话
+          </button>
+          <button type="button" class="danger-button" id="delete-conversation-button">
+            删除会话
+          </button>
+        </div>
+        <div class="conversation-panel" id="conversation-panel"></div>
+
+        <div class="message-list" id="message-list" aria-live="polite"></div>
+
+        <form class="composer" id="message-form">
+          <label for="message-input">你的问题</label>
+          <textarea
+            id="message-input"
+            name="message"
+            rows="4"
+            placeholder="先选择会话，再输入想问 AI 的内容……"
+            disabled
+          ></textarea>
+          <div class="composer-footer">
+            <p class="form-feedback" id="form-feedback" role="status">正在加载会话。</p>
+            <button type="submit" class="primary-button" id="send-button" disabled>发送</button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

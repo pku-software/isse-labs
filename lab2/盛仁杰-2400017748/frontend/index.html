@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 聊天助手</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="chat-app">
+      <aside class="sidebar"><button id="new-conversation" type="button">新建会话</button><div id="conversation-list"></div></aside>
+      <section class="chat-panel">
+        <header class="app-header"><h1 id="conversation-title">AI 聊天助手</h1></header>
+        <section class="messages" aria-label="聊天记录"></section>
+        <form class="composer"><label for="message-input">输入消息</label><textarea id="message-input" rows="3" placeholder="请输入你的问题"></textarea><button type="submit">发送</button></form>
+        <p class="status" aria-live="polite"></p>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
