@@ -1,4 +1,10 @@
+import os
+
+import requests
+from dotenv import load_dotenv
 from flask import Flask, jsonify, render_template, request
+
+load_dotenv()
 
 app = Flask(__name__, template_folder="frontend", static_folder="frontend", static_url_path="/static")
 app.json.ensure_ascii = False
@@ -18,6 +24,49 @@ def hello():
     return jsonify({"message": "你好"})
 
 
+def ask_deepseek(message):
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        return None, (jsonify({"error": "服务端尚未配置 DEEPSEEK_API_KEY。"}), 503)
+
+    try:
+        response = requests.post(
+            "https://api.deepseek.com/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "deepseek-flash",
+                "messages": [{"role": "user", "content": message}],
+                "stream": False,
+            },
+            timeout=60,
+        )
+    except requests.Timeout:
+        return None, (jsonify({"error": "DeepSeek 请求超时，请稍后重试。"}), 502)
+    except requests.RequestException:
+        return None, (jsonify({"error": "无法连接 DeepSeek API，请检查网络后重试。"}), 502)
+
+    if response.status_code == 401:
+        return None, (jsonify({"error": "DeepSeek API 鉴权失败，请检查本地密钥配置。"}), 502)
+    if not response.ok:
+        return None, (
+            jsonify({"error": f"DeepSeek API 返回错误（HTTP {response.status_code}）。"}),
+            502,
+        )
+
+    try:
+        payload = response.json()
+        reply = payload["choices"][0]["message"]["content"]
+    except (ValueError, KeyError, IndexError, TypeError):
+        return None, (jsonify({"error": "DeepSeek API 返回了无法识别的响应。"}), 502)
+
+    if not isinstance(reply, str) or not reply.strip():
+        return None, (jsonify({"error": "DeepSeek API 没有返回有效文本。"}), 502)
+    return reply.strip(), None
+
+
 @app.post("/api/messages")
 def create_message():
     global next_message_id
@@ -29,10 +78,15 @@ def create_message():
     if not isinstance(message, str) or not message.strip():
         return jsonify({"error": "message 不能为空，且必须是文本。"}), 400
 
+    clean_message = message.strip()
+    reply, error_response = ask_deepseek(clean_message)
+    if error_response is not None:
+        return error_response
+
     record = {
         "id": next_message_id,
-        "message": message.strip(),
-        "reply": "你好",
+        "message": clean_message,
+        "reply": reply,
     }
     next_message_id += 1
     messages.append(record)
