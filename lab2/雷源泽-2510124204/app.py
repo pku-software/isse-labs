@@ -1,9 +1,17 @@
+import json
+import os
 from pathlib import Path
+import urllib.error
+import urllib.request
 
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
 
 
 FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
+ENV_FILE = Path(__file__).resolve().parent / ".env"
+
+load_dotenv(ENV_FILE)
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
@@ -29,6 +37,50 @@ def parse_message_payload():
         return None, "message 不能为空"
 
     return message.strip(), None
+
+
+def generate_reply(message):
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        return None, ("DEEPSEEK_API_KEY 未配置", 503)
+
+    base_url = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com").rstrip("/")
+    model = os.getenv("DEEPSEEK_MODEL", "deepseek-flash")
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": message}],
+        "stream": False,
+        "thinking": {"type": "disabled"},
+    }
+    api_request = urllib.request.Request(
+        f"{base_url}/chat/completions",
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(api_request, timeout=60) as response:
+            response_data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as error:
+        app.logger.error("DeepSeek HTTP error: %s", error.code)
+        return None, ("DeepSeek 服务暂时不可用，请稍后重试", 502)
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
+        app.logger.error("DeepSeek request failed: %s", type(error).__name__)
+        return None, ("DeepSeek 服务暂时不可用，请稍后重试", 502)
+
+    choices = response_data.get("choices")
+    if not isinstance(choices, list) or not choices:
+        return None, ("DeepSeek 没有返回可用回复", 502)
+
+    reply = choices[0].get("message", {}).get("content")
+    if not isinstance(reply, str) or not reply.strip():
+        return None, ("DeepSeek 没有返回可用回复", 502)
+
+    return reply.strip(), None
 
 
 @app.get("/")
@@ -59,10 +111,15 @@ def create_message():
     if error:
         return jsonify({"error": error}), 400
 
+    reply, api_error = generate_reply(message)
+    if api_error:
+        detail, status_code = api_error
+        return jsonify({"error": detail}), status_code
+
     record = {
         "id": next_message_id,
         "message": message,
-        "reply": "你好",
+        "reply": reply,
     }
     next_message_id += 1
     messages.append(record)
