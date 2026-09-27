@@ -17,12 +17,24 @@
       </div>
       <span class="status-badge">DeepSeek AI</span>
     </header>
+    <div class="workspace">
+      <aside class="conversation-panel" aria-labelledby="conversation-heading">
+        <div class="sidebar-heading">
+          <h2 id="conversation-heading">我的会话</h2>
+          <button id="new-conversation" type="button" class="primary-button">新建</button>
+        </div>
+        <button id="refresh-conversations" type="button" class="text-button">刷新会话列表</button>
+        <div id="conversation-tools"></div>
+        <nav id="conversation-list" aria-label="聊天会话"><p class="muted">正在加载…</p></nav>
+      </aside>
     <section class="chat-panel" aria-labelledby="history-title">
       <div class="panel-header">
-        <h2 id="history-title">聊天记录</h2>
+        <h2 id="history-title">请选择会话</h2>
         <div class="record-actions">
           <span id="record-count" class="muted">加载中</span>
-          <button id="reload-button" type="button" class="text-button">刷新记录</button>
+          <button id="reload-button" type="button" class="text-button" data-needs-conversation>刷新记录</button>
+          <button id="rename-conversation" type="button" class="text-button" data-needs-conversation>重命名</button>
+          <button id="delete-conversation" type="button" class="text-button delete-button" data-needs-conversation>删除会话</button>
         </div>
       </div>
       <div id="messages" class="messages" aria-live="polite">
@@ -30,14 +42,15 @@
       </div>
       <form id="message-form" class="composer">
         <label for="message-input">写下你的问题</label>
-        <textarea id="message-input" name="message" rows="3" placeholder="今天想聊些什么？" aria-describedby="page-status"></textarea>
+        <textarea id="message-input" data-needs-conversation name="message" rows="3" placeholder="今天想聊些什么？" aria-describedby="page-status"></textarea>
         <div class="composer-footer">
           <p id="page-status" role="status">正在连接…</p>
-          <button id="send-button" type="submit" class="primary-button">发送消息 <span aria-hidden="true">↗</span></button>
+          <button id="send-button" data-needs-conversation type="submit" class="primary-button">发送消息 <span aria-hidden="true">↗</span></button>
         </div>
       </form>
       <noscript><p class="empty-state">请启用 JavaScript 后使用聊天功能。</p></noscript>
     </section>
+    </div>
     <footer class="page-footer">回复由 AI 生成，请核实重要信息；聊天记录自动保存。</footer>
   </main>
 </body>
