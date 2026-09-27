@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 聊天 Web 应用</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">AI</span>
+          <div>
+            <h1>聊天助手</h1>
+            <p>连接 Flask API 与 DeepSeek</p>
+          </div>
+        </div>
+        <span class="connection-status">界面预览</span>
+      </header>
+
+      <main class="chat-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>对话</h2>
+            <p>每条消息对应一条独立记录</p>
+          </div>
+          <span class="message-count" id="message-count">1 条记录</span>
+        </div>
+
+        <section
+          class="message-list"
+          id="message-list"
+          aria-label="聊天记录"
+          aria-live="polite"
+        >
+          <article class="message-card" data-message-id="demo">
+            <div class="message-row">
+              <span class="message-author">你</span>
+              <p class="message-text">这是一条用于展示页面布局的示例消息。</p>
+              <div class="message-actions">
+                <button class="text-button" type="button">修改</button>
+                <button class="text-button text-button--danger" type="button">
+                  删除
+                </button>
+              </div>
+            </div>
+            <div class="message-row message-row--reply">
+              <span class="message-author message-author--assistant">AI</span>
+              <p class="message-text">你好</p>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <div class="composer-area">
+        <p
+          class="feedback"
+          id="feedback"
+          role="status"
+          aria-live="polite"
+        ></p>
+        <form class="composer" id="message-form">
+          <label class="sr-only" for="message-input">输入消息</label>
+          <textarea
+            id="message-input"
+            name="message"
+            rows="2"
+            maxlength="2000"
+            placeholder="输入消息..."
+            required
+          ></textarea>
+          <button class="send-button" id="send-button" type="submit">
+            发送
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
