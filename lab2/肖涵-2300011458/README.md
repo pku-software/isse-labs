@@ -19,7 +19,7 @@
 - `role`：`user` 或 `assistant`；
 - `content`：消息正文。
 
-当前 conversation 和 message 保存在 Flask 进程内存中，重启 Flask 后会清空。
+conversation 和 message 持久化在 `data/conversations.json`。文件最外层是 conversation 数组，每个元素包含会话 `id`、`title` 和 `messages` 数组；Flask 启动时读取文件，文件不存在或为空时从空数组开始。每次创建、重命名、删除会话，或创建、修改、删除消息后，Flask 都会写回完整 JSON 文件。
 
 ## 安装与启动
 
@@ -37,3 +37,28 @@
 - `DELETE /api/conversations/<id>/messages/<message_id>`：删除一轮问答。
 
 发送新问题时，Flask 会把当前 conversation 中已有的 `user` 和 `assistant` 消息按顺序组成 DeepSeek `messages` 数组，再追加本次新的 `user` 消息。这样模型可以获得当前会话所需的历史上下文，同时不会混入其他会话的内容。模型回复后，Flask 将本次用户消息和 `assistant` 回复写回当前 conversation。
+
+## 配置与启动
+
+安装依赖：
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+从 `.env.example` 创建个人项目根目录下的 `.env`，并填入自己的 `DEEPSEEK_API_KEY`。真实 `.env` 已通过 `.gitignore` 排除，不应提交或发送到对话中。
+
+启动 Flask：
+
+```bash
+python app.py
+```
+
+然后访问 <http://localhost:5001/>。
+
+## API 测试示例
+
+```bash
+curl.exe http://localhost:5001/api/conversations
+curl.exe -X POST http://localhost:5001/api/conversations/1/messages -H "Content-Type: application/json" -d "{\"message\":\"你好\"}"
+```
