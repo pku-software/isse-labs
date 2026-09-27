@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI 聊天</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="app-header">
+        <span class="eyebrow">LAB 2 · AI CHAT</span>
+        <h1>开始一段对话</h1>
+        <p>在这里提问、查看回复，并管理每一次问答。</p>
+      </header>
+
+      <section class="chat-panel" aria-labelledby="history-title">
+        <div class="section-heading">
+          <h2 id="history-title">聊天记录</h2>
+          <span class="count">静态预览</span>
+        </div>
+
+        <div class="messages" id="messages">
+          <article class="message-card">
+            <div class="message-row">
+              <span class="label">你</span>
+              <p>你好，这个页面可以做什么？</p>
+            </div>
+            <div class="message-row assistant-row">
+              <span class="label">AI</span>
+              <p>这里将显示后端返回的回复。</p>
+            </div>
+            <div class="message-actions">
+              <button type="button" class="text-button">修改</button>
+              <button type="button" class="text-button danger">删除</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="composer-panel" aria-labelledby="composer-title">
+        <h2 id="composer-title">发送消息</h2>
+        <label for="message-input">你的问题</label>
+        <textarea id="message-input" rows="3" placeholder="输入你想问的问题……"></textarea>
+        <div class="composer-footer">
+          <p>当前是页面预览，按钮暂未连接后端。</p>
+          <button type="button" class="primary-button" id="send-button">发送</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

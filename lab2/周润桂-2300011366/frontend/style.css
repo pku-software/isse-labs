@@ -1,0 +1,67 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+  color: #172b3d;
+  background: #f3f7f8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top left, #dcefeb, transparent 42%), #f3f7f8;
+}
+
+button, textarea { font: inherit; }
+
+.app-shell {
+  width: min(780px, calc(100% - 32px));
+  margin: 48px auto;
+}
+
+.app-header { margin-bottom: 28px; }
+.eyebrow { color: #17866f; font-size: 12px; font-weight: 700; letter-spacing: .16em; }
+h1 { margin: 8px 0; font-size: clamp(28px, 5vw, 40px); }
+.app-header p, .composer-footer p { color: #667786; }
+h2 { margin: 0; font-size: 17px; }
+
+.chat-panel, .composer-panel {
+  background: #fff;
+  border: 1px solid #dde8e8;
+  border-radius: 18px;
+  box-shadow: 0 12px 32px #153b3a0a;
+  padding: 24px;
+}
+
+.chat-panel { margin-bottom: 16px; }
+.section-heading, .composer-footer, .message-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.section-heading { margin-bottom: 20px; }
+.count { color: #71838d; font-size: 13px; }
+.messages { min-height: 180px; }
+.message-card { border: 1px solid #e0e9e9; border-radius: 14px; overflow: hidden; }
+.message-row { padding: 16px 18px; }
+.assistant-row { background: #f5faf8; border-top: 1px solid #e0e9e9; }
+.label { display: block; margin-bottom: 6px; color: #16826b; font-size: 12px; font-weight: 700; }
+.message-row p { margin: 0; line-height: 1.6; }
+.message-actions { justify-content: flex-end; padding: 10px 16px; border-top: 1px solid #e0e9e9; }
+.text-button { padding: 6px 8px; border: 0; background: none; color: #167c69; cursor: pointer; }
+.text-button.danger { color: #b64b53; }
+.composer-panel h2 { margin-bottom: 16px; }
+.composer-panel label { display: block; margin-bottom: 8px; font-size: 14px; font-weight: 600; }
+textarea { width: 100%; resize: vertical; padding: 12px; border: 1px solid #cbdada; border-radius: 10px; outline-color: #16826b; }
+.composer-footer { margin-top: 12px; }
+.composer-footer p { margin: 0; font-size: 12px; }
+.primary-button { padding: 10px 22px; border: 0; border-radius: 9px; background: #16826b; color: #fff; font-weight: 700; cursor: pointer; }
+
+@media (max-width: 520px) {
+  .app-shell { margin: 24px auto; }
+  .chat-panel, .composer-panel { padding: 18px; }
+  .composer-footer { align-items: flex-start; flex-direction: column; }
+  .primary-button { width: 100%; }
+}
