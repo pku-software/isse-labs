@@ -13,31 +13,14 @@
         <p>输入消息，开始一次对话。</p>
       </header>
 
-      <section class="message-list" aria-label="聊天记录">
-        <article class="message-card">
-          <div>
-            <p class="message-label">用户</p>
-            <p>这里会显示你的消息。</p>
-          </div>
-          <div class="message-actions">
-            <button type="button">修改</button>
-            <button type="button" class="danger">删除</button>
-          </div>
-        </article>
-        <article class="message-card reply-card">
-          <div>
-            <p class="message-label">AI</p>
-            <p>这里会显示 AI 的回复。</p>
-          </div>
-        </article>
-      </section>
+      <section id="message-list" class="message-list" aria-label="聊天记录"></section>
 
-      <form class="message-form">
+      <form id="message-form" class="message-form">
         <label for="message">消息</label>
         <textarea id="message" name="message" rows="3" placeholder="请输入消息"></textarea>
         <button type="submit">发送</button>
       </form>
-      <p class="status" aria-live="polite">前端交互将在后续实现。</p>
+      <p id="status" class="status" aria-live="polite"></p>
     </main>
     <script src="app.js"></script>
   </body>

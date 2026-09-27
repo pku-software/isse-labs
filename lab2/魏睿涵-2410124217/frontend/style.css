@@ -41,15 +41,15 @@ p {
   background: #e0f2fe;
 }
 
-.reply-card {
-  background: #f3f4f6;
-}
-
 .message-label {
   margin-bottom: 6px;
   color: #475569;
   font-size: 0.875rem;
   font-weight: 700;
+}
+
+.ai-label {
+  margin-top: 20px;
 }
 
 .message-actions {
@@ -87,6 +87,10 @@ button.danger {
   background: #dc2626;
 }
 
+button.secondary {
+  background: #64748b;
+}
+
 button:focus-visible,
 textarea:focus-visible {
   outline: 3px solid #93c5fd;
@@ -96,6 +100,37 @@ textarea:focus-visible {
 .status {
   margin: 16px 0 0;
   color: #64748b;
+}
+
+.status.error {
+  color: #b91c1c;
+}
+
+.empty-state {
+  padding: 20px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  color: #64748b;
+}
+
+.inline-form,
+.confirmation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #bfdbfe;
+}
+
+.inline-form textarea {
+  flex-basis: 100%;
+}
+
+.confirmation span {
+  flex-basis: 100%;
+  font-weight: 700;
 }
 
 @media (max-width: 560px) {
