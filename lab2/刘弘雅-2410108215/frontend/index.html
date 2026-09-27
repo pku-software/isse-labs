@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI 聊天</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="app">
+      <header class="app-header">
+        <h1>AI 聊天</h1>
+        <p>与 AI 进行对话</p>
+      </header>
+
+      <section class="chat-panel" aria-label="聊天记录">
+        <ul id="message-list" class="message-list">
+          <li class="message">
+            <div class="message-content">
+              <p class="message-user">这是一条示例消息</p>
+              <p class="message-reply">这里是回复区域</p>
+            </div>
+            <div class="message-actions">
+              <button type="button" class="edit-button">修改</button>
+              <button type="button" class="delete-button">删除</button>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <footer class="composer">
+        <input id="message-input" type="text" placeholder="输入消息..." autocomplete="off">
+        <button id="send-button" type="button">发送</button>
+      </footer>
+
+      <p id="status" class="status" role="status"></p>
+    </main>
+  </body>
+</html>
