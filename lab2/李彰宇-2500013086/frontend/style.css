@@ -85,6 +85,8 @@ textarea {
 }
 
 .message-content {
+  flex: 1;
+  min-width: 0;
   display: grid;
   gap: 8px;
   line-height: 1.6;
@@ -104,6 +106,7 @@ textarea {
 }
 
 .message-actions {
+  flex: 0 0 auto;
   display: flex;
   gap: 8px;
 }
@@ -162,6 +165,7 @@ textarea {
   padding: 5px;
   color: #3157c8;
   background: transparent;
+  white-space: nowrap;
 }
 
 .text-button.danger {
