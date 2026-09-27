@@ -1,7 +1,46 @@
-from flask import Flask, jsonify
+import os
+
+from flask import Flask, jsonify, request, send_from_directory
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
+
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "frontend")
+
+messages = []
+next_id = 1
+
+
+def find_message(message_id):
+    for item in messages:
+        if item["id"] == message_id:
+            return item
+    return None
+
+
+def read_message_text():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or "message" not in data:
+        return None, (jsonify({"error": "缺少 message"}), 400)
+    text = data["message"]
+    if not isinstance(text, str) or not text.strip():
+        return None, (jsonify({"error": "message 不能为空"}), 400)
+    return text.strip(), None
+
+
+@app.get("/")
+def index():
+    return send_from_directory(FRONTEND_DIR, "index.html")
+
+
+@app.get("/style.css")
+def style_css():
+    return send_from_directory(FRONTEND_DIR, "style.css")
+
+
+@app.get("/app.js")
+def app_js():
+    return send_from_directory(FRONTEND_DIR, "app.js")
 
 
 @app.get("/api/hello")
@@ -11,26 +50,40 @@ def hello():
 
 @app.post("/api/messages")
 def create_message():
-    # TODO: 创建一条聊天记录，reply 暂不接入模型
-    return jsonify({"error": "尚未实现"}), 501
+    global next_id
+    text, error = read_message_text()
+    if error is not None:
+        return error
+    record = {"id": next_id, "message": text, "reply": "你好"}
+    next_id += 1
+    messages.append(record)
+    return jsonify(record), 201
 
 
 @app.get("/api/messages")
 def list_messages():
-    # TODO: 返回全部聊天记录
-    return jsonify({"error": "尚未实现"}), 501
+    return jsonify(messages)
 
 
 @app.patch("/api/messages/<int:message_id>")
 def update_message(message_id):
-    # TODO: 按 id 修改指定聊天记录
-    return jsonify({"error": "尚未实现", "id": message_id}), 501
+    record = find_message(message_id)
+    if record is None:
+        return jsonify({"error": "记录不存在", "id": message_id}), 404
+    text, error = read_message_text()
+    if error is not None:
+        return error
+    record["message"] = text
+    return jsonify(record)
 
 
 @app.delete("/api/messages/<int:message_id>")
 def delete_message(message_id):
-    # TODO: 按 id 删除指定聊天记录
-    return jsonify({"error": "尚未实现", "id": message_id}), 501
+    record = find_message(message_id)
+    if record is None:
+        return jsonify({"error": "记录不存在", "id": message_id}), 404
+    messages.remove(record)
+    return jsonify(record)
 
 
 if __name__ == "__main__":

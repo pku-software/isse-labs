@@ -106,10 +106,44 @@ h1 {
   color: #243126;
 }
 
-.record-actions {
+.record-actions,
+.inline-actions,
+.confirm-panel {
   display: flex;
-  flex-direction: column;
   gap: 8px;
+}
+
+.record-actions {
+  flex-direction: column;
+}
+
+.empty {
+  margin: 0;
+  color: var(--muted);
+}
+
+.inline-editor,
+.confirm-panel {
+  width: 100%;
+}
+
+.inline-editor label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.inline-actions,
+.confirm-panel {
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.inline-actions .feedback,
+.confirm-panel .feedback {
+  margin-right: auto;
 }
 
 button {
@@ -122,10 +156,16 @@ button {
   cursor: pointer;
 }
 
+button.secondary,
 button.danger {
   background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+button.danger {
   color: var(--danger);
-  border: 1px solid #e7c8c8;
+  border-color: #e7c8c8;
 }
 
 .composer {
