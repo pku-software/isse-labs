@@ -1,0 +1,11 @@
+# API key配置文件
+.env
+
+# python自动生成缓存
+__pycache__/ 
+
+# python虚拟环境
+.venv/
+
+# macOS自动生成文件
+.DS_Store
