@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -9,11 +10,44 @@ from openai import OpenAI
 app = Flask(__name__, static_folder="frontend", static_url_path="/frontend")
 app.json.ensure_ascii = False
 load_dotenv(Path(__file__).with_name(".env"))
-messages = []
-next_message_id = 1
-conversations = []
-next_conversation_id = 1
-next_turn_id = 1
+data_file = Path(__file__).with_name("data") / "conversations.json"
+
+
+def load_state():
+    if not data_file.exists():
+        return [], []
+    contents = data_file.read_text(encoding="utf-8")
+    if not contents.strip():
+        return [], []
+
+    state = json.loads(contents)
+    if not isinstance(state, dict):
+        raise ValueError("聊天数据文件的最外层必须是 JSON 对象")
+    stored_messages = state.get("messages", [])
+    stored_conversations = state.get("conversations", [])
+    if not isinstance(stored_messages, list) or not isinstance(stored_conversations, list):
+        raise ValueError("聊天数据文件中的 messages 和 conversations 必须是数组")
+    return stored_messages, stored_conversations
+
+
+def save_state():
+    data_file.parent.mkdir(parents=True, exist_ok=True)
+    state = {"messages": messages, "conversations": conversations}
+    temporary_file = data_file.with_suffix(".tmp")
+    temporary_file.write_text(
+        json.dumps(state, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    temporary_file.replace(data_file)
+
+
+messages, conversations = load_state()
+next_message_id = max((item["id"] for item in messages), default=0) + 1
+next_conversation_id = max((item["id"] for item in conversations), default=0) + 1
+next_turn_id = max(
+    (message["turn_id"] for conversation in conversations for message in conversation["messages"]),
+    default=0,
+) + 1
 
 
 def generate_reply(chat_messages):
@@ -70,6 +104,7 @@ def create_message():
     record = {"id": next_message_id, "message": message, "reply": reply}
     next_message_id += 1
     messages.append(record)
+    save_state()
     return record, 201
 
 
@@ -93,6 +128,7 @@ def update_message(message_id):
         return {"error": "消息不能为空"}, 400
 
     record["message"] = message
+    save_state()
     return record
 
 
@@ -103,6 +139,7 @@ def delete_message(message_id):
         return {"error": "聊天记录不存在"}, 404
 
     messages.remove(record)
+    save_state()
     return {"message": "已删除"}
 
 
@@ -120,6 +157,7 @@ def create_conversation():
     conversation = {"id": next_conversation_id, "title": title.strip(), "messages": []}
     next_conversation_id += 1
     conversations.append(conversation)
+    save_state()
     return conversation, 201
 
 
@@ -153,6 +191,7 @@ def rename_conversation(conversation_id):
         return {"error": "会话标题不能为空"}, 400
 
     conversation["title"] = title
+    save_state()
     return conversation
 
 
@@ -162,6 +201,7 @@ def delete_conversation(conversation_id):
     if conversation is None:
         return {"error": "会话不存在"}, 404
     conversations.remove(conversation)
+    save_state()
     return {"message": "会话已删除"}
 
 
@@ -193,6 +233,7 @@ def create_conversation_message(conversation_id):
         {"turn_id": turn_id, "role": "user", "content": message},
         {"turn_id": turn_id, "role": "assistant", "content": reply},
     ])
+    save_state()
     return {"id": turn_id, "message": message, "reply": reply}, 201
 
 
@@ -213,6 +254,7 @@ def update_conversation_message(conversation_id, turn_id):
         return {"error": "消息不能为空"}, 400
 
     user_message["content"] = message
+    save_state()
     return {"id": turn_id, "message": message}
 
 
@@ -227,6 +269,7 @@ def delete_conversation_message(conversation_id, turn_id):
     conversation["messages"] = [
         item for item in conversation["messages"] if item["turn_id"] != turn_id
     ]
+    save_state()
     return {"message": "已删除"}
 
 
