@@ -1,8 +1,13 @@
+import os
+
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
+from openai import APIConnectionError, APIStatusError, AuthenticationError, OpenAI, RateLimitError
 
 
 app = Flask(__name__, static_folder="frontend")
 app.json.ensure_ascii = False
+load_dotenv(override=True)
 messages = []
 next_message_id = 1
 
@@ -46,7 +51,31 @@ def create_message():
     if error:
         return error
 
-    record = {"id": next_message_id, "message": message, "reply": "你好"}
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        return jsonify(error="未配置 DEEPSEEK_API_KEY"), 503
+
+    try:
+        client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+        completion = client.chat.completions.create(
+            model="deepseek-flash",
+            messages=[{"role": "user", "content": message}],
+        )
+        reply = completion.choices[0].message.content
+        if not reply:
+            return jsonify(error="DeepSeek 未返回可用回复"), 502
+    except AuthenticationError:
+        return jsonify(error="DeepSeek API Key 无效或没有调用权限"), 502
+    except RateLimitError:
+        return jsonify(error="DeepSeek API 请求受限，请检查账户余额或稍后重试"), 429
+    except APIConnectionError:
+        return jsonify(error="无法连接 DeepSeek API，请检查网络连接"), 502
+    except APIStatusError as error:
+        return jsonify(error=f"DeepSeek API 返回错误状态：{error.status_code}"), 502
+    except Exception:
+        return jsonify(error="调用 DeepSeek API 时发生未知错误"), 502
+
+    record = {"id": next_message_id, "message": message, "reply": reply}
     messages.append(record)
     next_message_id += 1
     return jsonify(record), 201
