@@ -68,6 +68,9 @@ textarea {
 
 .message-list {
   min-height: 310px;
+  display: grid;
+  align-content: start;
+  gap: 14px;
 }
 
 .message-card {
@@ -103,6 +106,50 @@ textarea {
 .message-actions {
   display: flex;
   gap: 8px;
+}
+
+.empty-state {
+  margin: auto;
+  padding: 80px 20px;
+  color: #697386;
+  text-align: center;
+}
+
+.edit-panel,
+.delete-panel {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+.edit-panel textarea {
+  min-height: 88px;
+}
+
+.inline-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.secondary-button,
+.danger-button {
+  cursor: pointer;
+  border: 1px solid #cdd5df;
+  border-radius: 9px;
+  padding: 8px 13px;
+  font-weight: 650;
+  background: #ffffff;
+}
+
+.danger-button {
+  border-color: #b93838;
+  color: #ffffff;
+  background: #b93838;
+}
+
+.feedback.success {
+  color: #137a64;
 }
 
 .text-button,
@@ -169,8 +216,18 @@ textarea:focus {
 .text-button:hover,
 .text-button:focus-visible,
 .send-button:hover,
-.send-button:focus-visible {
+.send-button:focus-visible,
+.secondary-button:hover,
+.secondary-button:focus-visible,
+.danger-button:hover,
+.danger-button:focus-visible {
   filter: brightness(0.92);
+}
+
+button:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
 }
 
 @media (max-width: 600px) {
