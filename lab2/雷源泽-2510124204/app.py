@@ -10,14 +10,54 @@ from flask import Flask, jsonify, request, send_from_directory
 
 FRONTEND_DIR = Path(__file__).resolve().parent / "frontend"
 ENV_FILE = Path(__file__).resolve().parent / ".env"
+DATA_DIR = Path(__file__).resolve().parent / "data"
+MESSAGES_FILE = DATA_DIR / "messages.json"
 
 load_dotenv(ENV_FILE)
 
 app = Flask(__name__)
 app.json.ensure_ascii = False
 
-messages = []
-next_message_id = 1
+
+def load_messages():
+    if not MESSAGES_FILE.exists():
+        return []
+
+    try:
+        payload = json.loads(MESSAGES_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        app.logger.error("Could not load messages: %s", type(error).__name__)
+        return []
+
+    if not isinstance(payload, list):
+        app.logger.error("messages.json must contain a JSON array")
+        return []
+
+    records = []
+    for record in payload:
+        if (
+            isinstance(record, dict)
+            and isinstance(record.get("id"), int)
+            and isinstance(record.get("message"), str)
+            and isinstance(record.get("reply"), str)
+        ):
+            records.append(record)
+
+    return records
+
+
+def save_messages():
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    temporary_file = MESSAGES_FILE.with_suffix(".json.tmp")
+    temporary_file.write_text(
+        json.dumps(messages, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    temporary_file.replace(MESSAGES_FILE)
+
+
+messages = load_messages()
+next_message_id = max((record["id"] for record in messages), default=0) + 1
 
 
 def find_message(message_id):
@@ -124,6 +164,14 @@ def create_message():
     next_message_id += 1
     messages.append(record)
 
+    try:
+        save_messages()
+    except OSError as error:
+        messages.remove(record)
+        next_message_id -= 1
+        app.logger.error("Could not save created message: %s", type(error).__name__)
+        return jsonify({"error": "聊天记录保存失败"}), 500
+
     return jsonify(record), 201
 
 
@@ -142,7 +190,16 @@ def update_message(message_id):
     if error:
         return jsonify({"error": error}), 400
 
+    previous_message = record["message"]
     record["message"] = message
+
+    try:
+        save_messages()
+    except OSError as error:
+        record["message"] = previous_message
+        app.logger.error("Could not save updated message: %s", type(error).__name__)
+        return jsonify({"error": "聊天记录保存失败"}), 500
+
     return jsonify(record)
 
 
@@ -152,7 +209,16 @@ def delete_message(message_id):
     if record is None:
         return jsonify({"error": "聊天记录不存在"}), 404
 
+    record_index = messages.index(record)
     messages.remove(record)
+
+    try:
+        save_messages()
+    except OSError as error:
+        messages.insert(record_index, record)
+        app.logger.error("Could not save deleted message: %s", type(error).__name__)
+        return jsonify({"error": "聊天记录保存失败"}), 500
+
     return jsonify({"deleted": message_id})
 
 
