@@ -1,0 +1,126 @@
+:root {
+  color: #1f2937;
+  background: #f3f4f6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.chat-app {
+  display: flex;
+  width: min(760px, calc(100% - 32px));
+  margin: 48px auto;
+  padding: 28px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgb(15 23 42 / 10%);
+}
+
+.sidebar { width: 190px; padding-right: 20px; border-right: 1px solid #e5e7eb; }
+.chat-panel { flex: 1; padding-left: 20px; }
+.sidebar > button { width: 100%; margin-bottom: 16px; }
+.conversation-item { display: flex; gap: 4px; margin-bottom: 8px; }
+.conversation-item button:first-child { flex: 1; overflow: hidden; color: #374151; background: #e5e7eb; text-overflow: ellipsis; white-space: nowrap; }
+.conversation-item.active button:first-child { color: #fff; background: #2563eb; }
+.conversation-item button:last-child { padding: 4px 6px; background: #9ca3af; }
+
+.app-header {
+  margin-bottom: 24px;
+}
+
+.app-header h1,
+.app-header p {
+  margin: 0;
+}
+
+.app-header p {
+  margin-top: 8px;
+  color: #6b7280;
+}
+
+.messages {
+  display: grid;
+  gap: 16px;
+  min-height: 240px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+.message {
+  max-width: 80%;
+  padding: 14px 16px;
+  border-radius: 12px;
+}
+
+.message p {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+}
+
+.user-message {
+  justify-self: end;
+  background: #dbeafe;
+}
+
+.assistant-message {
+  justify-self: start;
+  background: #e5e7eb;
+}
+
+.message-role {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.message-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: #ffffff;
+  background: #2563eb;
+}
+
+.message-actions button {
+  padding: 4px 8px;
+  color: #374151;
+  background: rgb(255 255 255 / 70%);
+}
+
+.composer {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.composer label {
+  font-weight: 600;
+}
+
+textarea {
+  resize: vertical;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.status {
+  min-height: 1.5em;
+  margin: 12px 0 0;
+  color: #6b7280;
+}
