@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 聊天助手</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="chat-app">
+    <header class="chat-header">
+      <h1>AI 聊天助手</h1>
+      <p class="chat-subtitle">Flask + DeepSeek 的最小 AI 聊天应用</p>
+    </header>
+
+    <!-- 聊天记录区域 -->
+    <main class="chat-messages" id="chat-messages">
+      <p class="empty-hint" id="empty-hint">暂无聊天记录，发送第一条消息吧</p>
+    </main>
+
+    <!-- 输入区域 -->
+    <footer class="chat-input-bar">
+      <!-- 页面内状态提示：用于错误反馈、操作确认等，替代浏览器弹窗 -->
+      <div class="status-bar" id="status-bar" hidden></div>
+      <div class="input-row">
+        <input
+          type="text"
+          id="message-input"
+          placeholder="输入消息，按 Enter 或点击“发送”"
+          autocomplete="off"
+        >
+        <button type="button" id="send-button">发送</button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
