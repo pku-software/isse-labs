@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 聊天室</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="chat-app">
+      <header class="app-header">
+        <p class="eyebrow">AI CHAT</p>
+        <h1>和 AI 聊一聊</h1>
+        <p class="subtitle">输入问题，开始一段新的对话。</p>
+      </header>
+
+      <section class="conversation" aria-labelledby="conversation-title">
+        <div class="section-heading">
+          <h2 id="conversation-title">聊天记录</h2>
+          <span class="record-count">0 条记录</span>
+        </div>
+
+        <div id="empty-state" class="empty-state">
+          <p>还没有聊天记录。</p>
+          <p>在下方输入消息后，它会显示在这里。</p>
+        </div>
+        <div id="message-list" class="message-list" aria-live="polite"></div>
+      </section>
+
+      <form id="message-form" class="composer" aria-labelledby="composer-title">
+        <h2 id="composer-title">发送消息</h2>
+        <label for="message-input">想问 AI 什么？</label>
+        <textarea
+          id="message-input"
+          name="message"
+          rows="4"
+          placeholder="例如：用简单的语言解释什么是 REST API"
+        ></textarea>
+        <div class="composer-footer">
+          <p id="status-message" class="status-message" role="status">正在加载聊天记录…</p>
+          <button type="submit" class="primary-button">发送消息</button>
+        </div>
+      </form>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

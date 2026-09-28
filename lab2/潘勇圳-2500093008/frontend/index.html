@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 聊天</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="app">
+      <!-- 左侧：会话列表 -->
+      <aside class="sidebar">
+        <div class="sidebar__header">
+          <h1 class="sidebar__title">AI 聊天</h1>
+          <button
+            class="button button--primary button--small"
+            id="new-conversation"
+            type="button"
+          >
+            新建
+          </button>
+        </div>
+        <ul class="conversation-list" id="conversation-list"></ul>
+        <p class="sidebar__empty" id="conversation-empty">
+          还没有会话，点「新建」开始。
+        </p>
+      </aside>
+
+      <!-- 右侧：当前会话的聊天区，内容由 app.js 调用 Flask 的 API 渲染 -->
+      <section class="main">
+        <header class="main__header">
+          <h2 class="main__title" id="conversation-title">未选择会话</h2>
+          <div class="main__actions" id="conversation-actions"></div>
+        </header>
+
+        <div class="chat" id="chat" aria-label="聊天记录"></div>
+        <p class="empty" id="empty">这个会话还没有消息，发一条试试。</p>
+
+        <form class="composer" id="composer">
+          <input
+            class="composer__input"
+            id="message-input"
+            type="text"
+            name="message"
+            placeholder="输入消息，按回车或点击发送"
+            autocomplete="off"
+            maxlength="500"
+          />
+          <button class="button button--primary" id="send-button" type="submit">
+            发送
+          </button>
+        </form>
+
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
