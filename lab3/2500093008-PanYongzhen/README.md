@@ -21,9 +21,14 @@ GitHub 个人 Fork `Yongzhen23/isse-labs` 保存源码；ACR 根据 Dockerfile �
 - 个人分支：`lab3/2500093008-PanYongzhen`
 - 构建上下文：`/lab3/2500093008-PanYongzhen/`
 - Dockerfile：上下文内的 `Dockerfile`（按控制台字段要求填写）
-- 计划地域：华北 2（北京），尚未创建或验证
-- 仓库、镜像标签和镜像地址：待实际构建时记录
+- 地域：华北 2（北京）
+- ACR 命名空间：`yongzhen23-lab3`
+- 镜像仓库：`lab3-chat`（私有）
+- 镜像标签：`lab3-997873f`
+- 镜像地址：`crpi-5dewksocq9l0lctp.cn-beijing.personal.cr.aliyuncs.com/yongzhen23-lab3/lab3-chat:lab3-997873f`
 - 学生 Push 后手动触发构建；自动构建关闭
+
+ACR 已从个人 GitHub Fork 的上述分支完成云端构建，构建成功，耗时 27 秒。海外机器构建开启，构建缓存未禁用。
 
 ## ECI 配置与验证进度
 
