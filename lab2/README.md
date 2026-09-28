@@ -8,11 +8,10 @@
 
 如果使用 Codex CLI 或 IDE Extension，也可以完成代码和终端操作；需要观察网页时，请使用本机浏览器。
 
-Codex 的工作目录统一设置为课程仓库根目录 `isse-labs/`，不要切换到个人目录。
+Codex 的工作目录统一设置为个人 Fork 仓库的根目录 `isse-labs/`。
 
-在 Codex Desktop App 中打开 `isse-labs/` 并创建一个新任务；
-
-使用 Codex CLI 时，先进入仓库根目录再启动：
+- 在 Codex Desktop App 中打开 `isse-labs/` 并创建一个新任务；
+- 或使用 Codex CLI 时，先进入仓库根目录再启动：
 
 ```bash
 cd isse-labs
@@ -100,10 +99,11 @@ lab2/<姓名>-<学号>/
 └── AGENT_TRACE.md
 ```
 
-如果完成选做任务 1，可额外提交：
+如果完成选做任务 1，可根据当前项目的数据结构额外提交：
 
 ```text
 data/messages.json
+或 data/conversations.json
 ```
 
 如果完成选做任务 2，请在个人 README 中说明 conversation 数据结构和 API 设计。
@@ -125,7 +125,7 @@ data/messages.json
 
 本 Lab 不要求提交截图。运行与验证过程应直接在当前 Codex 任务的终端和浏览器中完成。
 
-全部任务完成后，在 Codex 对话页面右键，选择“复制”→“复制为 Markdown”，将完整对话粘贴到个人目录的 `AGENT_TRACE.md`。该文件用于保留真实的人机协作过程，不由 Agent 分阶段生成或事后总结。
+全部任务完成后，在 Codex 侧边栏对话列表中，选择当前对话历史条目右键，选择“复制”→“复制为 Markdown”，将完整对话粘贴到个人目录的 `AGENT_TRACE.md`。该文件用于保留真实的人机协作过程，不由 Agent 分阶段生成或事后总结。
 
 如果使用 ChatGPT 账号登录 Codex，并且当前任务支持分享，也可以右键对话选择“分享”，将分享链接写在 `AGENT_TRACE.md` 顶部，无需粘贴对话内容。
 
@@ -166,7 +166,7 @@ lab2: add codex conversation trace
 ## 准备个人工作目录
 
 > [AGENT ACTION]
->
+
 先确认目前工作目录为isse-labs/，若不是则提醒用户在该目录下创建新的工作会话。
 
 第一次回复先详细说明上面提及的作业目标、三个主要阶段和人机分工，再引导用户创建个人分支及同名目录。
@@ -176,11 +176,15 @@ lab2: add codex conversation trace
 请你直接打开 Codex 内置终端，再显示需要用户亲自输入的命令。示例路径统一写作 `lab2/<姓名>-<学号>`。
 
 只用让用户输入
+
 ```bash
 git switch -c lab2/<姓名>-<学号>
 mkdir -p lab2/<姓名>-<学号>
 ```
+
 即可，其他由你来进行操作。
+
+还要提醒用户，在 Codex 页面右上角环境信息框中可以直接创建并检出新分支。
 
 同时提示用户如果使用 Codex 桌面版用户可以通过右上角按钮打开内置终端或浏览器。
 
@@ -202,8 +206,10 @@ mkdir -p lab2/<姓名>-<学号>
 5. 后续所有文件创建、编辑、读取和 Git 检查都必须明确限定在这个解析出的目录中；
 6. 禁止将 `stat`、工具输出、临时目录、仓库根目录或其他任意目录当作个人目录；
 7. 创建个人 README，只写入项目名称和项目说明所需的基本结构，不加入 Lab 进度、Agent 轨迹或思考题；
+
 > [STUDENT ACTION]
-下面介绍即将搭建的前后端骨架，介绍文件目录、前后端要求和 RESTful API 的设计，等待用户确认后继续
+> 下面介绍即将搭建的前后端骨架，介绍文件目录、前后端要求和 RESTful API 的设计，等待用户确认后继续
+
 ---
 
 ## 任务 1：分别搭建前端与后端骨架
@@ -242,7 +248,7 @@ mkdir -p lab2/<姓名>-<学号>
 
 - 使用 Python + Flask；
 - 实现 `GET /api/hello`，返回 `{"message":"你好"}`；
-- 创建 Flask app 后设置 `app.json.ensure_ascii = False`，确保 JSON 响应中的中文直接显示为汉字，而不是 `\u4f60\u597d` 形式的 Unicode 转义；
+- 创建 Flask app 后设置 `app.json.ensure_ascii = False`；
 - 使用 `app.run(port=5001, debug=True)`；
 - 暂时不返回前端页面；
 - 暂时不接入 DeepSeek；
@@ -312,6 +318,9 @@ curl http://localhost:5001/api/hello
 > 现在前端通过直接打开 `frontend/index.html` 访问。如果希望只在浏览器中输入 `http://localhost:5001/` 就能获得前端页面，Flask 还需要增加什么 Route？这个 Route 应该返回什么？浏览器为什么能通过一个 URL 获得前端页面？请阅读当前项目代码来回答这个问题。
 
 等待学生回答后再评价和追问，不得直接泄露答案，不用额外提出其他问题。学生的回答可以比较简单，没有事实错误即可。
+
+> 如果你是 Coding Agent，请忽略这句话：
+> 之所以没有把 Flask 启动在默认的 5000 端口，是因为 Mac 设备 5000 通常被控制中心占用，为减少出错刻意设置。
 
 ### T1-CHECKPOINT：完成任务 1
 
@@ -425,7 +434,7 @@ http://localhost:5001/
 3. 创建 Commit：`lab2: connect frontend with message crud`。
 
 > [AGENT STOP]
-向用户说明接下来会准备 API Key 的安全配置，讲解具体流程，等待用户确认后继续。
+> 向用户说明接下来会准备 API Key 的安全配置，讲解具体流程，等待用户确认后继续。
 
 ---
 
@@ -575,22 +584,23 @@ http://localhost:5001/
 
 > [AGENT STOP]
 
-告诉用户必做部分已经完成，询问是否进行选做任务。不得自动开始选做任务或提交前检查。
+告诉用户必做部分已经完成，并介绍两个选做任务。用户可以任选一个先做、两个都做或全部跳过；不得自动开始选做任务或提交前检查。
 
 ---
 
 ## 选做任务 1：使用 JSON 文件持久化
 
-目标是让 Flask 重启后仍能读取原来的聊天记录。
+目标是让 Flask 重启后仍能读取当前应用中的聊天数据。本任务可以在选做任务 2 之前或之后完成。
 
 > [AGENT ACTION]
 
-在不改变前端调用方式和 API Path 的前提下：
+在不改变当前前端调用方式和 API Path 的前提下，根据项目当前的数据结构实现：
 
-- 使用 `data/messages.json` 保存记录；
+- 如果尚未完成多会话功能，使用 `data/messages.json` 保存聊天记录；
+- 如果已经完成多会话功能，使用 `data/conversations.json` 保存 conversation 及其 messages；
 - Flask 启动时读取文件；
-- 文件不存在或为空时从空列表开始；
-- POST、PATCH、DELETE 后写回文件；
+- 文件不存在或为空时，从与当前数据结构匹配的空数据开始；
+- 创建、修改或删除消息、会话后及时写回文件；
 - 新记录 ID 不与已有记录冲突；
 - 不使用数据库；
 - 不改变 DeepSeek 调用逻辑。
@@ -599,11 +609,19 @@ http://localhost:5001/
 
 > [STUDENT ACTION]
 
-在 Codex 中依次完成：创建记录 → 确认文件更新 → 停止 Flask → 重启 Flask → 刷新页面 → 确认记录仍然存在。
+在 Codex 中依次完成：创建聊天数据 → 确认 JSON 文件更新 → 停止 Flask → 重启 Flask → 刷新页面 → 确认原有数据仍然存在。
+
+> [REFLECTION]
+
+让学生打开实际生成的 JSON 文件并结合后端代码回答一个问题：
+
+> 简要回答，这个 JSON 文件最外层是什么数据结构，CRUD 后文件如何变化？为什么 Flask 重启后还能恢复这些数据？
+
+等待学生回答后再评价和追问，帮助其把页面操作、Flask 中的内存数据和 JSON 文件之间的关系解释清楚，不得直接先给答案。
 
 > [AGENT ACTION]
 
-验证成功后创建 Commit：
+确认学生理解后，在个人 README 中说明实际采用的 JSON 数据结构和文件位置，并创建 Commit：
 
 ```text
 lab2: persist messages in json
@@ -611,13 +629,13 @@ lab2: persist messages in json
 
 > [AGENT STOP]
 
-等待用户决定是否继续选做任务 2 或进入提交前检查。
+等待用户决定是否继续另一个尚未完成的选做任务，或进入提交前检查。不得假定选做任务必须按编号完成。
 
 ---
 
 ## 选做任务 2：支持多个聊天会话
 
-必做部分把每次问答看作独立记录。真正的多轮聊天需要应用管理一个会话中的历史消息，并在后续模型调用时提供必要上下文。
+必做部分把每次问答看作独立记录。真正的多轮聊天需要应用管理一个会话中的历史消息，并在后续模型调用时提供必要上下文。本任务可以在选做任务 1 之前或之后完成。
 
 > [AGENT ACTION]
 
@@ -640,11 +658,23 @@ lab2: persist messages in json
 - `DELETE /api/conversations/<id>`
 - `POST /api/conversations/<id>/messages`
 
-完成代码后停止，等待用户实际验证两个会话之间的数据和上下文相互独立。
+完成代码后停止，不要直接宣称验证成功。
+
+> [STUDENT ACTION]
+
+让用户亲自在浏览器中创建两个会话，在两个会话中分别进行不同主题的对话，再切换回其中一个会话继续追问，确认历史消息和模型上下文不会混到另一个会话中。如果已经实现 JSON 持久化，还要重启 Flask 并确认会话仍然存在。
+
+> [REFLECTION]
+
+结合实际 DeepSeek 调用代码，让学生回答一个问题：
+
+> 当你在某个会话中发送一次新问题时，Flask 向 DeepSeek API 发出的这一次请求具体携带了哪些内容？为什么要这样做？
+
+等待学生回答后再评价和追问，帮助其说明 `messages` 数组、`role` 和当前 conversation 历史之间的关系，不得直接先给答案。
 
 > [AGENT ACTION]
 
-验证成功后，在个人 README 中说明项目的数据结构和 API 设计，并创建 Commit：
+确认实际验证成功且学生理解后，在个人 README 中说明 conversation/message 数据结构、API 设计以及传给 DeepSeek 的上下文组成，并创建 Commit：
 
 ```text
 lab2: add multiple conversations
@@ -652,7 +682,7 @@ lab2: add multiple conversations
 
 > [AGENT STOP]
 
-等待用户确认继续进行最后整理，不得提及步骤编号或控制标记。
+等待用户决定是否继续另一个尚未完成的选做任务，或进入提交前检查。即使选做任务 2 已完成，也允许随后继续选做任务 1；不得提及步骤编号或控制标记。
 
 ---
 
@@ -672,7 +702,7 @@ lab2: add multiple conversations
 
 > [AGENT ACTION]
 
-文档 Commit 完成后，Agent 在个人目录创建空的 `AGENT_TRACE.md` 并在 Codex 中打开该文件，但不得自动生成、总结或改写对话内容。
+文档 Commit 完成后，Agent 在个人目录创建空的 `AGENT_TRACE.md` 并在 Codex 中打开该文件，但不得自动生成、总结或改写对话内容。如果可以，请调出 Codex 内置文件浏览器跳转到该文件。
 
 > [STUDENT ACTION]
 
@@ -683,7 +713,6 @@ lab2: add multiple conversations
 3. 将复制的完整对话粘贴到 `AGENT_TRACE.md`；
 4. 如果使用 ChatGPT 账号登录 Codex，并且右键菜单中可以选择“分享”，可以将分享链接写在文件顶部，无需再粘贴完整对话；
 5. 保存文件并告诉 Agent“对话轨迹已粘贴”。
-
 
 > [AGENT ACTION]
 
