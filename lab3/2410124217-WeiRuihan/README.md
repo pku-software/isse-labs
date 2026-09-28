@@ -10,10 +10,13 @@ Dockerfile 使用 `python:3.12-slim`，在 `/app` 中先复制并安装 `require
 
 ## 云端部署记录
 
-- ACR 地域：待配置（计划使用华北 2，北京）
+- ACR 地域：华北 2（北京）
+- ACR 私有镜像仓库：`lab3-chat`
 - ACR 构建分支：`lab3/2410124217-WeiRuihan`
 - ACR 构建上下文：`/lab3/2410124217-WeiRuihan/`
-- 镜像标签：待 ACR 构建后填写
+- Dockerfile：`Dockerfile`
+- 镜像标签：`lab3-e9e1e7c`
+- 自动构建：关闭；海外机器构建：开启
 - ECI 规格、公网地址与访问验证：待部署后填写
 
 本实验完成后，`screenshots/` 将保存 ECI 创建成功和浏览器公网访问的两张原始截图；`AGENT_TRACE.md` 将保存本次真实 Codex 对话轨迹或分享链接。
