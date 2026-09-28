@@ -18,11 +18,15 @@ Lab 2 中的 JSON 会话数据没有迁移。本 Lab 不要求云端持久化，
 
 ## ACR 构建记录
 
-- 地域：待构建时补充
+- 地域：华北 2（北京）
+- 代码源：个人 GitHub Fork `foolyuyu/isse-labs`
 - GitHub 分支：`lab3/2500013175-wangxiaoyu`
 - 构建上下文：`/lab3/2500013175-wangxiaoyu/`
-- Dockerfile：`Dockerfile`
-- 镜像仓库与版本标签：待构建时补充
+- Dockerfile 路径：`/lab3/2500013175-wangxiaoyu/Dockerfile`
+- ACR 命名空间：`isse`
+- 私有镜像仓库：`lab3-chat`
+- 镜像版本标签：`lab3-3da9592`
+- 构建方式：ACR 云端手动构建，已构建成功
 
 ## ECI 部署与验证
 
