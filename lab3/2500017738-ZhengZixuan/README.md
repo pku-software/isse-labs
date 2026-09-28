@@ -13,7 +13,7 @@
 
 Dockerfile 使用 Python 3.12 slim 基础镜像，在 `/app` 安装 `requirements.txt` 中的依赖，再复制 Flask 应用和前端文件。容器通过 Gunicorn 单 worker 监听 `0.0.0.0:5001`。`EXPOSE 5001` 只声明容器预期端口，不会自行创建公网入口。
 
-本 Lab 不要求在本机安装 Docker。ACR 构建规则应指向个人 GitHub Fork 的分支 `lab3/2500017738-ZhengZixuan`，构建上下文设为 `/lab3/2500017738-ZhengZixuan/`，Dockerfile 指向该目录内的 `Dockerfile`。构建成功后记录实际镜像标签与结果。
+本 Lab 不要求在本机安装 Docker。本次使用华北 2（北京）的 ACR 个人版实例，命名空间为 `lab3`，私有镜像仓库为 `chat-app`。代码源是个人 GitHub Fork `Zheng-Matt/isse-labs`；构建分支为 `lab3/2500017738-ZhengZixuan`，构建上下文为 `/lab3/2500017738-ZhengZixuan/`，Dockerfile 文件名为 `Dockerfile`，镜像标签为 `lab3-3919686`。本次构建由学生在控制台确认成功；自动构建关闭，海外机器构建开启。后续代码更新需先推送到该 GitHub 分支，再在 ACR 手动触发构建。
 
 ## ECI 运行配置
 
