@@ -44,14 +44,14 @@ CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--workers", "1", "app:app"]
 
 ---
 
-## ACR 映像檔建置資訊 (待任務 2 填入)
+## ACR 映像檔建置資訊
 - **地域**：華北 2 (北京)
-- **命名空間**：`AvinHsu`
-- **倉庫名稱**：`isse-labs`
+- **程式碼源**：GitHub (`AvinHsu/isse-labs-hw`)
 - **建置分支**：`lab3/2601930020-hsushuoheng`
 - **建置上下文路徑**：`/lab3/2601930020-hsushuoheng/`
 - **Dockerfile 路徑**：`Dockerfile`
-- **映像檔標籤**：待定
+- **映像檔標籤**：`lab3-f7e6edb`
+- **建置狀態**：雲端建置成功 (海外機器建置)
 
 ---
 
