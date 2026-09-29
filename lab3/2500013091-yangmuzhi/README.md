@@ -12,7 +12,17 @@
 
 `Dockerfile` 使用 Python 3.11 安装 `requirements.txt` 中的依赖，复制后端和前端，并以一个 Gunicorn worker 运行 `app:app`，监听 `0.0.0.0:5001`。页面、静态资源与 API 都使用该端口。`.dockerignore` 将本地环境文件、缓存、聊天数据、截图和对话轨迹排除在构建上下文之外。
 
-本实验由 ACR 从个人 GitHub 分支构建镜像，无需在本机安装 Docker。ACR 和 ECI 的实际配置与验证结果将在对应阶段补充。
+本实验由 ACR 从个人 GitHub 分支构建镜像，无需在本机安装 Docker。
+
+## ACR 云端构建
+
+- 代码源：个人 GitHub Fork `dhjx1234/isse-labs`。
+- 构建分支：`lab3/2500013091-yangmuzhi`。
+- 构建上下文目录：`/lab3/2500013091-yangmuzhi/`。
+- Dockerfile 文件名：`Dockerfile`。
+- 构建方式：手动触发；本次构建已由操作者在 ACR 控制台确认成功。
+
+ACR 实例地域、镜像命名空间、仓库名和实际镜像标签待按控制台配置补全。ECI 的实际配置与验证结果将在部署阶段补充。
 
 ## 非敏感检查接口
 
