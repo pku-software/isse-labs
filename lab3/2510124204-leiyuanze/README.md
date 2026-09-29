@@ -85,7 +85,28 @@ ACR 从 GitHub 远端分支拉取代码并构建镜像，再将镜像保存到�
 
 ## ECI 部署与公网验证
 
-待创建 ECI 后补充实际地域、实例名称、规格、镜像地址、端口、环境变量名称、公网访问地址和验证结果。
+- 云服务：阿里云弹性容器实例 ECI
+- 地域与可用区：华北 2（北京），北京可用区 H
+- 实例名称/ID：`eci-2zedish0bzjgnsnhnhgf`
+- 容器组名称：`container-group-1790689154920`
+- 算力规格：经济型，0.25 vCPU、512 MiB
+- 镜像地址：`crpi-saj2ljxashd028dn-vpc.cn-beijing.personal.cr.aliyuncs.com/isse-labs-lab3/isse-labs-lab3:lab3-1454ed6`
+- 容器监听端口：`5001`
+- 环境变量名称：`DEEPSEEK_API_KEY`
+- 公网弹性 IP：`39.105.88.8`
+- 私网 IP：`172.20.99.246`
+- 公网访问地址：`http://39.105.88.8:5001/`
+- 安全组：`sg-2zegaj6071nb2utqs90m`
+- 临时入方向规则：允许来源 `0.0.0.0/0` 访问 TCP `5001/5001`
+
+公网验证结果：
+
+- `GET /api/hello` 返回 `200` 和 `{"message":"你好"}`。
+- `GET /`、`/style.css`、`/app.js` 均返回 `200`。
+- `GET /api/conversations` 返回正常 JSON。
+- 直连 `POST /api/conversations` 返回 `201`，删除测试会话返回 `200`。
+- 学生已在自己的浏览器中访问公网页面，并确认非敏感聊天记录和 DeepSeek 回复正常显示。
+- 验证截图：`screenshots/eci-created.png`、`screenshots/public-page.png`。
 
 ## 安全与数据说明
 
@@ -93,3 +114,6 @@ ACR 从 GitHub 远端分支拉取代码并构建镜像，再将镜像保存到�
 - ECI 运行时通过后端环境变量 `DEEPSEEK_API_KEY` 提供 Key。
 - `.dockerignore` 排除了 `.env`、虚拟环境、缓存、日志、聊天数据和对话轨迹。
 - 本 Lab 未配置云端持久化存储，容器重建后聊天记录可能丢失。
+- 本实验使用公网 HTTP，聊天内容不加密；不要通过该地址发送敏感信息。
+- 公网聊天 API 没有鉴权，知道地址的其他人可能访问或调用后端并消耗 DeepSeek 额度。
+- ECI 验证和 PR 完成后必须删除 ECI，并检查关联 EIP；临时安全组规则也应清理。
