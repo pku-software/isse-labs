@@ -20,15 +20,18 @@ Flask 的 `/` 提供首页，`/static/` 提供前端资源，前端通过同源 
 
 已使用 Flask 测试客户端验证首页、CSS/JavaScript、`/api/hello`、会话和消息 CRUD、无效输入、缺少 Key 时的错误处理、JSON 写入，以及模拟模型回复下的会话上下文隔离。测试使用占位 Key 和模拟 HTTP 响应，未调用真实模型，也未读取 `.env`。Python 语法与 JavaScript 语法检查通过，个人目录 `.env` 和数据目录忽略规则已核验。
 
-本地测试不等于容器或公网验证：尚未实际构建镜像、运行 Linux Gunicorn 或验证真实模型回复，这些留待 ACR 和 ECI 阶段完成。
+本地测试不等于容器或公网验证：学生已报告 ACR 构建成功；ECI 中运行 Gunicorn、真实模型回复和公网访问仍待验证。
 
 ## ACR 与 ECI 实验记录
 
 - 个人 Fork：`Frost-Maple/isse-labs`
 - 个人分支：`lab3/2300015813-jiangjunshang`
-- 计划构建上下文：`/lab3/2300015813-jiangjunshang/`
+- 构建规则上下文：`/lab3/2300015813-jiangjunshang/`
 - Dockerfile：构建上下文内的 `Dockerfile`
-- ACR 地域、仓库、镜像标签和构建结果：尚未操作，后续按实际结果填写。
+- ACR 地域：华北 2（北京），学生已确认。
+- ACR 私有镜像仓库：`frosty-5813/lab3-chat`。
+- 本次规则镜像标签：`lab3-c376f1d`；源码提交 `c376f1d` 已核验推送至个人 Fork。
+- 构建结果：学生在控制台操作后报告构建成功；按实验要求不追加镜像标签列表核验，完整镜像地址待 ECI 选择时记录。
 - ECI 规格、公网地址及运行结果：尚未操作。
 - 运行时变量名称：`DEEPSEEK_API_KEY`，由学生在控制台填写真实值。
 - 公网浏览器验证及两张规定截图：尚未完成。
