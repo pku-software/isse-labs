@@ -29,10 +29,11 @@ Flask 的 `/` 提供首页，`/static/` 提供前端资源，前端通过同源 
 - 构建规则上下文：`/lab3/2300015813-jiangjunshang/`
 - Dockerfile：构建上下文内的 `Dockerfile`
 - ACR 地域：华北 2（北京），学生已确认。
-- ACR 私有镜像仓库：`frosty-5813/lab3-chat`。
+- ACR 私有镜像仓库：`frosty_5813/lab3-chat`。
+- 完整镜像仓库地址：`crpi-jdjoxtkxqfktfsck.cn-beijing.personal.cr.aliyuncs.com/frosty_5813/lab3-chat`（按学生提供的实际地址记录）。
 - 本次规则镜像标签：`lab3-c376f1d`；源码提交 `c376f1d` 已核验推送至个人 Fork。
-- 构建结果：学生在控制台操作后报告构建成功；按实验要求不追加镜像标签列表核验。已知仓库与标签如上，完整 registry 域名尚未提供，不推测填写。
-- ECI：华北 2（北京），经济型；截图可见 0.25 vCPU，内存数值未在截图中显示，待补充。
+- 构建结果：学生在控制台操作后报告构建成功；按实验要求不追加镜像标签列表核验。
+- ECI：华北 2（北京），经济型，0.25 vCPU、512 MiB 内存（学生提供实际规格，截图可见 CPU 和经济型标识）。
 - 实例 ID：`eci-2zegwyd75upj3zrdpz9e`；实际名称：`container-group-1790791891567`。
 - 公网访问地址：`http://59.110.166.124:5001/`。
 - 学生提供的容器日志显示 Gunicorn 23.0.0 监听 `0.0.0.0:5001`，sync worker 已启动。
@@ -42,7 +43,7 @@ Flask 的 `/` 提供首页，`/static/` 提供前端资源，前端通过同源 
 - 两张原始截图已核看，可打开且未发现凭据：`screenshots/eci-created.png`、`screenshots/public-page.png`。
 - PR 与资源清理：尚未完成；提交 PR 后由学生删除本实验 ECI 并核验相关 EIP 释放情况。
 
-本机不要求安装 Docker；镜像构建由 ACR 完成，运行由 ECI 完成。完成代码检查和情境思考题后才进行 Commit、学生 Push 及云端构建。实验末尾由学生保存本次真实对话到 `AGENT_TRACE.md`。
+本机不要求安装 Docker；镜像构建由 ACR 完成，运行由 ECI 完成。代码检查和情境思考题已完成，学生已 Push 用于构建的代码。本次真实对话已由学生导出保存到 `AGENT_TRACE.md`，Agent 保留原始内容并检查常见凭据格式，未发现命中。
 
 ## 公网排错与使用边界
 
