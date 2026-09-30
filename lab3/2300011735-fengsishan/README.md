@@ -30,12 +30,16 @@ python app.py
 
 ## ACR 云端构建
 
-- 地域：待完成 ACR 配置后记录
-- GitHub 仓库：个人 Fork `isse-labs`
+- 地域：华北 2（北京）
+- GitHub 仓库：个人 Fork `SishanFeng/isse-labs`
 - 构建分支：`lab3/2300011735-fengsishan`
 - 构建上下文：`/lab3/2300011735-fengsishan/`
 - Dockerfile：`Dockerfile`
-- 镜像标签：待构建时记录
+- ACR 仓库：私有仓库 `lab3-chat-2300011735`
+- 镜像标签：`lab3-0a714fe`
+- 构建方式：开启海外机器构建，由学生手动触发
+
+ACR 已成功从上述个人分支完成云端构建。后续若修改代码，需要先将新 Commit Push 到个人 Fork，再用新的版本标签重新触发构建。
 
 ## ECI 部署与验证
 
