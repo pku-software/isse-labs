@@ -24,8 +24,12 @@ Key 仅由后端在运行时读取 `DEEPSEEK_API_KEY` 环境变量。ECI 部署�
 - 分支：`lab3/2500013167-WangPeiyuan`。
 - 构建上下文：`/lab3/2500013167-WangPeiyuan/`。
 - Dockerfile：上下文中的 `Dockerfile`。
-- 计划地域：华北 2（北京），实际创建后补充。
-- 仓库、镜像标签和构建结果：待实际操作后记录。
+- 实际地域：华北 2（北京）。
+- ACR 命名空间：countlessbugs-lab3；私有仓库：lab3-wangpeiyuan。
+- 镜像标签：lab3-5ce69cf；对应应用提交：5ce69cf。
+- 构建方式：海外机器构建，关闭代码变更自动构建，手动触发。
+- 构建结果：学生已在 ACR 构建页确认成功；具体镜像地址待 ECI 选择时记录。
+- 更新流程：本地修改、Commit、Push 到个人分支，再手动触发 ACR 构建。
 
 ## ECI 配置与访问验证
 
