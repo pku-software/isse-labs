@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 聊天助手</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="conversation-sidebar" aria-label="会话管理">
+        <div class="sidebar-heading">
+          <p class="eyebrow">AI CHAT</p>
+          <h1>对话列表</h1>
+        </div>
+
+        <form id="conversation-form" class="new-conversation-form">
+          <label for="conversation-title">新会话名称</label>
+          <div class="compact-form-row">
+            <input
+              id="conversation-title"
+              type="text"
+              maxlength="60"
+              placeholder="例如：校园生活"
+            >
+            <button class="sidebar-primary-button" type="submit">新建</button>
+          </div>
+        </form>
+
+        <nav id="conversation-list" class="conversation-list" aria-label="会话列表">
+          <p class="sidebar-empty">正在加载会话……</p>
+        </nav>
+      </aside>
+
+      <section class="chat-app">
+        <header class="app-header">
+          <div>
+            <p class="eyebrow">CURRENT CONVERSATION</p>
+            <h2 id="current-conversation-title">请选择会话</h2>
+            <p class="subtitle">同一会话中的历史消息会作为模型上下文</p>
+          </div>
+          <span class="status-badge">服务已连接</span>
+        </header>
+
+        <section id="message-list" class="message-list" aria-label="聊天记录">
+          <p class="empty-state">请先创建或选择一个会话。</p>
+        </section>
+
+        <form id="message-form" class="composer" aria-label="发送消息">
+          <label for="message-input">输入消息</label>
+          <div class="composer-row">
+            <textarea
+              id="message-input"
+              name="message"
+              rows="3"
+              placeholder="在当前会话中继续提问……"
+              disabled
+            ></textarea>
+            <button id="send-button" class="primary-button" type="submit" disabled>
+              发送
+            </button>
+          </div>
+          <p id="page-feedback" class="page-feedback" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+# 默认排除所有文件，只允许以下运行文件进入构建上下文。
+# .env、虚拟环境、聊天数据、截图、对话轨迹和 Git 文件均不发送给构建器。
+**
+!requirements.txt
+!app.py
+!frontend/
+!frontend/index.html
+!frontend/style.css
+!frontend/app.js
