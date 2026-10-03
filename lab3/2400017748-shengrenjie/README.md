@@ -21,4 +21,12 @@ ACR 从个人 GitHub Fork 的 `lab3/2400017748-shengrenjie` 分支，以 `/lab3/
 
 ## ECI 实验记录
 
-待部署并验证后填写实际规格、公网访问结果和资源清理记录。
+- 地域：华北 2（北京），北京可用区 H；按量付费、经济型，0.25 vCPU / 0.5 GiB
+- 实例 ID：`eci-2zedish0bzjikrugpqhh`；容器组名称：`container-group-1791011410248`
+- 镜像：`isse-lab/isse-lab:lab3-ad3ad7e`；Gunicorn 监听 TCP 5001
+- 运行时环境变量名称：`DEEPSEEK_API_KEY`，由本人在 ECI 控制台设置，值不记录
+- 公网 IP：`182.92.0.189`；访问地址：`http://182.92.0.189:5001/`
+- 实例截图：`screenshots/eci-created.png`
+- Agent 从公网检查：首页、`/style.css`、`/app.js`、`/api/hello`、`/api/conversations` 均返回 HTTP 200
+
+浏览器聊天验证、风险说明和实例清理结果待完成后记录。
