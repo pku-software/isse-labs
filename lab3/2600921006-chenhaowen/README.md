@@ -63,7 +63,9 @@ uv run --no-project --python .venv/bin/python gunicorn --workers 1 --bind 127.0.
 
 源码仓库为个人 Fork `HaoWen46/isse-labs`，构建分支为 `lab3/2600921006-chenhaowen`，构建上下文为 `/lab3/2600921006-chenhaowen/`，Dockerfile 文件名为 `Dockerfile`。本次构建对应源码提交 `7d7703d`，指导配置的镜像标签为 `lab3-7d7703d`，开启海外机器构建并关闭自动构建；代码更新后需先 Commit、Push，再手动点击“立即构建”。
 
-2026-10-04，学生在 ACR 控制台确认构建成功，并提供镜像仓库名 `lab-3`。本次指导地域为华北 2（北京）；完整镜像地址、实际地域和选用的版本将在 ECI 选择镜像时补充。ACR 的构建机器负责执行 Dockerfile，镜像仓库负责保存构建结果。仅更新本说明不需要重新构建应用镜像。
+2026-10-04，学生在 ACR 控制台确认构建成功。随后从实际控制台核实：镜像仓库为 `haowen46/lab3-chat`，位于华北 2（北京），类型为私有。ACR 的构建机器负责执行 Dockerfile，镜像仓库负责保存构建结果。仅更新本说明不需要重新构建应用镜像。
+
+公网镜像仓库地址为 `crpi-qa9h3r7rc8yih8od.cn-beijing.personal.cr.aliyuncs.com/haowen46/lab3-chat`，专有网络地址为 `crpi-qa9h3r7rc8yih8od-vpc.cn-beijing.personal.cr.aliyuncs.com/haowen46/lab3-chat`。ECI 选择镜像时使用实际仓库名 `lab3-chat`，并选择对应的构建版本。
 
 ECI 实例配置、公网访问与资源释放记录将在实际操作和验证后补充。
 
