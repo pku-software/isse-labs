@@ -67,7 +67,15 @@ uv run --no-project --python .venv/bin/python gunicorn --workers 1 --bind 127.0.
 
 公网镜像仓库地址为 `crpi-qa9h3r7rc8yih8od.cn-beijing.personal.cr.aliyuncs.com/haowen46/lab3-chat`，专有网络地址为 `crpi-qa9h3r7rc8yih8od-vpc.cn-beijing.personal.cr.aliyuncs.com/haowen46/lab3-chat`。ECI 选择镜像时使用实际仓库名 `lab3-chat`，并选择对应的构建版本。
 
-ECI 实例配置、公网访问与资源释放记录将在实际操作和验证后补充。
+2026-10-04，学生提供的 ECI 控制台原始截图显示实例 `eci-2ze0ipfu87frugxylvnv` 中的 `container-1` 为“运行中”，重启次数为 0；所用镜像为 `crpi-qa9h3r7rc8yih8od-vpc.cn-beijing.personal.cr.aliyuncs.com/haowen46/lab3-chat:lab3-7d7703d`。截图保存在 [screenshots/eci-created.png](screenshots/eci-created.png)。
+
+学生提供的弹性公网 IP 为 `39.106.108.253`，应用访问地址为 [http://39.106.108.253:5001/](http://39.106.108.253:5001/)。初次公网连接超时，控制台的入方向规则只允许 TCP 22、TCP 3389 和 ICMP。学生随后添加了允许 TCP 5001、来源 `0.0.0.0/0` 的入方向规则。
+
+2026-10-04，Agent 通过该公网 IP 实际检查 `/`、`/static/app.js`、`/static/style.css`、`/api/hello` 和 `/api/conversations`，均获得 HTTP 200 且内容符合预期；健康接口返回 `{"message":"你好"}`。此检查未调用模型。学生浏览器中的真实模型回复、页面操作及第二张截图尚待验证。
+
+本实例用于短时 HTTP 演示：聊天内容在浏览器与实例之间未加密，聊天 API 无鉴权，其他人可通过公网地址调用后端并消耗模型额度。`DEEPSEEK_API_KEY` 仅由后端在运行时读取，不进入前端、镜像或 Git。测试仅使用非敏感内容，提交 PR 后由学生删除本实验 ECI，并核实关联 EIP 是否也已释放。
+
+ECI 容器组规格、学生浏览器验证与最终资源释放记录将在取得实际信息并验证后补充。
 
 ## 参考资料
 
