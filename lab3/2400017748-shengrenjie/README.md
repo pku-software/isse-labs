@@ -8,6 +8,17 @@ ACR 从个人 GitHub Fork 的 `lab3/2400017748-shengrenjie` 分支，以 `/lab3/
 
 `.dockerignore` 排除本地环境变量文件、聊天数据、对话轨迹、截图和缓存。真实 Key 只由本人在 ECI 容器运行时设置为环境变量，不进入源码、GitHub 或镜像。聊天数据写入容器内 `data/`，本实验不提供云端持久化。
 
-## ACR 与 ECI 实验记录
+## ACR 构建记录
 
-待完成云端构建、ECI 部署及浏览器验证后填写实际地域、仓库、镜像标签、规格、公网访问结果和资源清理记录。
+- 地域：华北 2（北京）
+- 私有镜像仓库：`isse-lab/isse-lab`
+- 代码源：个人 GitHub Fork `Dranix123/isse-labs`
+- 构建分支：`lab3/2400017748-shengrenjie`
+- 构建上下文：`/lab3/2400017748-shengrenjie/`
+- Dockerfile 文件名：`Dockerfile`
+- 镜像标签：`lab3-ad3ad7e`
+- 构建 ID：`7c2f6eb8-70e8-4183-8409-0316070b9e94`；ACR 构建页显示成功
+
+## ECI 实验记录
+
+待部署并验证后填写实际规格、公网访问结果和资源清理记录。
