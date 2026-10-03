@@ -61,7 +61,11 @@ uv run --no-project --python .venv/bin/python gunicorn --workers 1 --bind 127.0.
 
 ## 云端构建与部署
 
-源码仓库为个人 Fork `HaoWen46/isse-labs`，构建分支为 `lab3/2600921006-chenhaowen`，构建上下文为 `/lab3/2600921006-chenhaowen/`，Dockerfile 位于该目录中。代码需要先 Push 到此分支，ACR 才能构建对应版本。ACR 与 ECI 的实际地域、镜像地址、版本标签、实例配置及验证记录将在实际操作后补充。
+源码仓库为个人 Fork `HaoWen46/isse-labs`，构建分支为 `lab3/2600921006-chenhaowen`，构建上下文为 `/lab3/2600921006-chenhaowen/`，Dockerfile 文件名为 `Dockerfile`。本次构建对应源码提交 `7d7703d`，指导配置的镜像标签为 `lab3-7d7703d`，开启海外机器构建并关闭自动构建；代码更新后需先 Commit、Push，再手动点击“立即构建”。
+
+2026-10-04，学生在 ACR 控制台确认构建成功，并提供镜像仓库名 `lab-3`。本次指导地域为华北 2（北京）；完整镜像地址、实际地域和选用的版本将在 ECI 选择镜像时补充。ACR 的构建机器负责执行 Dockerfile，镜像仓库负责保存构建结果。仅更新本说明不需要重新构建应用镜像。
+
+ECI 实例配置、公网访问与资源释放记录将在实际操作和验证后补充。
 
 ## 参考资料
 
