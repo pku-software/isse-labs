@@ -30,4 +30,15 @@ ACR 使用本目录作为构建上下文，按 `Dockerfile` 从 `python:3.11-sli
 
 本地代码更新后，要先 Commit 并 Push 到上述 GitHub 分支，再手动触发 ACR 新构建。只有本 README 等文档变化时，无需为旧代码重新构建镜像。
 
-ECI 配置与公网验证结果将在对应实验步骤完成后补充。
+## ECI 运行配置与验证
+
+- 地域：华北 2（北京），与 ACR 相同。
+- 付费模式与实例：按量付费、普通实例、经济型，`0.25 vCPU / 0.5 GiB`。
+- 实例 ID：`eci-2zedrpae4o9xh88vk2jj`；镜像为本次 ACR 私有仓库的 `lab3-74308eb` 标签。
+- 一个容器，使用 Dockerfile 中的默认 Gunicorn 启动命令，监听 `0.0.0.0:5001`。
+- 容器运行时环境变量名称：`DEEPSEEK_API_KEY`。Key 值由学生在控制台填写，不记录在此处或截图中。
+- 网络：使用北京地域的 VPC、交换机与默认安全组，自动创建 EIP。浏览器访问方式为 `http://<该实例公网IP>:5001/`。
+
+Agent 从公网检查了 `/`、`/static/app.js`、`/static/style.css`、`/api/hello` 和 `/api/messages`，均返回 HTTP 200；检查问答列表接口时未读取聊天正文。学生的浏览器截图显示页面加载以及模型回复；学生另行报告已亲自完成修改和删除问答测试。截图分别保存在 `screenshots/eci-created.png` 和 `screenshots/public-page.png`，后者含本次公网地址和端口。
+
+本实验公网入口为 HTTP，聊天内容在浏览器与服务之间不加密。公开 API 没有鉴权，知道地址的人可能调用模型并消耗实验额度。只用非敏感内容演示，不作为正式服务部署。完成 PR 后，学生须删除本次 ECI 实例并核对自动创建的 EIP 是否仍独立计费；实验 Key 建议随后废除。
