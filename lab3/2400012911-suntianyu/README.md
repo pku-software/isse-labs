@@ -19,4 +19,15 @@ ACR 使用本目录作为构建上下文，按 `Dockerfile` 从 `python:3.11-sli
 
 真实 Key 仅在 ECI 容器运行时以 `DEEPSEEK_API_KEY` 环境变量设置。`.env`、本地虚拟环境、聊天数据和对话轨迹都被 `.dockerignore` 排除在构建上下文之外；`.env` 也被 Git 忽略。`.env.example` 只有占位值。
 
-ACR 构建信息、ECI 配置与公网验证结果将在对应实验步骤完成后补充。
+## ACR 云端构建
+
+- 地域：华北 2（北京），个人版实例。
+- 私有镜像仓库：`binwei114/isse-labs`。
+- GitHub 代码源：个人 Fork `binwei114/isse-labs` 的 `lab3/2400012911-suntianyu` 分支。
+- 构建上下文：`/lab3/2400012911-suntianyu/`；Dockerfile 文件名：`Dockerfile`。
+- 构建规则标签：`lab3-74308eb`；关闭自动构建，手动点击“立即构建”。
+- 先开启海外机器构建；学生已在 ACR 构建页确认本次构建成功。
+
+本地代码更新后，要先 Commit 并 Push 到上述 GitHub 分支，再手动触发 ACR 新构建。只有本 README 等文档变化时，无需为旧代码重新构建镜像。
+
+ECI 配置与公网验证结果将在对应实验步骤完成后补充。
