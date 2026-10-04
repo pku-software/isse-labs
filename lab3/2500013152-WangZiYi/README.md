@@ -47,14 +47,14 @@
 | 个人 Fork | `atribert/isse-labs` |
 | 构建分支 | `lab3/2500013152-WangZiYi` |
 | 构建上下文 | `/lab3/2500013152-WangZiYi/` |
-| Dockerfile | 个人目录中的 `Dockerfile`，具体字段按页面路径约定填写 |
+| Dockerfile 文件名 | `Dockerfile`，相对于上述个人目录构建上下文 |
 | 地域 | 华北 2（北京），`cn-beijing` |
 | ACR 命名空间 | `atribert` |
 | 私有镜像仓库 | `isse-lab3` |
-| 规则镜像标签 | `lab3-8d20293`（按本次指导设置，ECI 选择时确认） |
+| 规则镜像标签 | `lab3-8d20293`，已由 ECI 实际镜像地址确认 |
 | 构建方式 | GitHub 代码源；按指导开启海外机器构建，关闭自动构建，手动立即构建 |
 | 构建结果 | 学生报告构建成功 |
-| 完整镜像地址 | 待 ECI 选择镜像时补记 |
+| 完整镜像地址 | `crpi-q7r57z4583k13o50-vpc.cn-beijing.personal.cr.aliyuncs.com/atribert/isse-lab3:lab3-8d20293` |
 
 本实验由 ACR 在云端构建，不要求本地安装 Docker 或执行 Docker 构建、登录和推送。
 
