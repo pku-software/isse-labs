@@ -1,0 +1,15 @@
+.env
+.env.*
+.git
+.venv/
+venv/
+env/
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+data/
+**/*.log
+AGENT_TRACE.md
+screenshots/
+README.md
+.gitignore
