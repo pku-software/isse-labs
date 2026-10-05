@@ -34,3 +34,16 @@ python app.py
 - 构建方式：海外机器构建开启，自动构建关闭，手动点击“立即构建”
 
 具体镜像仓库地址在创建 ECI、选择“我的镜像”时补记。
+
+## ECI 部署与验证
+
+- 地域：华北 2（北京）
+- 实例类型：普通实例、经济型算力
+- 公网 IP：`101.200.60.217`
+- 端口：`5001`，安全组放行 `5001/TCP`
+- 环境变量：`DEEPSEEK_API_KEY`，仅在 ECI 容器运行时设置
+- 镜像版本：`lab3-1983d95`
+- 验证结果：`/`、`/api/hello`、`/api/conversations` 均返回 HTTP 200
+- 截图：`screenshots/eci-created.png`、`screenshots/public-page.png`
+
+本实验公网入口使用 HTTP 且聊天 API 无鉴权，测试完成后需删除 ECI 并核对 EIP 是否已释放。
