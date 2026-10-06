@@ -16,7 +16,17 @@
 
 ## ACR 构建
 
-完成 ACR 构建后补充地域、仓库、分支、构建上下文和镜像标签。
+- 地域：华北 2（北京）
+- ACR 命名空间：`suyingrui-lab3`
+- 私有镜像仓库：`lab3-chat`
+- GitHub 代码源：`suyingrui2024/isse-labs`
+- 构建分支：`lab3/2310306221-suyingrui`
+- 构建上下文：`/lab3/2310306221-suyingrui/`
+- Dockerfile：`Dockerfile`
+- 镜像标签：`lab3-ea7db05`
+- 构建方式：关闭自动构建，手动触发 ACR 云端构建
+
+本地代码更新后，需要先 Commit 并 Push 到上述个人 GitHub 分支，再触发新的 ACR 构建并使用新的镜像标签。
 
 ## ECI 部署与验证
 
