@@ -11,12 +11,17 @@ Dockerfile 使用 `python:3.12-slim`，在 `/app` 中先复制并安装 `require
 ## 云端部署记录
 
 - ACR 地域：华北 2（北京）
-- ACR 私有镜像仓库：`lab3-chat`
+- ACR 私有镜像仓库：`isse-lab3/lab3-chat`
 - ACR 构建分支：`lab3/2410124217-WeiRuihan`
 - ACR 构建上下文：`/lab3/2410124217-WeiRuihan/`
 - Dockerfile：`Dockerfile`
 - 镜像标签：`lab3-e9e1e7c`
 - 自动构建：关闭；海外机器构建：开启
-- ECI 规格、公网地址与访问验证：待部署后填写
+- ECI 地域与算力类别：华北 2（北京），经济型
+- ECI 容器端口：`5001/TCP`；安全组仅临时放行 `5001/TCP`
+- ECI 环境变量：仅在运行时配置 `DEEPSEEK_API_KEY`，不写入镜像、Git 或截图
+- 公网访问：`http://39.105.106.202:5001/`
+- 验证：外部 HTTP 请求已验证页面、静态资源、`/api/hello` 和 `/api/messages`；浏览器实际完成了非敏感聊天与 CRUD 验证
+- 风险与清理：该演示使用未加密 HTTP，聊天 API 没有鉴权。完成 PR 后立即删除 ECI，并检查和释放只为本实验创建的 EIP。
 
-本实验完成后，`screenshots/` 将保存 ECI 创建成功和浏览器公网访问的两张原始截图；`AGENT_TRACE.md` 将保存本次真实 Codex 对话轨迹或分享链接。
+`screenshots/` 包含 `eci-created.png`（ECI 创建成功）和 `public-page.png`（浏览器公网访问）；`AGENT_TRACE.md` 将在最后保存本次真实 Codex 对话轨迹或分享链接。
