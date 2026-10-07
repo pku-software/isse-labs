@@ -52,7 +52,22 @@ lab3/2410306202-chenxu/
 
 ## 四、镜像构建（ACR）
 
-> 本阶段信息在完成任务 2 后补充。
+- 地域：**华北 2（北京）**
+- ACR 个人版镜像命名空间：`chenxulab3`
+- 镜像仓库：`isse-labs`（私有）
+- 代码源：GitHub，`LinyuanChen05/isse-labs`（个人 Fork）
+- 构建分支：`lab3/2410306202-chenxu`（本次提交 `bf2d4a4`）
+- 构建上下文目录：`/lab3/2410306202-chenxu/`
+- Dockerfile 路径：`Dockerfile`
+- 镜像版本标签：`lab3-bf2d4a4`
+- 自动构建：关闭；开启"海外机器构建"，手动点击"立即构建"
+- 构建结果：成功
+
+镜像地址形如：`registry.cn-beijing.aliyuncs.com/chenxulab3/isse-labs:lab3-bf2d4a4`
+
+**更新代码后的重建流程**：先在本地 Commit 并 Push 到个人 Fork 的同一分支（ACR 只构建已 Push 的代码），
+再回到 ACR 该仓库的"构建"页重新触发"立即构建"，才会产生包含新代码的新镜像标签。
+只改文档（如本 README）不需要重新构建镜像。
 
 ## 五、云端运行（ECI）
 
