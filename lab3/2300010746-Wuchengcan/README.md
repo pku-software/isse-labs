@@ -88,3 +88,19 @@ curl.exe -X POST http://localhost:5001/api/messages -H "Content-Type: applicatio
 ## 选做功能
 
 未实现 JSON 文件持久化，也未实现多个聊天会话。
+
+## ACR 构建
+
+镜像由阿里云容器镜像服务在云端构建，不在本机构建。
+
+| 项目 | 值 |
+| --- | --- |
+| 地域 | 华北 2（北京） |
+| 命名空间 | `wuchengcan` |
+| 镜像仓库 | `lab3-chat`（私有） |
+| 代码来源 | GitHub `ChengcanWu/isse-labs` |
+| 分支 | `lab3/2300010746-Wuchengcan` |
+| 构建上下文 | `/lab3/2300010746-Wuchengcan/` |
+| Dockerfile | `Dockerfile` |
+| 镜像标签 | `lab3-8b682c1` |
+| 镜像地址 | `crpi-fom4qze0yaawfevk.cn-beijing.personal.cr.aliyuncs.com/wuchengcan/lab3-chat:lab3-8b682c1` |
