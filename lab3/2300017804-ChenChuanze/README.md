@@ -25,13 +25,21 @@ python -B -m unittest -v test_app
 
 2026-10-09 本地验证：4 项测试通过（页面与静态资源、输入校验与缺失 Key、会话和多轮消息 CRUD、原单消息 CRUD）；JavaScript 语法和 Gunicorn 配置检查通过。实际启动 Gunicorn 后，首页、静态资源、`/api/hello`、`/api/conversations` 均返回 HTTP 200，测试服务随后停止。`.env` 与运行数据的 Git 忽略规则已核对，凭据文件未被跟踪。
 
-本地检查使用 macOS/Python 3.13，不等同于 Linux/Python 3.12 镜像已构建成功；未调用真实模型。云端构建和学生浏览器验证结果将在实际完成后补充。
+本地检查使用 macOS/Python 3.13，不等同于 Linux/Python 3.12 镜像构建验证；未调用真实模型。ACR 构建结果见下文，学生浏览器验证结果待实际完成后补充。
 
 ## ACR 云端构建
 
 代码源为个人 Fork `GG-booond/isse-labs`，分支为 `lab3/2300017804-ChenChuanze`，构建上下文为 `/lab3/2300017804-ChenChuanze/`，Dockerfile 位于该上下文中的 `Dockerfile`。
 
-地域、ACR 仓库、构建标签及实际构建结果：待完成 ACR 操作后记录。代码须先 Push，ACR 才能构建新提交。
+- 地域：华北 2（北京），`cn-beijing`；个人版私有镜像仓库。
+- ACR 命名空间：`lab3-2300017804`；镜像仓库：`chat-app`。
+- 构建规则：Branch，分支及上下文同上；Dockerfile 文件名为 `Dockerfile`。
+- 海外机器构建开启，自动构建关闭，其他选项保持默认。
+- 镜像标签：`lab3-89a96ec`，对应代码提交 `89a96ec7d09904097270d72125e26da9eff7bd49`。
+- 2026-10-09：Agent 核对 GitHub 远端分支与代码提交一致；学生按上述设置操作 ACR，并报告控制台显示构建成功。
+- 具体镜像地址待 ECI 选择镜像时记录。
+
+代码须先 Commit、Push，再触发 ACR 构建；ACR 无法读取仅保留在本机的新提交。本次后续 README 文档更新不需要重新构建镜像。
 
 ## ECI 配置与访问验证
 
@@ -40,6 +48,8 @@ ECI 与 ACR 使用同一地域；沿用镜像中的启动命令，应用实际�
 实际规格、镜像地址及标签、公网地址、ECI 创建状态和学生浏览器验证结果：待部署后记录。
 
 必交截图在学生完成后保存为 `screenshots/eci-created.<真实扩展名>` 与 `screenshots/public-page.<真实扩展名>`。实验末尾由学生保存真实对话至 `AGENT_TRACE.md`。
+
+本实验短时使用公网 HTTP，浏览器与 ECI 之间的聊天内容不加密，不输入敏感信息。Key 留在后端，不随前端请求传输；聊天 API 没有鉴权，知道公网地址的人可能调用模型并消耗实验额度。ECI 即使无人访问也可能持续计费，创建前由学生核对控制台展示的 ECI 和 EIP 实际价格。
 
 ## 资源清理
 
