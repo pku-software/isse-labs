@@ -62,7 +62,7 @@ ECI 与 ACR 使用同一地域；沿用镜像中的启动命令，应用实际�
 - 学生本次提供的原始截图已核看并保持原始字节：`screenshots/eci-created.png` 显示 `lab3-2300017804-retry` 运行中；`screenshots/public-page.png` 包含地址栏 `39.106.120.1:5001` 和“你好”的实际模型回复。两图可打开、未含凭据。学生随后明确确认已亲自测试会话重命名、消息修改和删除；上述 Agent 公网检查也验证了对应接口成功。
 - ECI 列表仍仅列出新实例的私网 IP；本次公网入口是在 EIP 控制台绑定网卡，绑定状态以该页面核对的资源 ID 为准。旧 Expired 实例行仍显示同一公网地址的历史记录，不表示新 EIP 绑定到了旧实例。
 
-两张必交原始截图已保存为 `screenshots/eci-created.png` 与 `screenshots/public-page.png`。实验末尾由学生保存真实对话至 `AGENT_TRACE.md`。
+两张必交原始截图已保存为 `screenshots/eci-created.png` 与 `screenshots/public-page.png`。学生亲自运行本地会话导出命令，将真实用户与助手对话原文保存至 `AGENT_TRACE.md`；Agent 核对 109 条对话与本地记录逐字一致，未发现所检查的凭据格式。轨迹不含系统提示、内部推理、工具日志和图片数据，不是生成的摘要。
 
 本实验短时使用公网 HTTP，浏览器与 ECI 之间的聊天内容不加密，不输入敏感信息。Key 留在后端，不随前端请求传输；聊天 API 没有鉴权，知道公网地址的人可能调用模型并消耗实验额度。ECI 即使无人访问也可能持续计费，创建前由学生核对控制台展示的 ECI 和 EIP 实际价格。
 
