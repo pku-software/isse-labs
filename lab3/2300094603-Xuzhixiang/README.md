@@ -21,13 +21,17 @@ GitHub 个人 Fork 保存源码；ACR 从个人分支云端构建并保存镜像
 
 聊天记录写入容器内 `data/messages.json`，首次启动为空；不配置云端持久化，容器被替换或删除后记录可能丢失。Gunicorn 使用单 worker 以配合现有进程内记录状态。
 
-## ACR 构建（待实际完成）
+## ACR 构建
 
 - 个人 Fork：`Craneplayz/isse-labs`。
 - 分支：`lab3/2300094603-Xuzhixiang`。
 - 构建上下文：`/lab3/2300094603-Xuzhixiang/`。
 - Dockerfile：上下文目录内的 `Dockerfile`。
-- 地域、镜像仓库、规则标签与构建结果：部署阶段按实际结果补充。
+- 地域：华北 2（北京，`cn-beijing`）。
+- 私有镜像仓库：`craneplayz-lab/lab3-chat`。
+- 镜像标签：`lab3-0c79d65`，对应代码提交 `0c79d65`。
+- 开启海外机器构建，关闭自动构建，手动立即构建；学生报告构建页显示成功。
+- 完整镜像地址待 ECI 选择时补充。本地修改后需先 Commit、Push，再由 ACR 重新构建；ECI 使用新镜像运行容器。
 
 ## ECI 与公网验证（待实际完成）
 
