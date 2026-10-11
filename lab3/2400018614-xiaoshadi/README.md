@@ -92,3 +92,31 @@ curl http://localhost:5001/api/hello
 - 镜像地址：`registry.cn-beijing.aliyuncs.com/shadi_10086/lab3:lab3-a2e40bc`
 
 本地代码更新后，需要先提交并 Push 到个人 Fork 的对应分支，再到 ACR 触发一次新的构建，才能得到包含新代码的镜像。
+
+## 云端部署（ECI）
+
+本次实验用阿里云弹性容器实例（ECI）运行上面构建好的镜像，并通过自动创建的弹性公网 IP 提供访问。
+
+- 地域：华北 2（北京）
+- 实例名称：`lab3-2400018614`
+- 实例规格：经济型，0.25 vCPU / 512 MiB
+- 使用镜像：`registry.cn-beijing.aliyuncs.com/shadi_10086/lab3:lab3-a2e40bc`（ECI 从同账号 ACR 拉取）
+- 容器端口：Gunicorn 监听 `0.0.0.0:5001`，由 Dockerfile 的 `CMD` 决定
+- 安全组：入方向放行 `TCP 5001`，授权对象 `0.0.0.0/0`，否则公网无法访问
+- 环境变量：`DEEPSEEK_API_KEY`，值由运行者在 ECI 控制台手动填入，不写入镜像或仓库
+- 公网访问地址：`http://123.56.221.65:5001/`
+
+### 验证结果
+
+- 浏览器访问 `http://123.56.221.65:5001/`，页面正常加载；
+- `GET /api/hello` 返回 `{"message":"你好"}`；
+- `/app.js`、`/style.css` 等静态资源返回 200，没有 404；
+- 在页面中发消息能得到 DeepSeek 的真实回复，修改、删除记录均正常。
+
+相关截图见 `screenshots/eci-created.png`（实例创建成功）与 `screenshots/public-page.png`（浏览器实际访问公网页面，含地址栏）。
+
+### 安全与清理
+
+- 公网入口使用 **HTTP**，聊天内容在链路上**不加密**，请勿输入敏感信息；
+- 聊天 API **无鉴权**，任何人知道地址都可以调用，会消耗后端 Key 的额度；
+- 实验结束后**必须删除该 ECI 实例**，并检查为其自动创建的弹性公网 IP（EIP）是否仍在单独计费；实验用 API Key 建议随后废弃。
