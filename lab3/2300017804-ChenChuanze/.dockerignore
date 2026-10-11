@@ -1,0 +1,14 @@
+.env*
+**/.env*
+.venv/
+venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+data/
+.git/
+.DS_Store
+AGENT_TRACE.md
+screenshots/
+README.md
+test_app.py

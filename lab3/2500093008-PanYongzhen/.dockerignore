@@ -1,0 +1,13 @@
+**/.env
+**/.env.*
+**/.git
+**/.venv
+**/venv
+**/__pycache__
+**/*.pyc
+**/data
+**/*.log
+AGENT_TRACE.md
+screenshots/
+README.md
+.DS_Store

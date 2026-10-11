@@ -1,0 +1,19 @@
+# API Key 配置文件
+.env
+.env.*
+!.env.example
+
+# Python 自动生成的缓存
+__pycache__/
+*.py[cod]
+
+# Python 虚拟环境
+.venv/
+venv/
+
+# 运行时生成的会话数据
+data/*.json
+data/*.tmp
+
+# macOS 自动生成的文件
+.DS_Store

@@ -1,0 +1,10 @@
+**
+!app.py
+!requirements.txt
+!frontend/
+!frontend/**
+frontend/**/.env*
+frontend/**/__pycache__/
+frontend/**/*.log
+frontend/**/chat*.json
+frontend/**/messages*.json

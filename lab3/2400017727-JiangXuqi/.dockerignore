@@ -1,0 +1,17 @@
+# 本地密钥与虚拟环境：绝不能进入镜像
+.env
+.venv/
+venv/
+
+# Python 缓存与编译产物
+__pycache__/
+*.py[cod]
+
+# Git 仓库信息与本地忽略文件
+.git/
+.gitignore
+
+# 实验文档、轨迹与截图：留在仓库里即可，运行镜像不需要
+README.md
+AGENT_TRACE.md
+screenshots/

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 聊天 Web 应用（多会话支持）</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- 左側會話列表側邊欄 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>會話列表</h2>
+                <button id="btn-new-conv" class="btn-new">+ 新建會話</button>
+            </div>
+            <div id="conversations-list" class="conversations-list">
+                <!-- 動態載入會話清單 -->
+            </div>
+        </aside>
+
+        <!-- 右側主聊天區域 -->
+        <div class="chat-container">
+            <header class="chat-header">
+                <div class="header-left">
+                    <h2 id="current-conv-title">載入中...</h2>
+                    <button id="btn-rename-conv" class="btn-small">重新命名</button>
+                    <button id="btn-delete-conv" class="btn-small btn-danger">刪除會話</button>
+                </div>
+                <div id="status-banner" class="status-banner">連線中...</div>
+            </header>
+
+            <main id="chat-messages" class="chat-messages">
+                <!-- 動態載入當前會話訊息 -->
+            </main>
+
+            <!-- 頁面內修改訊息/會話彈窗 -->
+            <div id="edit-modal" class="inpage-modal hidden">
+                <div class="modal-content">
+                    <h3 id="modal-title">修改內容</h3>
+                    <input type="text" id="edit-input" placeholder="請輸入...">
+                    <div class="modal-actions">
+                        <button id="btn-save-edit" class="btn-primary">保存</button>
+                        <button id="btn-cancel-edit" class="btn-secondary">取消</button>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="chat-footer">
+                <form id="chat-form" class="input-form">
+                    <input type="text" id="user-input" placeholder="輸入您想問的問題..." autocomplete="off">
+                    <button type="submit" id="send-btn" class="btn-primary">發送</button>
+                </form>
+            </footer>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

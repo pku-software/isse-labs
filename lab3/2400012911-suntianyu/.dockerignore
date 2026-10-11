@@ -1,0 +1,11 @@
+.env
+.env.*
+.venv/
+__pycache__/
+*.pyc
+data/
+AGENT_TRACE.md
+screenshots/
+README.md
+.DS_Store
+*.log

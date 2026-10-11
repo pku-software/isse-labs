@@ -1,0 +1,10 @@
+# Only application inputs may enter the build context.
+**
+!Dockerfile
+!.dockerignore
+!requirements.txt
+!app.py
+!frontend/
+!frontend/index.html
+!frontend/app.js
+!frontend/style.css

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f5f0">
+  <title>AI 聊天室</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="chat-shell">
+    <header class="chat-header">
+      <div class="brand-mark" aria-hidden="true">AI</div>
+      <div>
+        <p class="eyebrow">PERSONAL ASSISTANT</p>
+        <h1>AI 聊天室</h1>
+      </div>
+      <span class="connection-status"><span class="status-dot"></span>本地服务</span>
+    </header>
+
+    <section class="chat-panel" aria-labelledby="conversation-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">CONVERSATION</p>
+          <h2 id="conversation-title">聊天记录</h2>
+        </div>
+        <span id="record-count" class="record-count">正在加载</span>
+      </div>
+
+      <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
+      <div id="message-list" class="message-list" aria-live="polite"></div>
+
+      <form id="composer" class="composer">
+        <label class="visually-hidden" for="message-input">输入消息</label>
+        <textarea id="message-input" rows="2" placeholder="输入你的消息…" required></textarea>
+        <div class="composer-footer">
+          <span class="composer-hint">每条问答会作为一条记录保存</span>
+          <button id="send-button" class="send-button" type="submit">
+            <span>发送消息</span><span aria-hidden="true">↗</span>
+          </button>
+        </div>
+      </form>
+    </section>
+    <footer class="page-footer">你的对话工作台</footer>
+  </main>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

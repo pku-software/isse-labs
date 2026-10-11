@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.git/
+.DS_Store
+data/
+AGENT_TRACE.md
