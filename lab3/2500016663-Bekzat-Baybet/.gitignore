@@ -1,0 +1,14 @@
+# 环境变量与密钥
+.env
+.env.*
+
+# 占位模板需要提交，取消上面的忽略
+!.env.example
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+
+# 虚拟环境
+.venv/
+venv/
