@@ -2,6 +2,10 @@
 
 本项目由 Lab 2 的 HTML / CSS / JavaScript + Flask + DeepSeek 聊天应用延续而来。Lab 3 不再增加聊天功能，而是把已有应用打包成容器镜像，并放到云端的弹性容器实例（ECI）上运行，让浏览器可以通过公网访问。
 
+## 架构与请求链路
+
+代码存放在个人 GitHub Fork；阿里云 ACR 从该分支在云端构建并保存镜像；ECI 拉取镜像运行容器，容器内由 Gunicorn 承载 Flask 应用，同时提供前端页面、静态资源和聊天 API；浏览器通过 ECI 的公网 IP 访问。后端在处理 `POST /api/messages` 时，用容器运行时环境变量中的 `DEEPSEEK_API_KEY` 调用 DeepSeek，Key 不进入前端、镜像或仓库。
+
 ## 项目功能
 
 - 浏览器打开聊天页面，输入消息后发送给后端；
@@ -23,6 +27,10 @@
 ├── .dockerignore       # 构建上下文排除项
 ├── .gitignore          # Git 忽略项（.env、缓存、虚拟环境）
 ├── .env.example        # 环境变量示例，只有占位值
+├── screenshots/        # 必交截图：ECI 已创建、浏览器公网访问
+│   ├── eci-created.png
+│   └── public-page.png
+├── AGENT_TRACE.md      # 由学生粘贴真实对话轨迹或分享链接
 └── README.md
 ```
 
@@ -76,7 +84,16 @@ curl http://localhost:5001/api/hello
 
 ## 容器化
 
-`Dockerfile` 说明镜像如何构建：选择 Python 基础镜像、先安装依赖、再复制应用与前端，最后由 Gunicorn 监听 `0.0.0.0:5001` 启动 Flask 应用。本实验不要求在本机安装 Docker，只用它在云端（ACR）构建。
+`Dockerfile` 的关键配置：
+
+- `FROM python:3.12-slim`：提供 Python 运行时，作为容器基础环境；
+- `WORKDIR /app`：设置容器内工作目录，`app.py` 的 `BASE_DIR` 因此为 `/app`；
+- 先 `COPY requirements.txt` 再 `RUN pip install`：把不常变的依赖层放在前面，源码变动时可以复用构建缓存；
+- 再 `COPY app.py .`、`COPY frontend ./frontend`：复制应用代码与前端资源；
+- `EXPOSE 5001`：说明性元数据，不会自动开放公网端口；
+- `CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--workers", "1", "--timeout", "90", "app:app"]`：运行阶段由 Gunicorn 启动 Flask；`--timeout 90` 是为了容纳最多 60 秒的 DeepSeek 调用。
+
+`.dockerignore` 排除 `.env`、缓存、虚拟环境、`.git`、轨迹与截图，确保 Key 不会进入构建上下文和镜像。本实验不要求在本机安装 Docker，只用它在云端（ACR）构建。
 
 ## 云端构建（ACR）
 
