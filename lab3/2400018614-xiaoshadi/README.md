@@ -77,3 +77,18 @@ curl http://localhost:5001/api/hello
 ## 容器化
 
 `Dockerfile` 说明镜像如何构建：选择 Python 基础镜像、先安装依赖、再复制应用与前端，最后由 Gunicorn 监听 `0.0.0.0:5001` 启动 Flask 应用。本实验不要求在本机安装 Docker，只用它在云端（ACR）构建。
+
+## 云端构建（ACR）
+
+本节记录本次实验使用的阿里云容器镜像服务（ACR）配置：ACR 从个人 GitHub Fork 的分支在云端构建镜像并保存，ECI 再拉取该镜像运行。
+
+- 地域：华北 2（北京）
+- 镜像命名空间：`shadi_10086`
+- 镜像仓库：`lab3`
+- 构建分支：`lab3/2400018614-xiaoshadi`
+- 构建上下文目录：`lab3/2400018614-xiaoshadi`
+- Dockerfile 文件名：`Dockerfile`
+- 镜像版本（Tag）：`lab3-a2e40bc`
+- 镜像地址：`registry.cn-beijing.aliyuncs.com/shadi_10086/lab3:lab3-a2e40bc`
+
+本地代码更新后，需要先提交并 Push 到个人 Fork 的对应分支，再到 ACR 触发一次新的构建，才能得到包含新代码的镜像。
