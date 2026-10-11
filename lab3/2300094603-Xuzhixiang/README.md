@@ -33,11 +33,27 @@ GitHub 个人 Fork 保存源码；ACR 从个人分支云端构建并保存镜像
 - 开启海外机器构建，关闭自动构建，手动立即构建；学生报告构建页显示成功。
 - 完整镜像地址待 ECI 选择时补充。本地修改后需先 Commit、Push，再由 ACR 重新构建；ECI 使用新镜像运行容器。
 
-## ECI 与公网验证（待实际完成）
+## ECI 与公网验证
 
-应用实际监听 `5001`；容器启动命令沿用 Dockerfile 的 CMD。实例规格、镜像版本、公网访问地址与验证结果待实际部署后记录。
+- 地域：华北 2（北京），可用区 H；实例名称 `lab3-2300094603`。
+- 经济型，0.25 vCPU、0.5 GiB（控制台显示 512 MiB），按量付费。
+- 镜像：`crpi-ev2srl9z7y245d36-vpc.cn-beijing.personal.cr.aliyuncs.com/craneplayz-lab/lab3-chat:lab3-0c79d65`。
+- 应用监听 `0.0.0.0:5001`；容器启动命令沿用 Dockerfile 的 CMD，运行日志显示 Gunicorn 与 worker 已启动。
+- 运行时环境变量名称：`DEEPSEEK_API_KEY`，真实值由学生自行配置。
+- 本次演示地址：`http://47.95.204.198:5001/`。这是临时实验入口，清理后不保证可用。
+- 初次公网访问失败，检查运行日志后由学生调整绑定安全组；随后 Agent 核验首页、JS、CSS、`/api/hello` 和 `/api/messages` 均返回 HTTP 200。
+- 学生浏览器截图确认页面加载和一次非敏感模型回复；学生报告刷新后记录保留、修改、删除均测试成功。Agent 未代学生执行浏览器操作。
 
-规定截图将在实际验证后保存为 `screenshots/eci-created.<真实扩展名>` 和 `screenshots/public-page.<真实扩展名>`。真实对话轨迹由学生在实验末尾保存为 `AGENT_TRACE.md`。
+浏览器请求经公网 EIP 和网络规则到达容器 5001 端口，由 Gunicorn 接收并交给 Flask 处理。其他设备可通过同一公网入口访问。
+
+该演示使用 HTTP，聊天内容未加密；API 无鉴权，其他人可能读取、修改或删除聊天记录，以及调用模型消耗实验额度。Key 保留在后端，不随前端请求传输。
+
+规定原始截图：
+
+- [ECI 已创建并运行](screenshots/eci-created.png)
+- [学生浏览器公网访问与模型回复](screenshots/public-page.png)
+
+真实对话轨迹由学生在实验末尾保存为 `AGENT_TRACE.md`。
 
 ## 清理计划
 
