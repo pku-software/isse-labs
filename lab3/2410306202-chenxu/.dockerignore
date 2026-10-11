@@ -1,0 +1,11 @@
+.env
+.git
+.gitignore
+AGENT_TRACE.md
+README.md
+screenshots/
+data/
+__pycache__/
+*.pyc
+.venv/
+venv/

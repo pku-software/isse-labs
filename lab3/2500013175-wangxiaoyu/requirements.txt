@@ -1,0 +1,6 @@
+Flask
+gunicorn
+httpx[socks]
+openai
+python-dotenv
+socksio
