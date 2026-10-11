@@ -44,3 +44,15 @@ python app.py
 - `POST /api/messages`：发送消息并获得模型回复；
 - `PATCH /api/messages/<id>`：修改记录；
 - `DELETE /api/messages/<id>`：删除记录。
+
+## ACR 构建配置
+
+- 地域：华北 2（北京）
+- 仓库：ACR 个人版私有仓库
+- 代码源：GitHub 个人 Fork `isse-labs`
+- 构建分支：`lab3/2410108215-LiuHongya`
+- 构建上下文目录：`/lab3/2410108215-LiuHongya/`
+- Dockerfile 路径：`Dockerfile`
+- 镜像标签：`lab3-ba42fd6`
+- 海外机器构建：开启
+- 自动构建：关闭（手动“立即构建”）
