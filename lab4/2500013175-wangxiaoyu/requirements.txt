@@ -1,0 +1,5 @@
+Flask
+httpx[socks]
+openai
+socksio
+prometheus-client
