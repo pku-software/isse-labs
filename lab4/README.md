@@ -92,6 +92,22 @@ Agent 负责代码、工具准备、配置、运行脚本和技术核验；学�
 
 找出学生自己的 Lab 2 或 Lab 3 项目。仅复制运行需要的非敏感源文件，不复制 `.env`、真实聊天数据、虚拟环境、旧截图、旧 `AGENT_TRACE.md`、云资源配置。不得修改原实验目录。把 `lab4/starter/` 的两个 Python 文件和采集配置复制到个人目录；不要提前补齐适配器。个人忽略规则先准备好，排除密钥、Python 缓存/虚拟环境、监控工具包及 Prometheus/Grafana 数据目录，保留 `results/*.json`、仪表盘和截图。
 
+**本地工具与运行目录固定如下，不随操作系统改变；只有可执行文件名和启动命令按实际系统适配：**
+
+| 内容 | 固定位置（相对于个人目录） |
+| --- | --- |
+| Prometheus/Grafana 下载包及校验文件 | `.tools/downloads/` |
+| 解压后的 Prometheus | `.tools/prometheus/` |
+| 解压后的 Grafana | `.tools/grafana/` |
+| Prometheus 时间序列数据库 | `.runtime/prometheus/` |
+| Grafana 数据库、日志、插件等运行文件 | `.runtime/grafana/`，可在其下分别建立子目录 |
+| 应用日志及其他本次运行文件 | `.runtime/app/` |
+| Python 虚拟环境 | `.venv/` |
+
+这些目录均位于 `lab4/<学号>-<姓名拼音>/` 内，不向仓库根目录或其他同学目录下载、解压或写运行数据。课程根目录 `.gitignore` 提供跨分支兜底，个人 `.gitignore` 仍需包含 `.tools/`、`.runtime/`、`.venv/`，以及密钥和 Python 缓存规则；学生实验期间不修改课程根目录 `.gitignore`。配置文件、启动脚本、仪表盘导出、`results/*.json` 和截图保留在可提交的位置，不放进上述忽略目录。
+
+**首次创建虚拟环境或下载工具前，Agent 必须自行核验忽略规则，不能只看 `.gitignore` 文件存在。**在仓库根目录用 `git check-ignore -v --` 检查实际计划使用的个人目录下代表性路径，例如 `.tools/downloads/prometheus.tar.gz`、两个工具目录内的可执行文件、`.runtime/prometheus/wal`、`.runtime/grafana/grafana.db` 和 `.venv/pyvenv.cfg`；路径包含完整个人目录前缀，文件无需预先创建。每项都须匹配有效规则，并用 `git ls-files --` 确认工具、运行数据及虚拟环境未被跟踪。同时确认结果文件、配置、仪表盘和截图不会被误忽略。未通过时先补齐个人忽略规则或修正路径并重新核验，**通过后才能安装依赖、下载、解压或启动工具**。若发现已有工具文件被跟踪，说明具体问题并等待处理确认，不擅自删除文件或移除已有跟踪。核验由 Agent 完成，不要求学生复制执行这些检查命令。
+
 阅读实际接口、请求 JSON、响应、前端和模型调用位置。向学生说明本项目将在哪里加计数/计时、如何切换模拟模型、脚本如何调用原聊天接口，说明需要修改的文件。**等待学生确认方案再改应用。**
 
 > [AGENT STOP]
@@ -140,7 +156,7 @@ Agent 启动本地服务，选可用端口，应用优先绑定 `127.0.0.1`。�
 
 先说明三个程序各自监听一个本地端口，浏览器访问工具页面，而 Prometheus 通过网络访问应用。本实验不用 Compose、Docker Desktop、WSL、ECS 或 ECI。
 
-按实际 OS/架构从官方渠道选择明确的稳定版本、下载并解压 Prometheus 与 Grafana；不要选预发布版。能自动完成就由 Agent 完成，遇系统安装/执行许可再指导学生处理。下载包、二进制和运行数据放在忽略的工具目录，记录版本及实际启动命令到个人 README，不提交这些程序。参考 [Prometheus 下载](https://prometheus.io/download/)、[Prometheus 入门](https://prometheus.io/docs/introduction/first_steps/)、[Grafana 安装](https://grafana.com/docs/grafana/latest/setup-grafana/installation/)。
+按实际 OS/架构从官方渠道选择明确的稳定版本；不要选预发布版。**下载前再次核验上文固定目录的忽略规则及未跟踪状态，失败时先修正，不继续下载。**安装包及校验文件只放入个人 `.tools/downloads/`，解压后分别放入 `.tools/prometheus/`、`.tools/grafana/`，不要在个人目录根部另造带版本号的工具目录。能自动完成就由 Agent 完成，遇系统安装/执行许可再指导学生处理。启动 Prometheus 时显式指定数据库为 `.runtime/prometheus/`；Grafana 的数据、日志、插件等运行路径显式设到 `.runtime/grafana/` 下，不能让默认路径把数据库写进可提交目录。记录版本、上述位置及实际启动命令到个人 README，不提交工具程序与运行数据。下载解压及启动后再次核验它们没有出现在待提交文件中。参考 [Prometheus 下载](https://prometheus.io/download/)、[Prometheus 入门](https://prometheus.io/docs/introduction/first_steps/)、[Grafana 安装](https://grafana.com/docs/grafana/latest/setup-grafana/installation/)。
 
 把个人 `prometheus.yml` 中的应用地址改成实际监听地址，采集间隔 2 秒、超时 1 秒。启动时明确指定该配置与个人专用数据目录，Prometheus 和 Grafana 的监听地址限制本机；优先使用可用的 `9090` 和 `3000` 端口。端口占用时调整，不关闭不属于本实验的进程；Grafana 连接地址、截图和说明也同步修改。创建可再次执行的、适合当前系统的启动说明或辅助脚本，不把工具安装当作主要思考题。
 
@@ -226,7 +242,7 @@ Agent 在每个阶段开始或工具返回新输出时简短提醒当前场景�
 
 > [AGENT ACTION]
 
-补全个人 README：项目来源、mock/real 区分、指标定义、工具版本与当前系统启动命令、实际端口、三个查询的意义、脚本适配位置、两次真实运行的参数/时间及可复现的图表结果。解释从干净环境如何重新运行，数据源如何导入；**不写思考题问答、Agent 操作过程或里程碑勾选区**。检验 `.env`、工具下载包、运行数据库未纳入提交，结果 JSON 和两张截图实际存在且可打开，适配器不再留未实现函数，仪表盘可导入；不把未生成的文件当已提交。课程模板自身留空是正常的，检查只针对个人副本。
+补全个人 README：项目来源、mock/real 区分、指标定义、工具版本与当前系统启动命令、实际端口、三个查询的意义、脚本适配位置、两次真实运行的参数/时间及可复现的图表结果。解释从干净环境如何重新运行，数据源如何导入；**不写思考题问答、Agent 操作过程或里程碑勾选区**。重新核验个人 `.tools/`、`.runtime/`、`.venv/` 被有效忽略且没有已跟踪文件，检查暂存内容，确认 `.env`、工具下载包、运行数据库未纳入提交；结果 JSON 和两张截图实际存在且可打开，适配器不再留未实现函数，仪表盘可导入；不把未生成的文件当已提交。课程模板自身留空是正常的，检查只针对个人副本。
 
 先将整理好的项目文档、仪表盘、模拟结果和截图创建文档收尾 Commit，例如 `lab4: finalize documentation and monitoring results`；没有新改动则不造空提交，确认这些文件已在阶段 Commit 中。**这一步不加入 `AGENT_TRACE.md`**。然后在个人目录创建空的轨迹文件并尽量打开供学生粘贴；若文件已有内容，保留并提醒学生核对，不覆盖。文件存在不代表真实轨迹已经保存。
 
