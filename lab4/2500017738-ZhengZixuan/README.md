@@ -65,7 +65,7 @@ Prometheus 显示 Target 为 `UP` 只表示它成功抓取了 `/metrics`；它�
 
 ## 实际运行结果
 
-结果由脚本写入 `results/first-run.json` 和 `results/changed-run.json`；文件时间为 UTC。首次运行五个阶段共约 2 分 42 秒，另有 10 秒采集收尾等待。完整阶段统计如下：
+结果由脚本写入 `results/first-run.json` 和 `results/changed-run.json`；文件时间为 UTC。首次完整运行从 `2026-10-12 16:50:55 UTC` 开始，最后一个阶段于 `16:53:27 UTC` 结束，之后等待 10 秒采集收尾。第二次 `slow` 阶段从 `2026-10-12 17:04:16 UTC` 到 `17:04:51 UTC`，之后同样等待 10 秒。完整阶段统计如下：
 
 | 阶段 | 设置 | 已发送 | 成功 | 业务/HTTP 错误 | 跳过 |
 | --- | --- | ---: | ---: | ---: | ---: |
