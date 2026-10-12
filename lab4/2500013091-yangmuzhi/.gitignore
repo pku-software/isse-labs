@@ -1,0 +1,17 @@
+# Local tools, runtime files and Python environment
+.tools/
+.runtime/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Credentials and local chat history
+.env
+.env.*
+*.pem
+*.key
+data/
+
+# Keep configuration, results/*.json, dashboards and screenshots tracked.
