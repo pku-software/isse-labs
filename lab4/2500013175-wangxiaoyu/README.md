@@ -46,6 +46,16 @@ HTTP 核验中，正常请求返回 201、模拟失败返回 503；两条 1 秒�
 
 `simulate_traffic.py`、`project_adapter.py` 和 `prometheus.yml` 来自课程 `lab4/starter/`。采集配置为 2 秒间隔、1 秒超时，应用目标地址为 `127.0.0.1:5001`。调度脚本通过 HTTP 访问应用，适配器负责对应项目接口。
 
+调度器保持与课程原件完全一致，负责发送节奏、并发上限、阶段切换和真实结果统计。个人 `project_adapter.py` 的三个适配函数为：
+
+- `confirm_mock_mode()`：在本机根地址 GET `/api/lab/status`，验证 `mode="mock"` 且 `external_model_calls=false`；成功后 POST `/api/conversations` 创建本次测试会话。禁用 HTTP 重定向和系统代理，不访问其他主机。
+- `build_chat_request()`：向 `/api/conversations/<本次会话ID>/messages` 发送 POST JSON，字段为 `message` 和 `mock` 下的 `delay_seconds`、`force_error`。
+- `response_is_success()`：要求 HTTP 201，且响应中用户与助手消息的角色、ID 和非空内容有效；503 模拟错误或无效 JSON 均判为失败，不打印消息正文。
+
+适配器单请求核验中，正常请求返回 201、强制错误返回 503，结果判断正确；非本机地址被拒绝。`ADAPTER_READY=True` 仅在单请求核验通过后启用。
+
+对临时 real 模式服务的 HTTP 核验中，适配器返回 False，课程脚本退出码为 2，聊天指标仍为零，未发出真实聊天请求；该临时服务已停止。
+
 ## Prometheus 与 Grafana
 
 官方稳定版：Prometheus 3.15.0、Grafana OSS 13.2.3，均为 macOS arm64。安装程序从官方 GitHub Releases 和 `dl.grafana.com` 下载并验证官方 SHA256；下载包与校验文件放在 `.tools/downloads/`，解压位置分别为 `.tools/prometheus/`、`.tools/grafana/`。安装前自动核验忽略规则和未跟踪状态。
@@ -75,3 +85,53 @@ Histogram 的 `_bucket{le="0.25"}` 表示耗时不超过 0.25 秒的累计观测
 可在另一 Grafana 实例导入 `grafana-dashboard.json`：先创建指向本机 Prometheus 的数据源，导入后在仪表盘顶部“Prometheus 数据源”下拉框选择它。JSON 中的三个 Panel 引用该数据源变量，不依赖原实例的数据库。
 
 已核验 Prometheus Target `chat-app` 的实际地址为 `http://127.0.0.1:5001/metrics`、健康状态 `up`、采集错误为空；Grafana 数据源健康检查返回 `OK`，三个查询均可执行。原始截图 `screenshots/prometheus-targets.png` 显示应用 Target 为 `UP`，补充图 `screenshots/prometheus-query.png` 显示成功 5、失败 2 的累计次数。
+
+## 首次完整模拟
+
+应用、Prometheus 和 Grafana 保持启动，在本个人目录执行：
+
+```sh
+.venv/bin/python -u simulate_traffic.py \
+  --base-url http://127.0.0.1:5001 --output results/first-run.json
+```
+
+使用默认参数：五阶段各 30 秒，正常/错误/恢复阶段目标频率 1 次/秒，burst 4 次/秒，slow 2 次/秒，正常延迟 0.1 秒、slow 延迟 3 秒，并发上限 6，错误阶段每第 3 次失败，单请求超时 10 秒，末尾等待采集 10 秒。
+
+运行日期为 2026-10-12；下表显示北京时间，结果 JSON 的实际起止时间为 UTC。慢阶段结束后等待在途请求完成，因此实际结束晚于 30 秒的调度窗口。
+
+| 阶段 | 实际时间 | 发送 | 成功 | 业务/HTTP 错误 | 跳过 |
+| --- | --- | --- | --- | --- | --- |
+| baseline | 20:21:44–20:22:14 | 30 | 30 | 0 | 0 |
+| burst | 20:22:14–20:22:44 | 120 | 120 | 0 | 0 |
+| slow | 20:22:44–20:23:17 | 52 | 52 | 0 | 8 |
+| errors | 20:23:17–20:23:47 | 30 | 20 | 10 | 0 |
+| recovery | 20:23:47–20:24:17 | 30 | 30 | 0 | 0 |
+
+合计发送 262、成功 252、预设失败 10；各阶段网络错误与非预期结果均为 0，脚本退出码为 0。JSON 中的 `client_mean_seconds` 包含 HTTP 开销，不是服务端 Histogram。
+
+Prometheus 在首次运行范围的真实查询结果中，成功速率最大为 4 次/秒，error 速率最大约 0.321 次/秒，在途数量最大为 6，服务端窗口平均耗时最大约 3.007 秒。慢阶段的并发名额满时跳过 8 次发送机会，目标频率与实际完成速率不同；burst→slow 也同时改变了目标频率。正常请求只持续约 0.1 秒，2 秒采集可能漏掉在途短峰值。速率和平均耗时使用 30 秒窗口，阶段边界被平滑，恢复有滞后。
+
+学生原始整体截图为 `screenshots/grafana-dashboard.png`，覆盖北京时间 20:21:34–20:24:57，包含完整模拟与收尾状态。三幅补充细节图为 `grafana-request-rate.png`、`grafana-inprogress.png`、`grafana-duration.png`，均位于 `screenshots/`。
+
+## 调整延迟后的模拟
+
+仅将 slow 后端延迟从 3 秒改为 8 秒；目标频率保持 2 次/秒、并发上限保持 6，单跑 slow 场景，调度窗口仍为 30 秒，末尾等待 10 秒。使用命令：
+
+```sh
+.venv/bin/python -u simulate_traffic.py \
+  --base-url http://127.0.0.1:5001 --scenario slow \
+  --phase-seconds 30 --slow-delay 8 --output results/changed-run.json
+```
+
+真实结果写入 `results/changed-run.json`，未覆盖首次结果。实际运行时间为 2026-10-12 北京时间 21:46:58–21:47:34，等待在途请求收尾使实际时长超过 30 秒。发送 24 次、成功 24 次、跳过 36 次发送机会，业务/HTTP 错误、网络错误、非预期结果均为 0，脚本退出码为 0。客户端平均耗时约 8.021 秒。
+
+| 实际结果 | 首次 slow（3 秒） | 第二次 slow（8 秒） |
+| --- | --- | --- |
+| 发送并成功完成 | 52 | 24 |
+| 跳过发送机会 | 8 | 36 |
+| Prometheus 采集到的在途峰值 | 6 | 6 |
+| 服务端窗口平均耗时峰值 | 约 3.007 秒 | 约 8.010 秒 |
+
+第二次成功速率曲线最高约 0.821 次/秒。每次模拟请求均等待约 8 秒，因此平均耗时形成约 8 秒的平台；无请求的窗口为无值，不补零。并发上限约束同时在途请求数量，不是累计完成次数；更长的等待占用并发名额更久，第二次完成数量减少、跳过机会增多。收尾后在途数量回到 0。
+
+第二次原始截图为 `screenshots/grafana-changed-run.png`，显示实际请求速率、在途峰值与 8 秒耗时平台。仪表盘 JSON 从本次实际 Grafana 导出，保留三个 Panel 及 Prometheus 数据源变量；它只保存配置，历史数据在 Prometheus 运行数据库内，不包含在导出 JSON 中。干净环境重新运行上述两次脚本可生成新的真实曲线；提交截图记录本次实际运行。
