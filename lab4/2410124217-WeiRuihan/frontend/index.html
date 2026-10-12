@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 聊天</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="chat-app">
+      <header>
+        <h1>AI 聊天</h1>
+        <p>输入消息，开始一次对话。</p>
+      </header>
+
+      <section id="message-list" class="message-list" aria-label="聊天记录"></section>
+
+      <form id="message-form" class="message-form">
+        <label for="message">消息</label>
+        <textarea id="message" name="message" rows="3" placeholder="请输入消息"></textarea>
+        <button type="submit">发送</button>
+      </form>
+      <p id="status" class="status" aria-live="polite"></p>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
