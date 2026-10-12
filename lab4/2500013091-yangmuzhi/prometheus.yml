@@ -1,4 +1,4 @@
-# Agent 复制到个人目录后改成学生应用实际本地地址；它不是容器地址。
+# Local mock chat application. Prometheus stores data in .runtime/prometheus/.
 global:
   scrape_interval: 2s
   scrape_timeout: 1s
