@@ -1,0 +1,228 @@
+{
+  "id": null,
+  "uid": "lab4-chat",
+  "title": "Lab 4 — 聊天应用监控",
+  "description": "本地 Flask mock 聊天应用，Prometheus 每 2 秒采集；速率与耗时使用 30 秒窗口。",
+  "tags": [
+    "lab4",
+    "chat-app"
+  ],
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "refresh": "2s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "2s",
+      "5s",
+      "10s",
+      "30s",
+      "1m"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "DS_PROMETHEUS",
+        "label": "Prometheus 数据源",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {
+          "selected": true,
+          "text": "Lab4 Prometheus",
+          "value": "lab4-prometheus"
+        },
+        "options": [],
+        "refresh": 1,
+        "hide": 0,
+        "regex": "",
+        "multi": false,
+        "includeAll": false
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "成功 / 失败请求速率",
+      "description": "最近 30 秒内平均每秒完成的聊天请求数；成功和失败分别显示，不是累计次数。",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (outcome) (rate(chat_requests_total{job=\"chat-app\"}[30s]))",
+          "legendFormat": "{{outcome}}",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "auto",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "正在处理的请求",
+      "description": "采集时正在执行的聊天请求数量，不是在线用户数。",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(chat_inprogress_requests{job=\"chat-app\"})",
+          "legendFormat": "在途请求",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "auto",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "平均处理耗时",
+      "description": "最近 30 秒内服务端处理耗时的总和增速除以观测次数增速，包含失败请求；没有请求时可以无值。",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(chat_request_duration_seconds_sum{job=\"chat-app\"}[30s])) / sum(rate(chat_request_duration_seconds_count{job=\"chat-app\"}[30s]))",
+          "legendFormat": "服务端平均耗时",
+          "range": true,
+          "instant": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "fillOpacity": 8,
+            "showPoints": "auto",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    }
+  ]
+}
