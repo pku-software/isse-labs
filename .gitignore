@@ -1,1 +1,10 @@
 .DS_Store
+
+# Lab 4 downloaded tools, runtime data and virtual environments
+/lab4/*/.tools/
+/lab4/*/.runtime/
+/lab4/*/.venv/
+/lab4/**/__pycache__/
+# Compatibility with earlier local monitoring directories
+/lab4/*/prometheus-data/
+/lab4/*/grafana-data/
