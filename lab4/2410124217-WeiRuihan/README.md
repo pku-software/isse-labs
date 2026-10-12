@@ -91,3 +91,74 @@ Grafana 通过 `grafana/provisioning/datasources/prometheus.yml` 自动配置数
 | 平均聊天处理耗时 | `sum(rate(chat_request_duration_seconds_sum{job="chat-app"}[30s])) / sum(rate(chat_request_duration_seconds_count{job="chat-app"}[30s]))` | 最近窗口内服务端平均耗时，单位秒，包含失败；没有请求时允许无值 |
 
 Histogram 的 `_bucket{le="…"}` 是耗时小于等于上界的累计样本数，`_sum` 是耗时总和，`_count` 是样本数。本次平均耗时图使用 `_sum` 与 `_count` 的变化率；不把客户端往返耗时当作服务端耗时。采集间隔和查询窗口可能让短峰值遗漏或阶段边界变得平滑。
+
+## 访问脚本适配
+
+`simulate_traffic.py` 与课程 `lab4/starter/simulate_traffic.py` 内容一致，保留本机地址限制、mock 核验、有限并发及真实结果统计。调度器负责各阶段的发送频率和并发上限，个人 `project_adapter.py` 负责把请求转换为原项目的接口：
+
+- `confirm_mock_mode()`：HTTP GET `/api/lab-status`，校验 `mode` 为 `mock` 且 `external_model_calls` 为布尔 false；禁用代理和重定向，核验失败返回 false。
+- `build_chat_request()`：HTTP POST `/api/messages`，JSON 字段为 `message`、`mock_delay`、`mock_error`。
+- `response_is_success()`：HTTP 201、有效 JSON 对象、整数记录 ID、非空回复且没有错误字段才算成功；不打印正文。
+
+单请求验证确认 mock 模式下正常请求返回 201，强制失败返回 503，并被适配器正确识别。相同应用以 real 配置启动临时本地服务时，状态接口返回 404；调度器拒绝运行，没有发送聊天请求，也没有调用真实模型。验证通过后设置 `ADAPTER_READY=True`。对实际 mock 服务的验证产生成功、失败各 1 次计数。
+
+## 首次完整模拟结果
+
+在仓库根目录使用以下命令，默认五个阶段各发送 30 秒、并发上限 6、结束后等待 10 秒采集；结果文件由真实运行产生：
+
+```powershell
+& 'lab4/2410124217-WeiRuihan/.venv/Scripts/python.exe' -u lab4/2410124217-WeiRuihan/simulate_traffic.py --base-url http://127.0.0.1:5001 --output lab4/2410124217-WeiRuihan/results/first-run.json
+```
+
+2026 年 10 月 12 日实际运行时间如下（北京时间；JSON 内记录 UTC）：
+
+| 阶段 | 起止时间 | 设置 | 发送 | 成功 | 业务/HTTP 错误 | 跳过 |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| baseline | 19:16:21–19:16:51 | 1 次/秒，延迟 0.1 秒 | 30 | 30 | 0 | 0 |
+| burst | 19:16:51–19:17:21 | 4 次/秒，延迟 0.1 秒 | 120 | 120 | 0 | 0 |
+| slow | 19:17:21–19:17:53 | 2 次/秒，延迟 3 秒 | 52 | 52 | 0 | 8 |
+| errors | 19:17:53–19:18:23 | 1 次/秒，延迟 0.1 秒，每第 3 次失败 | 30 | 20 | 10 | 0 |
+| recovery | 19:18:23–19:18:53 | 1 次/秒，延迟 0.1 秒，无强制失败 | 30 | 30 | 0 | 0 |
+
+共发送 262 次，成功 252 次，预期失败 10 次；各阶段网络错误与非预期结果均为 0，进程退出码为 0。slow 阶段等待在途请求收尾，因此实际结束时间比 30 秒发送窗口稍晚；达到并发上限时跳过发送机会，不无限排队。
+
+按三个 Panel 的原查询、2 秒步长核对本次时间范围内的 Prometheus 历史数据：成功请求速率最高 4 次/秒，失败速率最高约 0.3214 次/秒，在途数最高 6，服务端平均处理耗时最高约 3.001 秒。slow 阶段在途数从低负载时的约 1 上升到 5～6，随后回落；延长处理时间使请求更容易重叠，`2 次/秒 × 3 秒 ≈ 6` 可作为目标负载的近似估计，但实际发送量还受并发上限与完成节奏限制。
+
+`results/first-run.json` 中 `client_mean_seconds` 是客户端往返平均耗时，例如 slow 约 3.070 秒，包含网络与调度开销，不等同于服务端 Histogram。查询使用 30 秒窗口，因此速率和平均耗时曲线在阶段边界存在平滑与滞后。
+
+首次运行可使用绝对时间范围 `2026-10-12 19:16:11` 至 `19:19:33`（Asia/Shanghai）对照图表；完整仪表盘链接为 `http://127.0.0.1:3000/d/lab4-chat?from=1791803771000&to=1791803973000&timezone=Asia%2FShanghai`。历史曲线依赖本地 Prometheus 数据库；干净环境需重新运行脚本，并使用新的实际起止时间查看，结果 JSON 不包含整套监控数据库。
+
+## 延迟调整后的模拟结果
+
+第二次仅运行 slow 场景，将 `--slow-delay` 从 3 秒改为 1 秒，其余负载参数保持默认：目标每秒 2 次、并发上限 6、发送窗口 30 秒、收尾等待 10 秒。burst 和 errors 没有重复运行。
+
+```powershell
+& 'lab4/2410124217-WeiRuihan/.venv/Scripts/python.exe' -u lab4/2410124217-WeiRuihan/simulate_traffic.py --base-url http://127.0.0.1:5001 --scenario slow --slow-delay 1 --output lab4/2410124217-WeiRuihan/results/changed-run.json
+```
+
+实际起止时间为 2026-10-12 19:31:40–19:32:11（北京时间），发送并成功处理 60 次，错误、网络错误、非预期结果和跳过均为 0，进程退出码为 0。客户端往返平均耗时约 1.070 秒。
+
+| 对比项 | 首次 slow（3 秒延迟） | 第二次 slow（1 秒延迟） |
+| --- | --- | --- |
+| 实际发送 / 成功 | 52 / 52 | 60 / 60 |
+| 跳过发送机会 | 8 | 0 |
+| 采集到的在途数 | 主要为 5～6，最高 6 | 主要为 2，最高 2 |
+| 服务端平均耗时 | 最高约 3.001 秒 | 约 1.000～1.001 秒 |
+| 成功请求速率 | slow 窗口约 1.6～2 次/秒，边界混合前一阶段数据 | 最高 2 次/秒 |
+
+减少延迟后，每个请求更快释放处理位置，在途数和平均耗时下降；发送频率仍为每秒 2 次，因此成功速率没有升到更高的负载水平。第二次未达到并发上限，消除了首次的跳过发送。两次运行的时间范围不同，比较应分别选择各自的实际阶段；速率使用 30 秒窗口，阶段边界不能按瞬时发送频率直接解读。
+
+第二次图表范围为 `2026-10-12 19:31:30` 至 `19:32:51`（Asia/Shanghai），链接为 `http://127.0.0.1:3000/d/lab4-chat?from=1791804690000&to=1791804771000&timezone=Asia%2FShanghai`。
+
+## 仪表盘导入与截图
+
+`grafana-dashboard.json` 从本次实际 Grafana 仪表盘导出，包含三个 Panel、实际 PromQL 和数据源引用，内部数据库 ID 已置空以便导入。UID 为 `lab4-chat`，数据源 UID 为 `lab4-prometheus`。导入到干净实例时，先按 `grafana/provisioning/datasources/prometheus.yml` 创建数据源 `Lab4 Prometheus`（UID 保持 `lab4-prometheus`），地址指向本机 Prometheus，再在 Grafana 的 Dashboards → New → Import 上传该 JSON。使用其他数据源时，在三个 Panel 及其查询中选择对应的 Prometheus 数据源。导入文件保留最近 15 分钟的默认范围，历史实验对照请改为上文的绝对时间范围。
+
+使用随仓库提供的 `start-local.ps1` 时，数据源与仪表盘会自动 provision，无需再次手工导入。可编辑的初始定义为 `grafana/dashboards/chat.json`，导出文件用于复用本次实际仪表盘。
+
+`screenshots/` 均为学生从本地浏览器提供的原始 PNG，未拼接或生成：
+
+- `prometheus-targets.png`：`chat-app` 的采集地址与 UP 状态。
+- `grafana-dashboard-requests.png`：首次完整模拟的成功/失败速率与在途数。
+- `grafana-dashboard.png`：首次完整模拟的平均耗时，配合上一张覆盖三个 Panel 与完整时段。
+- `changed-run-requests.png`、`changed-run-duration.png`：延迟改为 1 秒后的三项曲线。
