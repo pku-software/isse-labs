@@ -16,7 +16,7 @@ zsh run_app.sh
 
 应用地址为 `http://127.0.0.1:5001/`，单进程、线程并发、不启用调试重载。可通过 `APP_PORT` 修改端口。聊天数据保存在 `.runtime/app/conversations.json`，工具、运行数据和虚拟环境分别放在 `.tools/`、`.runtime/`、`.venv/`，均不提交。
 
-本机安装依赖时，已有 SOCKS 代理设置使新虚拟环境的 pip 安装失败；以上命令仅对安装进程移除代理变量并使用官方 PyPI，不修改系统代理配置。实际安装版本为 Flask 3.1.3、prometheus-client 0.26.0、OpenAI 3.29.0。
+本机安装依赖时，已有 SOCKS 代理设置使新虚拟环境的 pip 安装失败；以上命令仅对安装进程移除代理变量并使用官方 PyPI，不修改系统代理配置。`requirements.txt` 固定本次实际验证的直接依赖版本：Flask 3.1.3、prometheus-client 0.26.0、OpenAI 3.29.0、httpx 0.28.1 和 socksio 1.0.0。
 
 `MODEL_MODE` 默认为 `mock`，返回固定测试回复，不导入或创建模型客户端、不读取 `.env`，不需要 Key。`GET /api/lab/status` 反映 mock 模式与外部调用关闭状态；real 模式下该接口返回 404。保留 `MODEL_MODE=real` 的 DeepSeek 功能，只读取进程环境中的 `DEEPSEEK_API_KEY`；本实验使用 mock 模式。
 
