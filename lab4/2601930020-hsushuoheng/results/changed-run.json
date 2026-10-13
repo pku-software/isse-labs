@@ -1,0 +1,26 @@
+{
+  "base_url": "http://127.0.0.1:5001",
+  "interrupted": false,
+  "phases": [
+    {
+      "phase": "slow",
+      "started_at": "2026-10-13T07:26:49+00:00",
+      "ended_at": "2026-10-13T07:27:26+00:00",
+      "settings": {
+        "name": "slow",
+        "rate": 2,
+        "delay": 3,
+        "error_every": 0
+      },
+      "duration_seconds": 35.0,
+      "scheduled": 70,
+      "sent": 70,
+      "skipped": 0,
+      "success": 70,
+      "http_or_business_errors": 0,
+      "transport_errors": 0,
+      "unexpected_results": 0,
+      "client_mean_seconds": 3.0586287332831747
+    }
+  ]
+}

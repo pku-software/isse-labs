@@ -1,0 +1,19 @@
+# Python virtual environment & cache
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment and sensitive keys
+.env
+*.env
+.env.*
+
+# Local tools & runtime directories
+.tools/
+.runtime/
+
+# Local data files
+data/
+*.sqlite3
+*.db
