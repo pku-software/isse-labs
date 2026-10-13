@@ -4,11 +4,13 @@
 禁止用随机修改指标代替 HTTP 访问，禁止在此填入真实 API Key。
 """
 
-from urllib.request import Request
+import json
+from urllib.request import Request, urlopen
+from urllib.error import URLError, HTTPError
 
 
 # 三个适配函数实现并通过单请求验证后，由 Agent 改成 True。
-ADAPTER_READY = False
+ADAPTER_READY = True
 
 
 def confirm_mock_mode(base_url: str, timeout: float) -> bool:
@@ -20,7 +22,16 @@ def confirm_mock_mode(base_url: str, timeout: float) -> bool:
     不得直接 return True，也不能仅检查客户端环境变量或打印一行文字。
     读取状态接口时禁止跟随到其他主机的重定向；失败时返回 False 或报错。
     """
-    raise NotImplementedError("请先实现 ADAPT 1：核验当前服务的模拟模式")
+    status_url = f"{base_url.rstrip('/')}/api/status"
+    req = Request(status_url, headers={"Accept": "application/json"}, method="GET")
+    try:
+        with urlopen(req, timeout=timeout) as response:
+            if response.status != 200:
+                return False
+            payload = json.loads(response.read().decode("utf-8"))
+            return bool(payload.get("mode") == "mock" and payload.get("external_model_calls") is False)
+    except Exception:
+        return False
 
 
 def build_chat_request(
@@ -33,7 +44,19 @@ def build_chat_request(
     不用客户端 sleep 冒充接口变慢。正常请求仍经过应用的聊天处理逻辑。
     消息只使用脚本提供的非敏感测试文本，不携带 API Key。
     """
-    raise NotImplementedError("请先实现 ADAPT 2：聊天接口和请求正文")
+    chat_url = f"{base_url.rstrip('/')}/api/conversations/1/messages"
+    body_dict = {
+        "message": message,
+        "delay_seconds": float(delay_seconds),
+        "force_error": bool(force_error),
+    }
+    body_bytes = json.dumps(body_dict, ensure_ascii=False).encode("utf-8")
+    return Request(
+        chat_url,
+        data=body_bytes,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
 
 
 def response_is_success(status_code: int, body: bytes) -> bool:
@@ -42,4 +65,10 @@ def response_is_success(status_code: int, body: bytes) -> bool:
     应识别有效回复、模拟错误及无效响应，不能只要有响应就返回 True。
     推荐模拟错误返回 503 和明确的错误 JSON。只判断，不输出聊天正文。
     """
-    raise NotImplementedError("请先实现 ADAPT 3：成功/失败响应判断")
+    if status_code != 201:
+        return False
+    try:
+        data = json.loads(body.decode("utf-8"))
+        return bool(isinstance(data, dict) and "assistant_message" in data and "conversation" in data)
+    except Exception:
+        return False

@@ -23,15 +23,6 @@
   "panels": [
     {
       "collapsed": false,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "id": 1,
-      "title": "成功/失敗請求變化 (Req/s)",
-      "type": "timeseries",
       "datasource": {
         "type": "prometheus",
         "uid": "ag12tquhb3im8c"
@@ -50,6 +41,13 @@
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
       "targets": [
         {
           "datasource": {
@@ -62,19 +60,12 @@
           "range": true,
           "refId": "A"
         }
-      ]
+      ],
+      "title": "成功/失敗請求變化 (Req/s)",
+      "type": "timeseries"
     },
     {
       "collapsed": false,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 2,
-      "title": "正在處理的請求數 (In-progress)",
-      "type": "timeseries",
       "datasource": {
         "type": "prometheus",
         "uid": "ag12tquhb3im8c"
@@ -93,6 +84,13 @@
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
       "targets": [
         {
           "datasource": {
@@ -105,19 +103,12 @@
           "range": true,
           "refId": "A"
         }
-      ]
+      ],
+      "title": "正在處理的請求數 (In-progress)",
+      "type": "timeseries"
     },
     {
       "collapsed": false,
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 8
-      },
-      "id": 3,
-      "title": "平均處理耗時 (Average Duration)",
-      "type": "timeseries",
       "datasource": {
         "type": "prometheus",
         "uid": "ag12tquhb3im8c"
@@ -136,6 +127,13 @@
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
       "targets": [
         {
           "datasource": {
@@ -148,12 +146,17 @@
           "range": true,
           "refId": "A"
         }
-      ]
+      ],
+      "title": "平均處理耗時 (Average Duration)",
+      "type": "timeseries"
     }
   ],
-  "refresh": "2s",
+  "refresh": "5s",
   "schemaVersion": 39,
-  "tags": ["lab4", "monitoring"],
+  "tags": [
+    "lab4",
+    "monitoring"
+  ],
   "time": {
     "from": "now-15m",
     "to": "now"
