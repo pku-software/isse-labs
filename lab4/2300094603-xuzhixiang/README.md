@@ -75,4 +75,34 @@ The request-rate and mean-duration panels need observations in their 30-second r
 
 ## Simulation results
 
-This section will be completed after the guided traffic simulation and the student's observations.
+The course-provided `simulate_traffic.py` was adapted through `project_adapter.py` and run against the local mock app. Both result files are kept for reproduction and comparison.
+
+Artifacts: [default run](results/first-run.json), [changed run](results/changed-run.json), and [Grafana dashboard screenshot](screenshots/grafana-dashboard.png).
+
+### Default run
+
+Run on 2026-10-13 from 09:30:37 to 09:33:10 China Standard Time with all five default phases and a concurrency limit of 6. The script reported no transport errors or unexpected results.
+
+| Phase | Scheduled | Sent | Skipped | Success | HTTP/business errors | Client mean |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `baseline` | 30 | 30 | 0 | 30 | 0 | 0.122 s |
+| `burst` | 120 | 120 | 0 | 120 | 0 | 0.124 s |
+| `slow` (2 req/s, 3 s delay, concurrency 6) | 60 | 52 | 8 | 52 | 0 | 3.023 s |
+| `errors` (every third request fails) | 30 | 30 | 0 | 20 | 10 | 0.121 s |
+| `recovery` | 30 | 30 | 0 | 30 | 0 | 0.120 s |
+
+The burst raised successful request rate without producing errors. In the slow phase, the finite concurrency limit caused 8 scheduled send opportunities to be skipped; the script does not queue them for later. The errors phase produced the configured 10 failures, then the recovery phase returned to successful, low-latency requests.
+
+### Changed run
+
+Run on 2026-10-13 from 10:44:17 to 10:44:50 China Standard Time with `--scenario slow --concurrency 10`; the slow rate (2 req/s), mock delay (3 s), and duration (30 s) matched the default run.
+
+| Phase | Concurrency | Scheduled | Sent | Skipped | Success | Errors | Client mean |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `slow` | 10 | 60 | 60 | 0 | 60 | 0 | 3.021 s |
+
+Increasing the concurrency limit from 6 to 10 reduced skipped opportunities from 8 to 0. The mean client duration stayed about 3.02 s. Prometheus's 2-second gauge samples averaged 4.59 in-progress requests in the first slow phase and 5.18 in the changed phase; both phases reached a sampled peak of 6, and the current gauge returned to 0 after completion. The server-side 30-second histogram mean evaluated at each phase end was 3.006 s and 3.005 s, respectively.
+
+The Grafana comparison used a two-hour browser-time range covering both runs. The in-progress Stat showed 0 at the end while its sparkline retained the historical activity.
+
+The JSON reports contain client-side durations, including HTTP overhead. They are useful for comparing these runs, but they are not substitutes for the server-side Prometheus histogram.
