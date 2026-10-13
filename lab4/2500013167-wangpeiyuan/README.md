@@ -34,6 +34,29 @@ HTTP 验证通过首页、mock 状态、创建/修改/删除、一次模拟失�
 
 Windows x64 官方稳定版本：Prometheus 3.15.0（2026-09-24）、Grafana OSS 13.2.3（2026-09-29）。安装包和官方 SHA256 记录放在 `.tools/downloads/`；校验后将包内顶层目录的内容分别解压到 `.tools/prometheus/`、`.tools/grafana/`。
 
+从干净环境重建工具时，先在仓库根目录核验个人忽略规则；以下下载、校验和解压命令在个人目录执行（下载失败可重试，校验不通过则停止）：
+
+```powershell
+New-Item -ItemType Directory -Force .tools/downloads, .tools/prometheus, .tools/grafana | Out-Null
+$labPromUrl = 'https://github.com/prometheus/prometheus/releases/download/v3.15.0/prometheus-3.15.0.windows-amd64.zip'
+$labGrafUrl = 'https://dl.grafana.com/grafana/release/13.2.3/grafana_13.2.3_36482603486_windows_amd64.tar.gz'
+curl.exe -fL --retry 3 -o .tools/downloads/prometheus.zip $labPromUrl
+if ($LASTEXITCODE -ne 0) { throw 'Prometheus download failed' }
+curl.exe -fL --retry 3 -o .tools/downloads/grafana.tar.gz $labGrafUrl
+if ($LASTEXITCODE -ne 0) { throw 'Grafana download failed' }
+$labPromSha = '5d333b385557d9adc2ff015d13da9809baccc52fb800a82d1e5c94b79258f87e'
+$labGrafSha = 'dafe883a7c15543c6d6710b868eb8b4053353441ce7ceacf150942b8de3960f0'
+@("$labPromSha prometheus.zip", "$labGrafSha grafana.tar.gz") | Set-Content .tools/downloads/checksums.txt
+if ((Get-FileHash .tools/downloads/prometheus.zip -Algorithm SHA256).Hash.ToLower() -ne $labPromSha) { throw 'Prometheus checksum mismatch' }
+if ((Get-FileHash .tools/downloads/grafana.tar.gz -Algorithm SHA256).Hash.ToLower() -ne $labGrafSha) { throw 'Grafana checksum mismatch' }
+tar.exe -xf .tools/downloads/prometheus.zip -C .tools/prometheus --strip-components 1
+if ($LASTEXITCODE -ne 0) { throw 'Prometheus extraction failed' }
+tar.exe -xf .tools/downloads/grafana.tar.gz -C .tools/grafana --strip-components 1
+if ($LASTEXITCODE -ne 0) { throw 'Grafana extraction failed' }
+```
+
+校验值对应上述固定版本的官方发行包。首次运行先启动应用，再运行监控启动脚本；重新启动前停止本实验已有实例，避免端口冲突。前台应用在其终端按 Ctrl+C 停止，监控启动脚本记录的进程 ID 位于各自 `.runtime/` 子目录的 `process.pid`，停止时须核对进程路径属于本项目工具。
+
 应用启动后在个人目录执行 `./start-monitoring.ps1`。Prometheus 启动参数为 `--config.file=<个人目录>/prometheus.yml --storage.tsdb.path=<个人目录>/.runtime/prometheus --web.listen-address=127.0.0.1:9090`，每 2 秒采集 `127.0.0.1:5001/metrics`，超时 1 秒。Targets 页面为 http://127.0.0.1:9090/targets。
 
 Grafana 启动命令为 `.tools/grafana/bin/grafana.exe server --homepath=<个人目录>/.tools/grafana --config=<个人目录>/grafana.ini`。脚本将 `GF_PATHS_DATA`、`GF_PATHS_LOGS`、`GF_PATHS_PLUGINS` 分别设为 `.runtime/grafana/data`、`logs`、`plugins`；`GF_PATHS_PROVISIONING` 指向个人 `grafana/provisioning/`。数据源为 `http://127.0.0.1:9090`，UID 为 `lab4-prometheus`。启动脚本将仪表盘复制到 `.runtime/grafana/dashboards/`，并设置 provisioning 使用该目录。
