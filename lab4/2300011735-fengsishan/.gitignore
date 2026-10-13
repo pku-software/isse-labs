@@ -1,0 +1,17 @@
+# Credentials and local Python files
+.env
+.env.*
+*.pem
+*.key
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Monitoring binaries, downloads and runtime data
+.tools/
+.runtime/
+
+# Keep configs, dashboard, results and screenshots tracked
+.DS_Store
+Thumbs.db
