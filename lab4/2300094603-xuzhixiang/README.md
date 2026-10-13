@@ -20,6 +20,30 @@ The downloaded tools and their databases stay in ignored `.tools/` and `.runtime
 
 The verified official archives for this Mac are Prometheus 3.15.0 (`darwin/arm64`, SHA256 `920df4d17e78b3b0175af144eb318b0c74d1cf7b1d1251b326966f0e81977260`) and Grafana OSS 13.2.3 (`darwin/arm64`, SHA256 `248a51bcfacdb1ec642006cee46b4de44a34bcf41ddea88d96a4605e2e9d808c`). Get official releases from [Prometheus downloads](https://prometheus.io/download/) and [Grafana OSS downloads](https://grafana.com/grafana/download?edition=oss&platform=mac).
 
+### Recreate from a clean checkout
+
+On this Apple Silicon Mac, create the ignored Python environment and runtime directories:
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+mkdir -p .tools/downloads .runtime/app .runtime/prometheus \
+  .runtime/grafana/data .runtime/grafana/logs .runtime/grafana/plugins
+```
+
+Download the official `prometheus-3.15.0.darwin-arm64.tar.gz` and `grafana_13.2.3_36482603486_darwin_arm64.tar.gz` archives into `.tools/downloads/`. Compare their SHA256 values with the hashes above, then extract and rename the top-level directories:
+
+```sh
+shasum -a 256 .tools/downloads/prometheus-3.15.0.darwin-arm64.tar.gz
+shasum -a 256 .tools/downloads/grafana_13.2.3_36482603486_darwin_arm64.tar.gz
+tar -xzf .tools/downloads/prometheus-3.15.0.darwin-arm64.tar.gz -C .tools
+mv .tools/prometheus-3.15.0.darwin-arm64 .tools/prometheus
+tar -xzf .tools/downloads/grafana_13.2.3_36482603486_darwin_arm64.tar.gz -C .tools
+mv .tools/grafana-13.2.3 .tools/grafana
+```
+
+Grafana loads the Prometheus data source from `grafana/provisioning/datasources/lab4-prometheus.yml` and the dashboard provider from `grafana/provisioning/dashboards/lab4-provider.yml` at startup; the dashboard JSON is under `grafana/dashboards/`.
+
 Run each service in a separate Terminal window from this directory:
 
 ```sh
@@ -77,7 +101,21 @@ The request-rate and mean-duration panels need observations in their 30-second r
 
 The course-provided `simulate_traffic.py` was adapted through `project_adapter.py` and run against the local mock app. Both result files are kept for reproduction and comparison.
 
-Artifacts: [default run](results/first-run.json), [changed run](results/changed-run.json), and [Grafana dashboard screenshot](screenshots/grafana-dashboard.png).
+The adapter checks `/api/lab4/status` for mock mode, sends `POST /api/messages`, and classifies replies from the HTTP status and response JSON. To reproduce the two runs after starting the app, Prometheus, and Grafana:
+
+```sh
+./.venv/bin/python simulate_traffic.py --base-url http://127.0.0.1:5001 \
+  --scenario all --phase-seconds 30 --concurrency 6 --settle-seconds 10 \
+  --output results/first-run.json
+```
+
+```sh
+./.venv/bin/python simulate_traffic.py --base-url http://127.0.0.1:5001 \
+  --scenario slow --phase-seconds 30 --concurrency 10 --settle-seconds 10 \
+  --output results/changed-run.json
+```
+
+Artifacts: [default run](results/first-run.json), [changed run](results/changed-run.json), [Prometheus target UP screenshot](screenshots/prometheus-targets.png), and [Grafana dashboard screenshot](screenshots/grafana-dashboard.png).
 
 ### Default run
 
