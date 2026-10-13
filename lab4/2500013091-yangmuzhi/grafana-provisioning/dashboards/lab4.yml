@@ -1,0 +1,12 @@
+apiVersion: 1
+providers:
+  - name: Lab4
+    orgId: 1
+    folder: Lab4
+    folderUid: lab4
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 15
+    options:
+      path: $LAB4_GRAFANA_DASHBOARDS
