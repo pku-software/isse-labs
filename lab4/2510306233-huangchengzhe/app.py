@@ -1,22 +1,35 @@
 import json
 import os
+import threading
+import time
 
 import requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, Response, jsonify, request, send_from_directory
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
+import metrics
 
 load_dotenv()
+
+APP_MODE = os.getenv("APP_MODE", "mock").strip().lower()
+if APP_MODE not in ("mock", "real"):
+    APP_MODE = "mock"
 
 DEEPSEEK_API_URL = "https://api.deepseek.com/chat/completions"
 DEEPSEEK_MODEL = "deepseek-chat"
 OLD_DATA_FILE = os.path.join("data", "messages.json")
 DATA_FILE = os.path.join("data", "conversations.json")
 
+MOCK_REPLY = "（模拟回复）这是本地测试回复，未调用外部模型。"
+MAX_MOCK_DELAY = 5.0
+
 app = Flask(__name__)
 app.json.ensure_ascii = False
 
 conversations = []
 next_conversation_id = 1
+_storage_lock = threading.Lock()
 
 
 def load_data():
@@ -97,6 +110,22 @@ def call_deepseek(history, content):
         return None, f"解析 DeepSeek 响应失败: {exc}"
 
 
+def generate_reply(history, content, options):
+    if APP_MODE == "real":
+        return call_deepseek(history, content)
+    delay = options.get("delay", 0)
+    if isinstance(delay, (int, float)):
+        delay = max(0.0, min(float(delay), MAX_MOCK_DELAY))
+    else:
+        delay = 0.0
+    fail = bool(options.get("fail", False))
+    if delay:
+        time.sleep(delay)
+    if fail:
+        return None, "模拟错误：请求处理失败"
+    return MOCK_REPLY, None
+
+
 @app.route("/")
 def index():
     return send_from_directory("frontend", "index.html")
@@ -112,9 +141,22 @@ def script():
     return send_from_directory("frontend", "app.js")
 
 
+@app.route("/metrics")
+def metrics_page():
+    return Response(generate_latest(), mimetype=CONTENT_TYPE_LATEST)
+
+
 @app.route("/api/hello")
 def hello():
     return jsonify({"message": "你好"})
+
+
+@app.route("/api/lab-status")
+def lab_status():
+    return jsonify({
+        "mode": APP_MODE,
+        "external_model_calls": APP_MODE == "real",
+    })
 
 
 @app.route("/api/conversations", methods=["POST"])
@@ -124,14 +166,15 @@ def create_conversation():
     title = data.get("title", "新会话")
     if not isinstance(title, str) or not title.strip():
         title = "新会话"
-    conversation = {
-        "id": next_conversation_id,
-        "title": title.strip(),
-        "messages": [],
-    }
-    next_conversation_id += 1
-    conversations.append(conversation)
-    save_data()
+    with _storage_lock:
+        conversation = {
+            "id": next_conversation_id,
+            "title": title.strip(),
+            "messages": [],
+        }
+        next_conversation_id += 1
+        conversations.append(conversation)
+        save_data()
     return jsonify(conversation), 201
 
 
@@ -159,8 +202,9 @@ def update_conversation(conversation_id):
     title = data["title"]
     if not isinstance(title, str) or not title.strip():
         return jsonify({"error": "title 不能为空"}), 400
-    conversation["title"] = title.strip()
-    save_data()
+    with _storage_lock:
+        conversation["title"] = title.strip()
+        save_data()
     return jsonify(conversation)
 
 
@@ -169,8 +213,9 @@ def delete_conversation(conversation_id):
     global conversations
     if find_conversation(conversation_id) is None:
         return jsonify({"error": "会话不存在"}), 404
-    conversations = [c for c in conversations if c["id"] != conversation_id]
-    save_data()
+    with _storage_lock:
+        conversations = [c for c in conversations if c["id"] != conversation_id]
+        save_data()
     return jsonify({"message": "删除成功"})
 
 
@@ -187,26 +232,38 @@ def create_message(conversation_id):
         return jsonify({"error": "message 不能为空"}), 400
     content = content.strip()
 
-    reply, error = call_deepseek(conversation["messages"], content)
-    if error:
-        return jsonify({"error": error}), 502
+    metrics.chat_inprogress_requests.inc()
+    started = time.monotonic()
+    try:
+        reply, error = generate_reply(list(conversation["messages"]), content, data)
+        if error:
+            metrics.chat_requests_total.labels(outcome="error").inc()
+            metrics.chat_request_duration_seconds.observe(time.monotonic() - started)
+            status = 503 if APP_MODE == "mock" else 502
+            return jsonify({"error": error}), status
 
-    user_message = {
-        "id": next_message_id(conversation),
-        "role": "user",
-        "content": content,
-    }
-    assistant_message = {
-        "id": user_message["id"] + 1,
-        "role": "assistant",
-        "content": reply,
-    }
-    conversation["messages"].append(user_message)
-    conversation["messages"].append(assistant_message)
-    if conversation["title"] == "新会话":
-        conversation["title"] = content[:20]
-    save_data()
-    return jsonify(conversation), 201
+        with _storage_lock:
+            user_message = {
+                "id": next_message_id(conversation),
+                "role": "user",
+                "content": content,
+            }
+            assistant_message = {
+                "id": user_message["id"] + 1,
+                "role": "assistant",
+                "content": reply,
+            }
+            conversation["messages"].append(user_message)
+            conversation["messages"].append(assistant_message)
+            if conversation["title"] == "新会话":
+                conversation["title"] = content[:20]
+            save_data()
+
+        metrics.chat_requests_total.labels(outcome="success").inc()
+        metrics.chat_request_duration_seconds.observe(time.monotonic() - started)
+        return jsonify(conversation), 201
+    finally:
+        metrics.chat_inprogress_requests.dec()
 
 
 @app.route(
@@ -228,8 +285,9 @@ def update_message(conversation_id, message_id):
     content = data["content"]
     if not isinstance(content, str) or not content.strip():
         return jsonify({"error": "content 不能为空"}), 400
-    message["content"] = content.strip()
-    save_data()
+    with _storage_lock:
+        message["content"] = content.strip()
+        save_data()
     return jsonify(message)
 
 
@@ -243,10 +301,11 @@ def delete_message(conversation_id, message_id):
         return jsonify({"error": "会话不存在"}), 404
     if not any(m["id"] == message_id for m in conversation["messages"]):
         return jsonify({"error": "消息不存在"}), 404
-    conversation["messages"] = [
-        m for m in conversation["messages"] if m["id"] != message_id
-    ]
-    save_data()
+    with _storage_lock:
+        conversation["messages"] = [
+            m for m in conversation["messages"] if m["id"] != message_id
+        ]
+        save_data()
     return jsonify({"message": "删除成功"})
 
 
@@ -254,4 +313,4 @@ load_data()
 
 
 if __name__ == "__main__":
-    app.run(port=5001, debug=True)
+    app.run(host="127.0.0.1", port=5001, debug=False, threaded=True)
