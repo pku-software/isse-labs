@@ -1,15 +1,19 @@
 """支持多个独立的 DeepSeek 会话，并用 JSON 文件保存会话与问答。"""
 
 import json
+import math
 import os
 import tempfile
+import time
 from itertools import count
 from pathlib import Path
 from threading import Lock
 
 import requests
-from dotenv import load_dotenv
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+
+from metrics import monitor_chat
 from werkzeug.exceptions import (
     BadGateway,
     BadRequest,
@@ -22,15 +26,16 @@ from werkzeug.exceptions import (
 )
 
 
-# 由后端进程读取本项目的配置，兼容 Windows 编辑器保存的 UTF-8 BOM。
-# 不将密钥写入响应或日志；启动目录改变时仍能找到同一个 .env。
-load_dotenv(Path(__file__).resolve().with_name(".env"), encoding="utf-8-sig")
+# 模式只在启动时确定；实验默认 mock，不读取 .env。
+CHAT_MODE = os.environ.get("CHAT_MODE", "mock").strip().lower()
+if CHAT_MODE not in {"mock", "real"}:
+    raise RuntimeError("CHAT_MODE 必须是 mock 或 real")
 
 # 将 frontend 中的文件映射到根路径，供 HTML 中的相对资源地址使用。
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 app.json.ensure_ascii = False
 
-DATA_FILE = Path(__file__).resolve().parent / "data" / "conversations.json"
+DATA_FILE = Path(__file__).resolve().parent / ".runtime" / "app" / "conversations.json"
 LEGACY_FILE = DATA_FILE.with_name("messages.json")
 MISSING_FILE = object()
 
@@ -159,6 +164,23 @@ def read_text(field, limit):
 
 
 def get_ai_reply(message, history):
+    """仅替换模型调用，保留原聊天校验、存储和响应流程。"""
+    if CHAT_MODE == "real":
+        return get_real_ai_reply(message, history)
+    data = request.get_json()
+    delay = data.get("mock_delay_seconds", 0.1)
+    force_error = data.get("mock_force_error", False)
+    if type(delay) not in (int, float) or not math.isfinite(delay) or not 0 <= delay <= 30:
+        raise BadRequest("mock_delay_seconds 必须是 0 至 30 的有限数字")
+    if type(force_error) is not bool:
+        raise BadRequest("mock_force_error 必须是布尔值")
+    time.sleep(delay)
+    if force_error:
+        raise ServiceUnavailable("监控实验：模拟模型调用失败")
+    return "这是本地 mock 测试回复，未调用外部模型。"
+
+
+def get_real_ai_reply(message, history):
     """调用 DeepSeek，只返回回答文本，不向浏览器转发上游原始响应。"""
     api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
     if not api_key or api_key == "your_api_key_here":
@@ -228,6 +250,18 @@ def hello():
     return jsonify({"message": "你好"})
 
 
+@app.get("/metrics")
+def metrics():
+    return Response(generate_latest(), content_type=CONTENT_TYPE_LATEST)
+
+
+@app.get("/api/lab/status")
+def lab_status():
+    if CHAT_MODE != "mock":
+        raise NotFound("实验状态接口仅在 mock 模式启用")
+    return jsonify({"mode": CHAT_MODE, "external_model_calls": False})
+
+
 def find_conversation(conversation_id):
     conversation = conversations.get(conversation_id)
     if conversation is None:
@@ -287,6 +321,7 @@ def delete_conversation(conversation_id):
 
 @app.post("/api/messages")
 @app.post("/api/conversations/<int:conversation_id>/messages")
+@monitor_chat
 def create_message(conversation_id=None):
     message = read_text("message", MAX_MESSAGE_LENGTH)
     with data_lock:
@@ -354,5 +389,6 @@ def delete_message(message_id, conversation_id=None):
 
 
 if __name__ == "__main__":
-    # 直接运行仅供本机检查；云端由 Dockerfile 中的 Gunicorn 启动。
-    app.run(host="127.0.0.1", port=5001, debug=False)
+    # 单进程、多线程：慢聊天处理期间仍能采集指标。
+    app.run(host="127.0.0.1", port=int(os.environ.get("PORT", "5001")),
+            debug=False, threaded=True, use_reloader=False)
