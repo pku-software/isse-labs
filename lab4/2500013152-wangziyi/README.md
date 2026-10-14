@@ -79,3 +79,46 @@ sum(rate(chat_request_duration_seconds_sum{job="chat-app"}[30s])) / sum(rate(cha
 不是在线用户数；第三项是最近窗口的服务端平均耗时，单位秒，无请求时可能无值。
 Histogram 的 `_bucket{le="..."}` 为不超过指定耗时的累计样本数，
 `_sum` 为总耗时，`_count` 为样本数。
+
+## 实际模拟结果
+
+首次完整模拟使用默认参数（五个阶段各 30 秒，slow 阶段并发上限 6），结果文件为
+`results/first-run.json`。运行时间为 2026-10-14 18:19:00–18:21:43（北京时间）。
+各阶段实际结果：baseline 发送 30、成功 30；burst 发送 120、成功 120；slow
+发送 52、成功 52、因并发已满跳过 8；errors 发送 30、成功 20、预期业务错误 10；
+recovery 发送 30、成功 30。全程无网络错误。slow 阶段服务端平均耗时接近 3 秒，
+采集到的在途请求峰值为 6；errors 阶段错误速率上升，recovery 后回落。
+
+第二次只运行 slow 阶段，使用 `--phase-seconds 30 --concurrency 3`，其余保持
+每秒约 2 次、后端延迟 3 秒，结果文件为 `results/changed-run.json`。运行时间为
+2026-10-14 18:42:54–18:43:36（北京时间），发送 27、成功 27、跳过 33、业务错误 0、
+网络错误 0，客户端平均耗时约 3.03 秒，采集到的在途峰值为 3。并发降低后，达到
+上限的调度机会直接跳过，所以成功数量下降但错误指标没有增加。
+
+完整五阶段仪表盘截图为 `screenshots/grafana-dashboard.png`，slow 阶段的补充观察图为
+`screenshots/grafana-slow-rate-inprogress.png` 和 `screenshots/grafana-slow-duration.png`；
+Prometheus Target 截图为 `screenshots/prometheus-targets.png`。
+
+## 复现脚本与仪表盘导入
+
+`simulate_traffic.py` 与课程调度器一致。`project_adapter.py` 通过真实 HTTP
+读取 `/api/lab-status`，拒绝非 mock 模式和重定向；构造原 `POST /api/messages`
+请求，携带 mock 延迟/失败选项；以 HTTP 201 和有效记录 JSON 判断成功。
+已验证正常请求、强制失败、无效响应、本机限制和 real 模式拒绝。
+脚本不需要 Key，不直接修改指标。
+
+在本目录运行：
+
+```powershell
+.\.venv\Scripts\python.exe simulate_traffic.py --base-url http://127.0.0.1:5001 --output results/first-run.json
+.\.venv\Scripts\python.exe simulate_traffic.py --base-url http://127.0.0.1:5001 --scenario slow --phase-seconds 30 --concurrency 3 --output results/changed-run.json
+```
+
+运行期间保持电脑唤醒。目标速率是发送机会，实际完成量受延迟和并发上限影响；
+JSON 的客户端耗时包含网络开销，不能当作服务端 Histogram。
+30 秒窗口会平滑阶段边界并产生恢复滞后；2 秒采集可能错过短请求的在途峰值。
+
+`grafana-dashboard.json` 是从实际运行的 Grafana 导出的仪表盘，包含三个 Panel。
+在另一套 Grafana 导入前，创建 UID 为 `lab4-prometheus` 的 Prometheus 数据源，
+地址指向实际本机 Prometheus；或把 JSON 中该 UID 改成对应数据源 UID。
+当前环境启动脚本会自动配置数据源并加载 `dashboards/chat.json`。
