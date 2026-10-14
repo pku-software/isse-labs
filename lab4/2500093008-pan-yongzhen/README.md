@@ -29,3 +29,54 @@ MODEL_MODE=mock PORT=5001 lab4/2500093008-pan-yongzhen/.venv/bin/python lab4/250
 - `chat_request_duration_seconds`：服务端聊天处理耗时，包含失败；桶上界为 0.05、0.1、0.25、0.5、1、2、3、5、10、15 秒及 +Inf。
 
 指标定义位于 `metrics.py`。开发验证请求也会计入指标，服务进程重启后内存指标重新开始。
+
+## 本地监控工具安装与连接
+
+使用官方 macOS ARM64 稳定版 Prometheus 3.15.0、Grafana OSS 13.2.3。下载来源分别是 [Prometheus](https://prometheus.io/download/) 与 [Grafana](https://grafana.com/grafana/download/13.2.3?edition=oss&platform=mac)。
+
+个人目录内的固定位置：下载与校验文件 `.tools/downloads/`，程序 `.tools/prometheus/` 和 `.tools/grafana/`，Prometheus 数据 `.runtime/prometheus/`，Grafana 数据、日志、插件分别为 `.runtime/grafana/data/`、`logs/`、`plugins/`；应用数据 `.runtime/app/`，Python 环境 `.venv/`。这些目录均不提交。
+
+从干净环境安装时，先在仓库根目录核验个人忽略规则，再在个人目录执行以下命令（首次安装，工具目录为空时）：
+
+```sh
+cd lab4/2500093008-pan-yongzhen
+mkdir -p .tools/downloads .tools/prometheus .tools/grafana
+curl -fL --retry 3 -o .tools/downloads/prometheus-3.15.0.darwin-arm64.tar.gz https://github.com/prometheus/prometheus/releases/download/v3.15.0/prometheus-3.15.0.darwin-arm64.tar.gz
+curl -fL --retry 3 -o .tools/downloads/grafana_13.2.3_36482603486_darwin_arm64.tar.gz https://dl.grafana.com/grafana/release/13.2.3/grafana_13.2.3_36482603486_darwin_arm64.tar.gz
+```
+
+解压前用 `shasum -a 256` 核对下载包，必须与以下官方校验值一致：
+
+| 文件 | SHA256 |
+| --- | --- |
+| prometheus-3.15.0.darwin-arm64.tar.gz | `920df4d17e78b3b0175af144eb318b0c74d1cf7b1d1251b326966f0e81977260` |
+| grafana_13.2.3_36482603486_darwin_arm64.tar.gz | `248a51bcfacdb1ec642006cee46b4de44a34bcf41ddea88d96a4605e2e9d808c` |
+
+```sh
+tar -xzf .tools/downloads/prometheus-3.15.0.darwin-arm64.tar.gz --strip-components=1 -C .tools/prometheus
+tar -xzf .tools/downloads/grafana_13.2.3_36482603486_darwin_arm64.tar.gz --strip-components=1 -C .tools/grafana
+```
+
+应用启动后，在两个独立终端分别运行（个人目录内）：
+
+```sh
+sh start-monitoring.sh prometheus
+```
+
+```sh
+sh start-monitoring.sh grafana
+```
+
+启动脚本显式传入个人配置与运行数据目录。Prometheus 监听 `127.0.0.1:9090`，每 2 秒采集 `127.0.0.1:5001/metrics`，超时 1 秒，job 为 `chat-app`。Grafana 监听 `127.0.0.1:3000`，通过配置文件自动添加 UID 为 `lab4-prometheus` 的数据源，指向 `http://127.0.0.1:9090`，并载入 `dashboards/chat-monitoring.json`。本机匿名访问仅有 Viewer 权限，随机管理员口令保存在被忽略的 `.runtime/grafana/admin-password`，不纳入提交。
+
+## 三个图表
+
+仪表盘刷新间隔为 5 秒，时间范围可在页面右上角选择。查询使用最近 30 秒窗口，阶段边界会平滑，并可能存在滞后。
+
+| Panel | PromQL | 含义 |
+| --- | --- | --- |
+| 成功与失败请求速率 | `sum by (outcome) (rate(chat_requests_total{job="chat-app"}[30s]))` | 最近窗口内每秒完成的成功/失败请求数，非累计次数 |
+| 正在处理的请求 | `sum(chat_inprogress_requests{job="chat-app"})` | 当前在途请求数，非在线用户数 |
+| 平均处理耗时 | `sum(rate(chat_request_duration_seconds_sum{job="chat-app"}[30s])) / sum(rate(chat_request_duration_seconds_count{job="chat-app"}[30s]))` | 最近窗口内服务端平均耗时，单位秒，包含失败请求 |
+
+Histogram 的 `_bucket{le="…"}` 表示耗时不超过上界的累计请求数；`_sum` 是累计耗时，`_count` 是记录次数。第三个图使用窗口内耗时增长量除以次数增长量；没有请求时可能无值，不补零。
