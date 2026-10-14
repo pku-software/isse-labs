@@ -35,7 +35,7 @@ mock 聊天可附带 `mock_delay_seconds`（0–10 秒，默认 0.1 秒）与
 页面、状态接口、记录查询和 `/metrics` 不计入聊天指标。
 指标标签不包含消息内容或用户身份。
 
-课程 `simulate_traffic.py` 与待适配的 `project_adapter.py` 已复制到本目录。
+课程 `simulate_traffic.py` 与已完成项目适配的 `project_adapter.py` 位于本目录。
 
 ## Prometheus 与 Grafana（Windows x64）
 
@@ -56,7 +56,8 @@ Prometheus 校验值见该版本官方 `sha256sums.txt`。
 ```powershell
 .\.tools\prometheus\prometheus.exe --config.file=prometheus.yml --storage.tsdb.path=.runtime/prometheus --web.listen-address=127.0.0.1:9090
 # Grafana 运行前按 start-monitoring.ps1 设置 GF_PATHS_* 和 LAB4_DASHBOARD_DIR
-.\.tools\grafana\bin\grafana.exe server --homepath=.tools/grafana --config=grafana.ini
+$grafanaRoot = (Get-Location).Path
+.\.tools\grafana\bin\grafana.exe server --homepath="$grafanaRoot/.tools/grafana" --config="$grafanaRoot/grafana.ini"
 ```
 
 Prometheus 页面为 http://127.0.0.1:9090/targets，采集 job 为 `chat-app`，
@@ -67,7 +68,7 @@ http://127.0.0.1:3000/d/lab4-wangziyi 。工具均只监听本机。
 Prometheus 数据在 `.runtime/prometheus/`，Grafana 数据、日志和插件分别在
 `.runtime/grafana/data/`、`logs/`、`plugins/`，工具和运行数据都不提交。
 
-三个 Panel 每 2 秒刷新，使用以下 PromQL：
+三个 Panel 默认每 2 秒刷新（截图时选择了 5 秒），使用以下 PromQL：
 
 ```promql
 sum by (outcome) (rate(chat_requests_total{job="chat-app"}[30s]))
