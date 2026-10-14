@@ -61,4 +61,51 @@ Histogram 桶边界为 0.05、0.1、0.25、0.5、1、2、3、5、10、20、30、
 
 测试使用独立临时聊天数据，覆盖成功与失败指标、异常收尾、输入校验、非聊天接口排除、原 CRUD、real/mock 路径区分，以及两个慢请求并发时的指标读取。测试禁止实际外部模型调用。
 
-`simulate_traffic.py`、`project_adapter.py` 和 `prometheus.yml` 是课程 `63c1038` 版本的个人副本。访问适配器尚未实现，`ADAPTER_READY=False`，调度器会拒绝运行。
+`simulate_traffic.py`、`project_adapter.py` 和 `prometheus.yml` 是课程 `63c1038` 版本的个人副本。访问适配器中的三个函数用于核验 mock 状态、构造聊天请求和判断响应。
+
+## Prometheus 与 Grafana
+
+安装脚本固定使用 [Prometheus 3.15.0](https://github.com/prometheus/prometheus/releases/tag/v3.15.0) 和 [Grafana OSS 13.2.4](https://grafana.com/grafana/download/13.2.4?edition=oss&platform=windows) 的 Windows x64 官方包。安装时验证脚本中固定的 SHA-256，下载中断后可重复运行以复用完整分块。
+
+在仓库根目录使用已创建的虚拟环境：
+
+```powershell
+& ./lab4/2500018733-ChenKaishun/.venv/Scripts/python.exe lab4/2500018733-ChenKaishun/install-monitoring.py
+& ./lab4/2500018733-ChenKaishun/.venv/Scripts/python.exe lab4/2500018733-ChenKaishun/start-monitoring.py
+```
+
+启动脚本同时启动 mock 聊天应用、Prometheus 和 Grafana，启动前要求 5001、9090、3001 端口空闲。若之前在终端中运行了 `start-app.ps1`，先在该终端用 Ctrl+C 停止它，再启动整套服务。启动失败会停止本次脚本已启动的进程；成功后进程记录写入 `.runtime/processes.json`。
+
+也可以添加 `--service app`、`--service prometheus` 或 `--service grafana` 分别启动某个尚未运行的服务；此时只检查该服务的端口。Windows 后台进程使用隐藏控制台，并将标准输出与错误写入对应的 `.runtime/<服务名>/`。
+
+| 服务 | 地址与配置 |
+| --- | --- |
+| 聊天应用 | `http://127.0.0.1:5001/`，单进程多线程 |
+| Prometheus Targets | `http://127.0.0.1:9090/targets` |
+| Grafana 仪表盘 | `http://127.0.0.1:3001/d/lab4-chat` |
+
+3000 端口已有其他程序，因此 Grafana 使用 3001。三个服务均只绑定 `127.0.0.1`。Grafana 允许本机匿名只读查看，数据源与仪表盘由配置文件导入；管理账户的随机密码保存在被忽略的 `.runtime/grafana/admin-password.txt` 中。
+
+相对于个人目录，下载包、分块及校验文件位于 `.tools/downloads/`，解压目录固定为 `.tools/prometheus/` 和 `.tools/grafana/`。Prometheus 时间序列存入 `.runtime/prometheus/`；Grafana 的数据库、日志、插件和仪表盘运行副本分别放在 `.runtime/grafana/data/`、`logs/`、`plugins/`、`dashboards/`。源码配置与可导入的 `grafana-dashboard.json` 保留在可提交目录。
+
+Prometheus 的实际参数为：
+
+```text
+prometheus.exe --config.file=<个人目录>/prometheus.yml --storage.tsdb.path=<个人目录>/.runtime/prometheus --web.listen-address=127.0.0.1:9090 --storage.tsdb.retention.time=7d
+```
+
+Grafana 的实际参数为 `grafana.exe server --homepath <个人目录>/.tools/grafana --config <个人目录>/grafana.ini`；启动脚本通过 `GF_PATHS_DATA`、`GF_PATHS_LOGS`、`GF_PATHS_PLUGINS` 和 `GF_PATHS_PROVISIONING` 指定各路径。
+
+`prometheus.yml` 每 2 秒采集一次 `127.0.0.1:5001/metrics`，超时 1 秒，job 为 `chat-app`。Grafana 数据源地址为 `http://127.0.0.1:9090`，UID 固定为 `lab4-prometheus`。启动脚本自动导入；若手工导入仪表盘，应先按 `grafana-provisioning/datasources/prometheus.yml` 建立同 UID 的数据源，或将 JSON 中的数据源 UID 换成目标实例的 UID。
+
+仪表盘每 2 秒刷新，三个查询如下：
+
+| 图表 | PromQL | 单位与意义 |
+| --- | --- | --- |
+| 成功 / 失败请求速率 | `sum by (outcome) (rate(chat_requests_total{job="chat-app"}[30s]))` | 请求/秒；最近 30 秒窗口内的平均完成速率 |
+| 正在处理的请求 | `sum(chat_inprogress_requests{job="chat-app"})` | 请求数；当前在途处理数量 |
+| 平均处理耗时 | `sum(rate(chat_request_duration_seconds_sum{job="chat-app"}[30s])) / sum(rate(chat_request_duration_seconds_count{job="chat-app"}[30s]))` | 秒；最近 30 秒窗口内的服务端平均耗时 |
+
+平均耗时查询在没有新请求时可能得到无值，面板保留空缺。应用重启后内存指标重新累计，Prometheus 已采集的历史仍在其数据目录中。
+
+2026-10-14 的本地连接核验中，`chat-app` 的采集地址为 `http://127.0.0.1:5001/metrics`，Target 为 `UP`；Grafana 数据源健康检查为 `OK`，三个面板查询均返回 HTTP 200。通过原聊天接口发送一条延迟 0.1 秒的 mock 请求后，平均耗时查询取得约 0.105 秒。此为连接核验，不是五阶段访问模拟结果。
