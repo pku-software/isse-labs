@@ -36,3 +36,46 @@ mock 聊天可附带 `mock_delay_seconds`（0–10 秒，默认 0.1 秒）与
 指标标签不包含消息内容或用户身份。
 
 课程 `simulate_traffic.py` 与待适配的 `project_adapter.py` 已复制到本目录。
+
+## Prometheus 与 Grafana（Windows x64）
+
+实际工具版本：Prometheus 3.15.0、Grafana OSS 13.2.4。官方来源：
+
+- https://github.com/prometheus/prometheus/releases/tag/v3.15.0
+- https://grafana.com/grafana/download/13.2.4?platform=windows&edition=oss
+
+将官方 Windows amd64 包及校验文件下载到 `.tools/downloads/`，核验 SHA256
+后去掉包的外层目录，分别解压到 `.tools/prometheus/` 和 `.tools/grafana/`。
+Grafana 便携包的官方 SHA256 为
+`3e005ff50fe3bb6b8cb428ef127636fac4ee676bf9b6d819c6a2297d21f4bcbd`；
+Prometheus 校验值见该版本官方 `sha256sums.txt`。
+
+应用启动后，在本目录运行 `./start-monitoring.ps1`。脚本检查端口占用，
+不停止已有服务；启动命令对应：
+
+```powershell
+.\.tools\prometheus\prometheus.exe --config.file=prometheus.yml --storage.tsdb.path=.runtime/prometheus --web.listen-address=127.0.0.1:9090
+# Grafana 运行前按 start-monitoring.ps1 设置 GF_PATHS_* 和 LAB4_DASHBOARD_DIR
+.\.tools\grafana\bin\grafana.exe server --homepath=.tools/grafana --config=grafana.ini
+```
+
+Prometheus 页面为 http://127.0.0.1:9090/targets，采集 job 为 `chat-app`，
+目标 `127.0.0.1:5001`，间隔 2 秒、超时 1 秒。Grafana 页面为
+http://127.0.0.1:3000/d/lab4-wangziyi 。工具均只监听本机。
+数据源自动配置为 `http://127.0.0.1:9090`，UID 为 `lab4-prometheus`；
+仪表盘通过 `provisioning/` 自动加载 `dashboards/chat.json`，匿名访问仅允许查看。
+Prometheus 数据在 `.runtime/prometheus/`，Grafana 数据、日志和插件分别在
+`.runtime/grafana/data/`、`logs/`、`plugins/`，工具和运行数据都不提交。
+
+三个 Panel 每 2 秒刷新，使用以下 PromQL：
+
+```promql
+sum by (outcome) (rate(chat_requests_total{job="chat-app"}[30s]))
+sum(chat_inprogress_requests{job="chat-app"})
+sum(rate(chat_request_duration_seconds_sum{job="chat-app"}[30s])) / sum(rate(chat_request_duration_seconds_count{job="chat-app"}[30s]))
+```
+
+第一项是最近 30 秒平均每秒完成的成功/失败聊天数；第二项是当前在途聊天数，
+不是在线用户数；第三项是最近窗口的服务端平均耗时，单位秒，无请求时可能无值。
+Histogram 的 `_bucket{le="..."}` 为不超过指定耗时的累计样本数，
+`_sum` 为总耗时，`_count` 为样本数。
