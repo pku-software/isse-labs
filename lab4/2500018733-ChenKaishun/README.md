@@ -63,6 +63,16 @@ Histogram 桶边界为 0.05、0.1、0.25、0.5、1、2、3、5、10、20、30、
 
 `simulate_traffic.py`、`project_adapter.py` 和 `prometheus.yml` 是课程 `63c1038` 版本的个人副本。访问适配器中的三个函数用于核验 mock 状态、构造聊天请求和判断响应。
 
+`project_adapter.py` 通过 `GET /api/lab/status` 严格核验 `mode=mock` 且 `external_model_calls=false`，禁止重定向和非本机目标。每个工作线程通过原会话创建接口建立独立会话，并在该线程内复用；聊天请求发送到 `POST /api/conversations/<id>/messages`，携带 `message`、`mock_delay_seconds` 和 `mock_force_error`。只有 HTTP 201 且返回有效 ID、消息字段及非空回复时判定成功。
+
+课程调度器保持原样。创建会话发生在构造聊天请求时，不计入聊天业务指标，也不包含在调度器记录的单次聊天客户端耗时中，但会占用该工作线程的时间。调度器每个阶段建立自己的线程池。
+
+适配器通过非 mock HTTP 服务拒绝测试、重定向拒绝测试、线程间会话隔离测试、响应判断测试，以及实际应用的一次成功和一次模拟失败请求验证后，设为 `ADAPTER_READY=True`。回归检查命令：
+
+```powershell
+& ./lab4/2500018733-ChenKaishun/.venv/Scripts/python.exe -m unittest discover -s lab4/2500018733-ChenKaishun -p test_adapter.py -v
+```
+
 ## Prometheus 与 Grafana
 
 安装脚本固定使用 [Prometheus 3.15.0](https://github.com/prometheus/prometheus/releases/tag/v3.15.0) 和 [Grafana OSS 13.2.4](https://grafana.com/grafana/download/13.2.4?edition=oss&platform=windows) 的 Windows x64 官方包。安装时验证脚本中固定的 SHA-256，下载中断后可重复运行以复用完整分块。
@@ -77,6 +87,16 @@ Histogram 桶边界为 0.05、0.1、0.25、0.5、1、2、3、5、10、20、30、
 启动脚本同时启动 mock 聊天应用、Prometheus 和 Grafana，启动前要求 5001、9090、3001 端口空闲。若之前在终端中运行了 `start-app.ps1`，先在该终端用 Ctrl+C 停止它，再启动整套服务。启动失败会停止本次脚本已启动的进程；成功后进程记录写入 `.runtime/processes.json`。
 
 也可以添加 `--service app`、`--service prometheus` 或 `--service grafana` 分别启动某个尚未运行的服务；此时只检查该服务的端口。Windows 后台进程使用隐藏控制台，并将标准输出与错误写入对应的 `.runtime/<服务名>/`。
+
+本机实验中 Grafana 后台运行曾出现无响应，因此建议分别启动应用和 Prometheus，并在独立 PowerShell 终端前台运行 Grafana，保持该终端开启：
+
+```powershell
+& ./lab4/2500018733-ChenKaishun/.venv/Scripts/python.exe lab4/2500018733-ChenKaishun/start-monitoring.py --service app
+& ./lab4/2500018733-ChenKaishun/.venv/Scripts/python.exe lab4/2500018733-ChenKaishun/start-monitoring.py --service prometheus
+& ./lab4/2500018733-ChenKaishun/start-grafana.ps1
+```
+
+已运行的服务不重复启动。`grafana.ini` 禁用了本实验不使用的数据源插件，保留 Prometheus 数据源；前台方式与后台方式使用同一份数据库和仪表盘配置。
 
 | 服务 | 地址与配置 |
 | --- | --- |
@@ -109,3 +129,47 @@ Grafana 的实际参数为 `grafana.exe server --homepath <个人目录>/.tools/
 平均耗时查询在没有新请求时可能得到无值，面板保留空缺。应用重启后内存指标重新累计，Prometheus 已采集的历史仍在其数据目录中。
 
 2026-10-14 的本地连接核验中，`chat-app` 的采集地址为 `http://127.0.0.1:5001/metrics`，Target 为 `UP`；Grafana 数据源健康检查为 `OK`，三个面板查询均返回 HTTP 200。通过原聊天接口发送一条延迟 0.1 秒的 mock 请求后，平均耗时查询取得约 0.105 秒。此为连接核验，不是五阶段访问模拟结果。
+## 访问模拟与实验结果
+
+在仓库根目录、三个服务运行且应用处于 mock 模式时执行：
+
+```powershell
+& ./lab4/2500018733-ChenKaishun/.venv/Scripts/python.exe lab4/2500018733-ChenKaishun/simulate_traffic.py --base-url http://127.0.0.1:5001 --output lab4/2500018733-ChenKaishun/results/first-run.json
+& ./lab4/2500018733-ChenKaishun/.venv/Scripts/python.exe lab4/2500018733-ChenKaishun/simulate_traffic.py --base-url http://127.0.0.1:5001 --scenario slow --slow-delay 1 --phase-seconds 30 --slow-rate 2 --concurrency 6 --output lab4/2500018733-ChenKaishun/results/changed-run.json
+```
+
+以上为本次运行参数；再次复现时更换输出文件名，以保留本次结果。两次均使用并发上限 6。结果 JSON 时间为 UTC，下表为北京时间（UTC+8），日期均为 2026-10-14。每阶段计划发送 30 秒，结束时间包含等待在途请求完成的时间。
+
+首次完整模拟结果见 [first-run.json](results/first-run.json)：
+
+| 阶段 | 北京时间 | 目标频率（次/秒） | 模拟延迟（秒） | 计划 | 实发 | 成功 | 业务/HTTP 错误 | 跳过 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| baseline | 20:13:40–20:14:10 | 1 | 0.1 | 30 | 30 | 30 | 0 | 0 |
+| burst | 20:14:10–20:14:40 | 4 | 0.1 | 120 | 120 | 120 | 0 | 0 |
+| slow | 20:14:40–20:15:12 | 2 | 3 | 60 | 52 | 52 | 0 | 8 |
+| errors | 20:15:12–20:15:42 | 1 | 0.1 | 30 | 30 | 20 | 10 | 0 |
+| recovery | 20:15:42–20:16:12 | 1 | 0.1 | 30 | 30 | 30 | 0 | 0 |
+
+首次实际发送 262 次，其中成功 252 次、模拟失败 10 次。所有阶段的传输错误和非预期结果均为 0，运行未中断。burst 阶段成功完成速率升高，图中峰值约 3.96 次/秒；slow 阶段在途数量和平均耗时升高；errors 阶段出现失败速率；recovery 阶段恢复成功处理。模拟错误期间 Target 仍为 UP，因为指标采集能够正常完成。
+
+第二次仅运行 slow 场景，时间为 20:29:29–20:30:00，结果见 [changed-run.json](results/changed-run.json)。固定目标频率每秒 2 次、并发上限 6，仅将模拟延迟从 3 秒降为 1 秒：
+
+| 对比项 | 首次 slow | 第二次 slow |
+| --- | --- | --- |
+| 模拟延迟 | 3 秒 | 1 秒 |
+| 平均耗时曲线峰值（30 秒窗口） | 3.012 秒 | 1.014 秒 |
+| 采集到的在途数量峰值 | 6 | 2 |
+| 计划发送数 | 60 | 60 |
+| 实际发送数 / 成功数 | 52 / 52 | 60 / 60 |
+| 跳过发送机会 | 8 | 0 |
+| 脚本记录的客户端平均耗时 | 3.092 秒 | 1.078 秒 |
+
+延迟缩短后，请求更快结束，在途数量减少，并发名额更快释放，脚本完成全部计划发送。跳过的 8 次是未发出请求的发送机会，不属于服务器失败请求。第二次无跳过表明本次负载下并发容量足够；提高频率后仍可能达到上限。
+
+服务端平均耗时曲线与客户端平均耗时采用不同计量范围，表中的曲线峰值也不是整个阶段的平均值。耗时在请求结束时记录，查询又使用 30 秒窗口，因此曲线变化滞后于阶段切换。Prometheus 每 2 秒采集一次，短请求的在途峰值可能没有被采到。
+
+### 原始截图与仪表盘
+
+- [Prometheus Target UP 原图](screenshots/prometheus-targets.png)
+- [完整五阶段 Grafana 原图](screenshots/grafana-dashboard.png)，时间范围为 20:13:30–20:16:32，包含三个面板与图例。
+- [Grafana 仪表盘 JSON](grafana-dashboard.json)，从本次实际运行的仪表盘 API 导出，导入所需数据源 UID 为 `lab4-prometheus`。
