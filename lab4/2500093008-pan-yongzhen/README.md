@@ -80,3 +80,46 @@ sh start-monitoring.sh grafana
 | 平均处理耗时 | `sum(rate(chat_request_duration_seconds_sum{job="chat-app"}[30s])) / sum(rate(chat_request_duration_seconds_count{job="chat-app"}[30s]))` | 最近窗口内服务端平均耗时，单位秒，包含失败请求 |
 
 Histogram 的 `_bucket{le="…"}` 表示耗时不超过上界的累计请求数；`_sum` 是累计耗时，`_count` 是记录次数。第三个图使用窗口内耗时增长量除以次数增长量；没有请求时可能无值，不补零。
+
+## 脚本适配与复现实验
+
+`simulate_traffic.py` 为课程 starter 的原始调度器副本，未修改。`project_adapter.py` 的三个适配点分别通过 HTTP 核验 `/api/lab/status`、向原 `/api/messages` 构造 POST 请求，以及依据 201 状态与有效 `id/message/reply` 判断成功。状态检查关闭代理与重定向，核验真实返回的 mock 状态；非 mock 服务会在发送聊天请求前被拒绝。单请求验证通过后启用了 `ADAPTER_READY`。
+
+以下命令在仓库根目录执行。首次完整运行每阶段 30 秒，并发上限 6，请求超时 10 秒，收尾等待 10 秒：
+
+```sh
+lab4/2500093008-pan-yongzhen/.venv/bin/python -u lab4/2500093008-pan-yongzhen/simulate_traffic.py --base-url http://127.0.0.1:5001 --output lab4/2500093008-pan-yongzhen/results/first-run.json
+```
+
+对照运行仅执行 slow 场景，唯一改变的请求参数为延迟 3 秒改为 5 秒，其他参数沿用默认值：
+
+```sh
+lab4/2500093008-pan-yongzhen/.venv/bin/python -u lab4/2500093008-pan-yongzhen/simulate_traffic.py --base-url http://127.0.0.1:5001 --scenario slow --phase-seconds 30 --slow-delay 5 --output lab4/2500093008-pan-yongzhen/results/changed-run.json
+```
+
+已有结果应保留；再次复现时请把 `--output` 改为新的文件名，避免覆盖本次真实结果。脚本只发送本机 HTTP 请求，不直接操作指标。并发容量满时跳过发送机会，阶段结束等待在途请求收尾。JSON 中的 `client_mean_seconds` 包含网络等客户端开销，不能当作服务端 Histogram。
+
+## 实际实验结果
+
+两次运行均在 2026 年 10 月 15 日完成。下表使用北京时间（UTC+8）；原始 JSON 保存 UTC 时间。首次完整运行无网络错误、无非预期结果，全部 10 次失败均为 errors 阶段设定的模拟失败。
+
+| 阶段 | 北京时间 | 目标频率/秒 | 后端延迟/秒 | 发送 | 成功 | 模拟失败 | 跳过 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| baseline | 01:36:07–01:36:37 | 1 | 0.1 | 30 | 30 | 0 | 0 |
+| burst | 01:36:37–01:37:07 | 4 | 0.1 | 120 | 120 | 0 | 0 |
+| slow | 01:37:07–01:37:39 | 2 | 3 | 52 | 52 | 0 | 8 |
+| errors | 01:37:39–01:38:09 | 1 | 0.1 | 30 | 20 | 10 | 0 |
+| recovery | 01:38:09–01:38:39 | 1 | 0.1 | 30 | 30 | 0 | 0 |
+| 对照 slow | 08:24:40–08:25:14 | 2 | 5 | 35 | 35 | 0 | 25 |
+
+首次累计发送 262 次，成功 252 次，模拟失败 10 次。Grafana 截图覆盖 01:35:52–01:39:24。burst 的成功速率达到约 4 req/s；slow 的在途峰值为 6，服务端平均耗时峰值约 3.008 秒；errors 的错误速率升高，recovery 后随窗口更新回落。短请求可能未被 2 秒采集间隔捕捉，因此 Gauge 短时显示 0 不表示期间没有请求。速率与平均耗时使用 30 秒窗口，变化平滑并跨越阶段边界。
+
+对照运行无失败、无网络错误、无非预期结果。对应 08:24:25–08:25:54 窗口内，平均服务端耗时峰值约 5.010 秒，在途峰值仍为 6，成功速率峰值约 1.107 req/s，跳过次数由 8 增至 25。这反映脚本的 6 并发上限与更长处理时间限制了发送及完成速率，并非测得应用最大处理能力。客户端平均耗时分别为 3.029 秒和 5.030 秒，仅作独立客户端统计。
+
+`results/first-run.json` 和 `results/changed-run.json` 是实际执行输出。`screenshots/prometheus-targets.png` 为学生截取的 Target UP 原图，`screenshots/grafana-dashboard.png` 为首次完整模拟的学生仪表盘原图。Target 截图显示较旧的 last scrape 页面状态，随后通过实时 API 核验采集持续正常、无错误。
+
+## 仪表盘导入
+
+`grafana-dashboard.json` 从实际 Grafana 仪表盘导出，包含三个 Panel，并把数据源引用转换为导入时选择的 `DS_PROMETHEUS`。在 Grafana 导入页面上传此文件，选择指向 `http://127.0.0.1:9090` 的 Prometheus 数据源即可。本项目的启动脚本则通过 provisioning 自动加载同一组查询的 `dashboards/chat-monitoring.json`，使用固定数据源 UID `lab4-prometheus`，不需要手动导入。若导入到同一实例，注意同 UID 仪表盘已存在，避免重复覆盖。
+
+仪表盘 JSON 不包含历史指标。历史数据存放在被忽略的 `.runtime/prometheus/` 中；新环境需重新运行模拟，并在 Grafana 选择那次运行的实际时间范围。
