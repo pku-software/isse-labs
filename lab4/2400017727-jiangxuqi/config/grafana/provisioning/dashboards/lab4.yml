@@ -1,0 +1,10 @@
+apiVersion: 1
+providers:
+  - name: Lab4
+    orgId: 1
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 10
+    options:
+      path: ${LAB4_ROOT}/.runtime/grafana/dashboards
