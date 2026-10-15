@@ -1,0 +1,39 @@
+"""仅在原聊天 POST 处理流程中记录业务指标。"""
+
+from functools import wraps
+from time import perf_counter
+
+from flask import make_response
+from prometheus_client import Counter, Gauge, Histogram
+
+
+CHAT_REQUESTS = Counter(
+    "chat_requests_total", "Completed chat requests by outcome", ["outcome"]
+)
+for outcome in ("success", "error"):
+    CHAT_REQUESTS.labels(outcome=outcome)
+
+CHAT_INPROGRESS = Gauge("chat_inprogress_requests", "Chat requests currently processing")
+CHAT_DURATION = Histogram(
+    "chat_request_duration_seconds", "Server-side chat processing duration in seconds",
+    buckets=(0.05, 0.1, 0.25, 0.5, 1, 2, 3, 5, 10, 20, 30, 60),
+)
+
+
+def monitor_chat(handler):
+    @wraps(handler)
+    def measured(*args, **kwargs):
+        started = perf_counter()
+        outcome = "error"
+        CHAT_INPROGRESS.inc()
+        try:
+            response = make_response(handler(*args, **kwargs))
+            if 200 <= response.status_code < 300:
+                outcome = "success"
+            return response
+        finally:
+            CHAT_DURATION.observe(perf_counter() - started)
+            CHAT_REQUESTS.labels(outcome=outcome).inc()
+            CHAT_INPROGRESS.dec()
+
+    return measured
