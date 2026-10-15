@@ -64,3 +64,57 @@ sum(rate(chat_request_duration_seconds_sum{job="chat-app"}[30s])) / sum(rate(cha
 ```
 
 它们依次表示最近 30 秒的成功/失败平均完成速率、采集时刻正在处理的请求数、最近 30 秒包含失败请求的服务端平均耗时。没有新请求时耗时可能无值，仪表盘保留空缺。手动导入仪表盘时，先建立 UID 为 `lab4-prometheus` 的 Prometheus 数据源；或把 JSON 中的 UID 改为已有数据源的 UID，再导入。
+
+## 课程访问脚本适配
+
+`simulate_traffic.py` 保持课程原样，负责发送节奏、有限并发、阶段切换与真实结果统计。`project_adapter.py` 将这些通用操作转换成原项目 HTTP 请求：
+
+- `confirm_mock_mode()` 禁止重定向，通过 `GET /api/lab-status` 核验 `mode=mock` 且 `external_model_calls=false`，随后通过 `POST /api/conversations` 创建本次测试会话并保存其 ID；状态不符或请求失败则拒绝运行。
+- `build_chat_request()` 访问 `POST /api/conversations/<id>/messages`，发送 `message`、`mock_delay_seconds`、`mock_force_error`，不携带模型 Key。
+- `response_is_success()` 要求 HTTP 200、JSON 含非空回复和消息字段且没有错误；模拟 HTTP 503 判为失败，无效 JSON 也判为失败，不打印聊天正文。
+
+模拟脚本只访问本机，延迟与失败在后端执行。会话创建不计入聊天指标；只有聊天处理完成时记录成功/失败次数和耗时。
+
+## 实际模拟与复现
+
+两次运行日期均为 2026-10-15；下表为北京时间（Asia/Shanghai），结果 JSON 使用 UTC。应用和监控工具启动后，在个人目录执行以下命令。结果路径需要保留原始记录时请另选文件，避免覆盖已提交结果。
+
+首次完整模拟：
+
+```sh
+conda run --no-capture-output -n isse-lab2 python -u simulate_traffic.py --base-url http://127.0.0.1:5001 --output results/first-run.json
+```
+
+默认五阶段各调度 30 秒，单请求超时 10 秒，并发上限 6，末尾等待采集 10 秒；各阶段会等待在途请求收尾。实际结果：
+
+| 阶段 | 实际开始—结束 | 目标频率（次/秒） | 后端延迟（秒） | 发送 | 成功 | 业务/HTTP 失败 | 跳过 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| baseline | 12:48:14—12:48:44 | 1 | 0.1 | 30 | 30 | 0 | 0 |
+| burst | 12:48:44—12:49:14 | 4 | 0.1 | 120 | 120 | 0 | 0 |
+| slow | 12:49:14—12:49:46 | 2 | 3 | 52 | 52 | 0 | 8 |
+| errors | 12:49:46—12:50:16 | 1 | 0.1 | 30 | 20 | 10 | 0 |
+| recovery | 12:50:16—12:50:46 | 1 | 0.1 | 30 | 30 | 0 | 0 |
+
+总计发送 262 次，成功 252 次、预期模拟失败 10 次；没有网络错误或非预期结果。errors 阶段每第 3 次请求强制失败。Prometheus 采集数据显示：成功速率峰值约 4 次/秒，在途数最高 6，平均服务端耗时最高约 3.006 秒。慢回复阶段在途数和平均耗时上升，恢复阶段随后回落。速率与平均耗时使用 30 秒窗口，因此阶段边界会平滑、恢复会有滞后；短请求的在途峰值可能被 2 秒采集间隔漏掉。首次 slow 阶段同时改变频率和延迟，不能将速率变化全部归因于延迟。
+
+第二次仅运行 slow 场景，只把目标频率从 2 改为 4 次/秒；延迟保持 3 秒，并发上限保持 6：
+
+```sh
+conda run --no-capture-output -n isse-lab2 python -u simulate_traffic.py --base-url http://127.0.0.1:5001 --scenario slow --slow-rate 4 --phase-seconds 30 --output results/changed-run.json
+```
+
+实际阶段为 13:06:56—13:07:29。30 秒内安排 120 次发送机会，发送 57 次且全部成功，跳过 63 次，没有网络错误或非预期结果。
+
+与第一次 slow 的发送 52 次、跳过 8 次相比，提高目标频率后发送量仅增至 57 次，跳过增至 63 次。实际完成速率的 30 秒窗口峰值约 1.893 次/秒，在途数最高仍为 6，服务端平均耗时峰值约 3.007 秒。并发上限 6 和单次约 3 秒的处理时间将持续处理能力限制在约每秒 2 次；目标频率不等于实际完成频率。跳过的发送机会未产生 HTTP 聊天请求，不计入应用指标。
+
+JSON 中的 `client_mean_seconds` 包含 HTTP 和网络开销，不能当作服务端 Histogram；两次 slow 的客户端平均耗时分别约 3.0073 秒和 3.0079 秒。服务端耗时数值来自 Prometheus 的 Histogram 查询。
+
+## 截图与查看范围
+
+以下均为学生浏览器截图原始 PNG：
+
+- `screenshots/prometheus-targets.png`：`chat-app`，`127.0.0.1:5001/metrics` 为 UP。
+- `screenshots/prometheus-query.png`：累计请求数查询。
+- `screenshots/grafana-dashboard.png` 与 `screenshots/grafana-duration.png`：同一次完整模拟的图表，前者包含请求速率和在途数，后者补充平均耗时；合起来覆盖三个 Panel。
+
+首次图表时间范围为 12:48:00—12:51:30；第二次比较范围为 13:06:40—13:08:30。可在 Grafana 时间选择器中输入相应日期和时间。监控数据库不随代码提交，干净环境需要重新执行模拟并选择新运行的时间范围，不能只导入仪表盘就取得旧历史曲线。`grafana-dashboard.json` 从本次实际运行的 Grafana 导出，保留数据源 UID 引用，移除实例内数字 ID 以便导入。

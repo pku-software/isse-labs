@@ -4,11 +4,34 @@
 禁止用随机修改指标代替 HTTP 访问，禁止在此填入真实 API Key。
 """
 
-from urllib.request import Request
+import ipaddress
+import json
+from urllib.error import URLError
+from urllib.parse import urlsplit
+from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
+
+
+_chat_paths = {}
+
+
+class NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def local_base(base_url):
+    parts = urlsplit(base_url)
+    if (parts.scheme not in ("http", "https") or not parts.hostname
+            or parts.username or parts.password or parts.query or parts.fragment
+            or parts.path not in ("", "/")):
+        raise ValueError("只接受无凭据的本地服务根地址")
+    if parts.hostname != "localhost" and not ipaddress.ip_address(parts.hostname).is_loopback:
+        raise ValueError("本实验只访问本机")
+    return base_url.rstrip("/")
 
 
 # 三个适配函数实现并通过单请求验证后，由 Agent 改成 True。
-ADAPTER_READY = False
+ADAPTER_READY = True
 
 
 def confirm_mock_mode(base_url: str, timeout: float) -> bool:
@@ -20,7 +43,30 @@ def confirm_mock_mode(base_url: str, timeout: float) -> bool:
     不得直接 return True，也不能仅检查客户端环境变量或打印一行文字。
     读取状态接口时禁止跟随到其他主机的重定向；失败时返回 False 或报错。
     """
-    raise NotImplementedError("请先实现 ADAPT 1：核验当前服务的模拟模式")
+    base_url = local_base(base_url)
+    _chat_paths.pop(base_url, None)
+    opener = build_opener(ProxyHandler({}), NoRedirect())
+    try:
+        with opener.open(base_url + "/api/lab-status", timeout=timeout) as response:
+            state = json.loads(response.read(1024 * 1024))
+        if (not isinstance(state, dict) or state.get("mode") != "mock"
+                or state.get("external_model_calls") is not False):
+            return False
+        request = Request(
+            base_url + "/api/conversations",
+            data=json.dumps({"title": "监控实验模拟会话"}).encode("utf-8"),
+            headers={"Content-Type": "application/json"}, method="POST",
+        )
+        with opener.open(request, timeout=timeout) as response:
+            if response.status != 201:
+                return False
+            conversation = json.loads(response.read(1024 * 1024))
+        if not isinstance(conversation, dict) or type(conversation.get("id")) is not int:
+            return False
+        _chat_paths[base_url] = f"/api/conversations/{conversation['id']}/messages"
+        return True
+    except (URLError, OSError, ValueError):
+        return False
 
 
 def build_chat_request(
@@ -33,7 +79,18 @@ def build_chat_request(
     不用客户端 sleep 冒充接口变慢。正常请求仍经过应用的聊天处理逻辑。
     消息只使用脚本提供的非敏感测试文本，不携带 API Key。
     """
-    raise NotImplementedError("请先实现 ADAPT 2：聊天接口和请求正文")
+    base_url = local_base(base_url)
+    if base_url not in _chat_paths:
+        raise ValueError("请先通过 HTTP 核验 mock 并建立测试会话")
+    return Request(
+        base_url + _chat_paths[base_url],
+        data=json.dumps({
+            "message": message,
+            "mock_delay_seconds": delay_seconds,
+            "mock_force_error": force_error,
+        }, ensure_ascii=False).encode("utf-8"),
+        headers={"Content-Type": "application/json"}, method="POST",
+    )
 
 
 def response_is_success(status_code: int, body: bytes) -> bool:
@@ -42,4 +99,12 @@ def response_is_success(status_code: int, body: bytes) -> bool:
     应识别有效回复、模拟错误及无效响应，不能只要有响应就返回 True。
     推荐模拟错误返回 503 和明确的错误 JSON。只判断，不输出聊天正文。
     """
-    raise NotImplementedError("请先实现 ADAPT 3：成功/失败响应判断")
+    if status_code != 200:
+        return False
+    try:
+        data = json.loads(body)
+    except ValueError:
+        return False
+    return (isinstance(data, dict) and "error" not in data
+            and isinstance(data.get("message"), str)
+            and isinstance(data.get("reply"), str) and bool(data["reply"].strip()))
