@@ -269,6 +269,19 @@ def record_chat_outcome(success, started):
 
 
 conversations = load_conversations()
+if not conversations:
+    # 保证全新环境也有一个可用会话，供访问脚本的固定接口使用。
+    _now = utc_now()
+    conversations.append(
+        {
+            "id": 1,
+            "title": "Lab4 监控实验",
+            "createdAt": _now,
+            "updatedAt": _now,
+            "messages": [],
+        }
+    )
+    save_conversations()
 next_conversation_id = max(
     (conversation["id"] for conversation in conversations),
     default=0,

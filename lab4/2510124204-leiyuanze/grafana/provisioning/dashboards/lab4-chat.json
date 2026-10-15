@@ -5,7 +5,7 @@
   "tags": ["lab4", "chat"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 0,
+  "version": 1,
   "refresh": "5s",
   "editable": true,
   "time": { "from": "now-15m", "to": "now" },
