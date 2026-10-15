@@ -4,7 +4,7 @@
 
 ## 本地运行
 
-当前环境为 macOS arm64、zsh、conda 环境 `isse-lab2`（Python 3.11.16）。在本目录运行：
+当前环境为 macOS arm64、zsh、conda 环境 `isse-lab2`（Python 3.11.16）。干净环境需先安装 conda；若没有该环境，执行 `conda create -n isse-lab2 python=3.11 -y`。进入仓库的 `lab4/2400017748-shengrenjie/` 后运行：
 
 ```sh
 conda run --no-capture-output -n isse-lab2 python -m pip install -r requirements.txt
@@ -40,6 +40,28 @@ real 模式保留原 DeepSeek 功能，需显式设置 `CHAT_MODE=real` 并通�
 选用官方稳定版 Prometheus 3.15.0 和 Grafana Enterprise 13.2.4 的 darwin-arm64 二进制包。Grafana 使用本地基础数据源和图表功能。官方来源：[Prometheus 下载](https://prometheus.io/download/)、[Grafana 下载](https://grafana.com/grafana/download?platform=mac)。
 
 下载包和 SHA256 校验文件位于 `.tools/downloads/`；解压目录分别为 `.tools/prometheus/`、`.tools/grafana/`。下载后在 `.tools/downloads/` 执行 `LC_ALL=C LC_CTYPE=C LANG=C shasum -a 256 -c prometheus.sha256` 与 `LC_ALL=C LC_CTYPE=C LANG=C shasum -a 256 -c grafana.sha256` 验证官方摘要。工具和数据不提交，需要重新下载对应版本并解压（去掉归档最外层目录）。
+
+在干净的 macOS arm64 环境中，可在个人目录下载并验证本次使用的版本。先用 `git check-ignore -v -- .tools/downloads/prometheus-3.15.0.darwin-arm64.tar.gz .tools/downloads/grafana-enterprise_13.2.4_darwin_arm64.tar.gz .tools/prometheus/prometheus .tools/grafana/bin/grafana .runtime/prometheus/wal .runtime/grafana/data/grafana.db .runtime/grafana/log/grafana.log .runtime/grafana/plugins/test .runtime/app/app.log .venv/pyvenv.cfg` 确认各路径命中忽略规则，且 `git ls-files -- .tools .runtime .venv` 无输出，再执行：
+
+```sh
+mkdir -p .tools/downloads .tools/prometheus .tools/grafana
+curl -fL --retry 2 -o .tools/downloads/prometheus-3.15.0.darwin-arm64.tar.gz https://github.com/prometheus/prometheus/releases/download/v3.15.0/prometheus-3.15.0.darwin-arm64.tar.gz
+curl -fL --retry 2 -o .tools/downloads/grafana-enterprise_13.2.4_darwin_arm64.tar.gz https://dl.grafana.com/grafana-enterprise/release/13.2.4/grafana-enterprise_13.2.4_38252365904_darwin_arm64.tar.gz
+```
+
+官方 SHA256 摘要如下；可将每一行分别保存为 `.tools/downloads/prometheus.sha256` 和 `.tools/downloads/grafana.sha256`，再进入下载目录运行上文的校验命令，两项都为 `OK` 后解压。
+
+```text
+920df4d17e78b3b0175af144eb318b0c74d1cf7b1d1251b326966f0e81977260  prometheus-3.15.0.darwin-arm64.tar.gz
+15d92dc7dd6d5f9599fa2822d1e83acb45e2c03a77694d7871330341c14d6250  grafana-enterprise_13.2.4_darwin_arm64.tar.gz
+```
+
+回到个人目录后执行：
+
+```sh
+LC_ALL=C LC_CTYPE=C LANG=C tar -xzf .tools/downloads/prometheus-3.15.0.darwin-arm64.tar.gz -C .tools/prometheus --strip-components=1
+LC_ALL=C LC_CTYPE=C LANG=C tar -xzf .tools/downloads/grafana-enterprise_13.2.4_darwin_arm64.tar.gz -C .tools/grafana --strip-components=1
+```
 
 应用启动后，在本目录两个终端分别执行：
 
