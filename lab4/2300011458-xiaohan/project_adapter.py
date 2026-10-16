@@ -4,11 +4,41 @@
 禁止用随机修改指标代替 HTTP 访问，禁止在此填入真实 API Key。
 """
 
-from urllib.request import Request
+import json
+from urllib.error import HTTPError, URLError
+from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
 
 # 三个适配函数实现并通过单请求验证后，由 Agent 改成 True。
-ADAPTER_READY = False
+ADAPTER_READY = True
+
+_conversation_id = None
+
+
+class _NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def _request_json(request: Request, timeout: float):
+    """Send one adapter setup request without proxies or redirects."""
+    opener = build_opener(ProxyHandler({}), _NoRedirect())
+    try:
+        with opener.open(request, timeout=timeout) as response:
+            status_code = response.status
+            body = response.read(1024 * 1024)
+    except HTTPError as error:
+        with error:
+            status_code = error.code
+            body = error.read(1024 * 1024)
+    except (URLError, TimeoutError, OSError):
+        return None, None
+
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return status_code, None
+    return status_code, payload
 
 
 def confirm_mock_mode(base_url: str, timeout: float) -> bool:
@@ -20,7 +50,60 @@ def confirm_mock_mode(base_url: str, timeout: float) -> bool:
     不得直接 return True，也不能仅检查客户端环境变量或打印一行文字。
     读取状态接口时禁止跟随到其他主机的重定向；失败时返回 False 或报错。
     """
-    raise NotImplementedError("请先实现 ADAPT 1：核验当前服务的模拟模式")
+    global _conversation_id
+
+    base_url = base_url.rstrip("/")
+    status_code, payload = _request_json(
+        Request(f"{base_url}/api/lab4/status", method="GET"), timeout
+    )
+    if not (
+        status_code == 200
+        and isinstance(payload, dict)
+        and payload.get("mode") == "mock"
+        and payload.get("external_model_calls") is False
+    ):
+        return False
+
+    status_code, conversations = _request_json(
+        Request(f"{base_url}/api/conversations", method="GET"), timeout
+    )
+    if status_code != 200 or not isinstance(conversations, list):
+        return False
+
+    valid_ids = [
+        item.get("id")
+        for item in conversations
+        if isinstance(item, dict)
+        and isinstance(item.get("id"), int)
+        and not isinstance(item.get("id"), bool)
+        and item["id"] > 0
+    ]
+    if valid_ids:
+        _conversation_id = valid_ids[0]
+        return True
+
+    request_body = json.dumps(
+        {"title": "Lab 4 流量模拟"}, ensure_ascii=False
+    ).encode("utf-8")
+    status_code, conversation = _request_json(
+        Request(
+            f"{base_url}/api/conversations",
+            data=request_body,
+            headers={"Content-Type": "application/json; charset=utf-8"},
+            method="POST",
+        ),
+        timeout,
+    )
+    if not (
+        status_code == 201
+        and isinstance(conversation, dict)
+        and isinstance(conversation.get("id"), int)
+        and not isinstance(conversation.get("id"), bool)
+        and conversation["id"] > 0
+    ):
+        return False
+    _conversation_id = conversation["id"]
+    return True
 
 
 def build_chat_request(
@@ -33,7 +116,23 @@ def build_chat_request(
     不用客户端 sleep 冒充接口变慢。正常请求仍经过应用的聊天处理逻辑。
     消息只使用脚本提供的非敏感测试文本，不携带 API Key。
     """
-    raise NotImplementedError("请先实现 ADAPT 2：聊天接口和请求正文")
+    if _conversation_id is None:
+        raise RuntimeError("请先调用 confirm_mock_mode 完成会话准备")
+
+    request_body = json.dumps(
+        {
+            "message": message,
+            "mock_delay_seconds": delay_seconds,
+            "mock_force_error": force_error,
+        },
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return Request(
+        f"{base_url.rstrip('/')}/api/conversations/{_conversation_id}/messages",
+        data=request_body,
+        headers={"Content-Type": "application/json; charset=utf-8"},
+        method="POST",
+    )
 
 
 def response_is_success(status_code: int, body: bytes) -> bool:
@@ -42,4 +141,24 @@ def response_is_success(status_code: int, body: bytes) -> bool:
     应识别有效回复、模拟错误及无效响应，不能只要有响应就返回 True。
     推荐模拟错误返回 503 和明确的错误 JSON。只判断，不输出聊天正文。
     """
-    raise NotImplementedError("请先实现 ADAPT 3：成功/失败响应判断")
+    if status_code != 201:
+        return False
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return False
+    if not isinstance(payload, dict):
+        return False
+
+    user_message = payload.get("user_message")
+    assistant_message = payload.get("assistant_message")
+    return bool(
+        isinstance(user_message, dict)
+        and user_message.get("role") == "user"
+        and isinstance(user_message.get("content"), str)
+        and user_message["content"].strip()
+        and isinstance(assistant_message, dict)
+        and assistant_message.get("role") == "assistant"
+        and isinstance(assistant_message.get("content"), str)
+        and assistant_message["content"].strip()
+    )
