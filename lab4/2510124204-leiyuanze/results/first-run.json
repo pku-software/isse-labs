@@ -1,0 +1,106 @@
+{
+  "base_url": "http://127.0.0.1:5001",
+  "interrupted": false,
+  "phases": [
+    {
+      "phase": "baseline",
+      "started_at": "2026-10-15T13:27:35+00:00",
+      "ended_at": "2026-10-15T13:28:05+00:00",
+      "settings": {
+        "name": "baseline",
+        "rate": 1,
+        "delay": 0.1,
+        "error_every": 0
+      },
+      "duration_seconds": 30,
+      "scheduled": 30,
+      "sent": 30,
+      "skipped": 0,
+      "success": 30,
+      "http_or_business_errors": 0,
+      "transport_errors": 0,
+      "unexpected_results": 0,
+      "client_mean_seconds": 0.12280000000003687
+    },
+    {
+      "phase": "burst",
+      "started_at": "2026-10-15T13:28:05+00:00",
+      "ended_at": "2026-10-15T13:28:35+00:00",
+      "settings": {
+        "name": "burst",
+        "rate": 4,
+        "delay": 0.1,
+        "error_every": 0
+      },
+      "duration_seconds": 30,
+      "scheduled": 120,
+      "sent": 120,
+      "skipped": 0,
+      "success": 120,
+      "http_or_business_errors": 0,
+      "transport_errors": 0,
+      "unexpected_results": 0,
+      "client_mean_seconds": 0.1259999999999612
+    },
+    {
+      "phase": "slow",
+      "started_at": "2026-10-15T13:28:35+00:00",
+      "ended_at": "2026-10-15T13:29:08+00:00",
+      "settings": {
+        "name": "slow",
+        "rate": 2,
+        "delay": 3,
+        "error_every": 0
+      },
+      "duration_seconds": 30,
+      "scheduled": 60,
+      "sent": 52,
+      "skipped": 8,
+      "success": 52,
+      "http_or_business_errors": 0,
+      "transport_errors": 0,
+      "unexpected_results": 0,
+      "client_mean_seconds": 3.0288653846152487
+    },
+    {
+      "phase": "errors",
+      "started_at": "2026-10-15T13:29:08+00:00",
+      "ended_at": "2026-10-15T13:29:38+00:00",
+      "settings": {
+        "name": "errors",
+        "rate": 1,
+        "delay": 0.1,
+        "error_every": 3
+      },
+      "duration_seconds": 30,
+      "scheduled": 30,
+      "sent": 30,
+      "skipped": 0,
+      "success": 20,
+      "http_or_business_errors": 10,
+      "transport_errors": 0,
+      "unexpected_results": 0,
+      "client_mean_seconds": 0.12589999999969828
+    },
+    {
+      "phase": "recovery",
+      "started_at": "2026-10-15T13:29:38+00:00",
+      "ended_at": "2026-10-15T13:30:08+00:00",
+      "settings": {
+        "name": "recovery",
+        "rate": 1,
+        "delay": 0.1,
+        "error_every": 0
+      },
+      "duration_seconds": 30,
+      "scheduled": 30,
+      "sent": 30,
+      "skipped": 0,
+      "success": 30,
+      "http_or_business_errors": 0,
+      "transport_errors": 0,
+      "unexpected_results": 0,
+      "client_mean_seconds": 0.12236666666673651
+    }
+  ]
+}

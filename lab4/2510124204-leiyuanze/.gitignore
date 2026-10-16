@@ -1,0 +1,20 @@
+# 密钥与本地配置
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# 监控工具与运行数据（不提交）
+.tools/
+.runtime/
+
+# 编辑器与系统杂物
+.vscode/
+.idea/
+.DS_Store
