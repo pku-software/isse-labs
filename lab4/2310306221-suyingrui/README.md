@@ -13,6 +13,8 @@ python3 -m venv .venv
 CHAT_MODE=mock .venv/bin/python app.py --port 5001
 ```
 
+应用在前台运行，请保持该终端开启；另开终端进入同一个人目录，再安装、启动监控工具或运行访问脚本。
+
 页面为 <http://127.0.0.1:5001/>，指标为 <http://127.0.0.1:5001/metrics>。应用使用单进程、线程并发，无调试重载。聊天记录写入 `.runtime/app/messages.json`，共享读写有锁保护；等待模型回复时不持有存储锁。
 
 当前安装的主要依赖版本为 Flask 3.1.3、prometheus-client 0.26.0、openai 2.48.0。
@@ -160,7 +162,7 @@ Histogram 的 `_bucket{le="..."}` 表示耗时不超过该上界的累计次数�
 
 ### 调整延迟后的模拟（2026-10-18）
 
-真实结果文件：[results/changed-run.json](results/changed-run.json)。本次仅运行 slow 场景，将后端延迟从 3 秒改为 6 秒；目标频率仍为每秒 2 次、并发上限仍为 6、超时仍为 10 秒。发出请求持续 30 秒，在途请求收尾后于北京时间 02:41:42～02:42:16 完成，再等待 10 秒用于采集。
+真实结果文件：[results/changed-run.json](results/changed-run.json)。本次仅运行 slow 场景，将后端延迟从 3 秒改为 6 秒；目标频率仍为每秒 2 次、并发上限仍为 6、超时仍为 10 秒。实际运行区间为北京时间 02:41:42～02:42:16，其中发出请求持续 30 秒，其余时间等待在途请求收尾，之后再等待 10 秒用于采集。
 
 ```sh
 .venv/bin/python -u simulate_traffic.py --base-url http://127.0.0.1:5001 --scenario slow --phase-seconds 30 --slow-rate 2 --slow-delay 6 --concurrency 6 --timeout 10 --settle-seconds 10 --output results/changed-run.json
