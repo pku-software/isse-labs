@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 聊天</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <button type="button" id="new-conversation" class="new-conversation-button">＋ 新建会话</button>
+      <ul id="conversation-list" class="conversation-list"></ul>
+    </aside>
+
+    <main class="chat-panel">
+      <header class="chat-header">
+        <h1 id="current-title">选择一个会话开始聊天</h1>
+        <div class="header-actions">
+          <button type="button" id="rename-button" class="header-button" hidden>重命名</button>
+          <button type="button" id="delete-conversation" class="header-button danger" hidden>删除会话</button>
+        </div>
+      </header>
+
+      <div id="messages" class="messages"></div>
+
+      <div id="error" class="error" hidden></div>
+
+      <form id="message-form" class="composer">
+        <input type="text" id="message-input" class="message-input" placeholder="输入消息..." autocomplete="off">
+        <button type="submit" id="send-button" class="send-button">发送</button>
+      </form>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
