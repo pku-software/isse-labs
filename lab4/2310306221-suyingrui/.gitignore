@@ -13,3 +13,6 @@ __pycache__/
 *.pem
 *.key
 /data/
+
+# Incoming screenshot originals; named submission copies live in screenshots/.
+/temp/

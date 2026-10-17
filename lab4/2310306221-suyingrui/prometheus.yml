@@ -1,4 +1,4 @@
-# Agent 复制到个人目录后改成学生应用实际本地地址；它不是容器地址。
+# Local Flask application; Prometheus itself listens on 127.0.0.1:9090.
 global:
   scrape_interval: 2s
   scrape_timeout: 1s
