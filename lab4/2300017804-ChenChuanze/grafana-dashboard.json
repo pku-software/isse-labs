@@ -1,87 +1,38 @@
 {
-  "id": null,
-  "uid": "lab4-chat-2300017804",
-  "title": "Lab 4 · 聊天应用监控",
-  "tags": [
-    "lab4",
-    "chat-app"
-  ],
-  "timezone": "browser",
-  "schemaVersion": 39,
-  "version": 1,
-  "editable": true,
-  "refresh": "2s",
-  "time": {
-    "from": "now-15m",
-    "to": "now"
-  },
-  "timepicker": {
-    "refresh_intervals": [
-      "2s",
-      "5s",
-      "10s",
-      "30s",
-      "1m"
-    ]
-  },
-  "templating": {
-    "list": []
-  },
   "annotations": {
     "list": []
   },
+  "editable": true,
+  "id": null,
+  "links": [],
   "panels": [
     {
-      "id": 1,
-      "type": "timeseries",
-      "title": "成功 / 失败请求速率",
-      "description": "最近 30 秒内平均每秒完成的请求数，按 success/error 区分。",
       "datasource": {
         "type": "prometheus",
         "uid": "lab4-prometheus"
       },
-      "gridPos": {
-        "x": 0,
-        "y": 0,
-        "w": 24,
-        "h": 7
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "lab4-prometheus"
-          },
-          "editorMode": "code",
-          "expr": "sum by (outcome) (rate(chat_requests_total{job=\"chat-app\"}[30s]))",
-          "legendFormat": "{{outcome}}",
-          "range": true,
-          "instant": false,
-          "interval": "2s"
-        }
-      ],
+      "description": "最近 30 秒内平均每秒完成的请求数，按 success/error 区分。",
       "fieldConfig": {
         "defaults": {
-          "unit": "reqps",
-          "min": 0,
-          "decimals": 2,
           "color": {
             "mode": "palette-classic"
           },
           "custom": {
+            "axisCenteredZero": false,
             "drawStyle": "line",
+            "fillOpacity": 8,
             "lineInterpolation": "linear",
             "lineWidth": 2,
-            "fillOpacity": 8,
             "showPoints": "never",
             "spanNulls": false,
-            "axisCenteredZero": false,
             "stacking": {
-              "mode": "none",
-              "group": "A"
+              "group": "A",
+              "mode": "none"
             }
-          }
+          },
+          "decimals": 2,
+          "min": 0,
+          "unit": "reqps"
         },
         "overrides": [
           {
@@ -93,8 +44,8 @@
               {
                 "id": "color",
                 "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#73BF69"
+                  "fixedColor": "#73BF69",
+                  "mode": "fixed"
                 }
               },
               {
@@ -112,8 +63,8 @@
               {
                 "id": "color",
                 "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#F2495C"
+                  "fixedColor": "#F2495C",
+                  "mode": "fixed"
                 }
               },
               {
@@ -124,162 +75,211 @@
           }
         ]
       },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
       "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        },
         "legend": {
-          "showLegend": true,
-          "displayMode": "table",
-          "placement": "bottom",
           "calcs": [
             "lastNotNull",
             "max"
-          ]
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
         }
-      }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lab4-prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (outcome) (rate(chat_requests_total{job=\"chat-app\"}[30s]))",
+          "instant": false,
+          "interval": "2s",
+          "legendFormat": "{{outcome}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "成功 / 失败请求速率",
+      "type": "timeseries"
     },
     {
-      "id": 2,
-      "type": "timeseries",
-      "title": "正在处理的请求",
-      "description": "采集时刻仍在处理的聊天请求数量。",
       "datasource": {
         "type": "prometheus",
         "uid": "lab4-prometheus"
       },
+      "description": "采集时刻仍在处理的聊天请求数量。",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "decimals": 0,
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
       "gridPos": {
-        "x": 0,
-        "y": 7,
+        "h": 7,
         "w": 12,
-        "h": 7
+        "x": 0,
+        "y": 7
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "targets": [
         {
-          "refId": "A",
           "datasource": {
             "type": "prometheus",
             "uid": "lab4-prometheus"
           },
           "editorMode": "code",
           "expr": "sum(chat_inprogress_requests{job=\"chat-app\"})",
+          "instant": false,
+          "interval": "2s",
           "legendFormat": "在途请求",
           "range": true,
-          "instant": false,
-          "interval": "2s"
+          "refId": "A"
         }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "min": 0,
-          "decimals": 0,
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 8,
-            "showPoints": "never",
-            "spanNulls": false,
-            "axisCenteredZero": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        },
-        "legend": {
-          "showLegend": true,
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ]
-        }
-      }
+      "title": "正在处理的请求",
+      "type": "timeseries"
     },
     {
-      "id": 3,
-      "type": "timeseries",
-      "title": "平均处理耗时",
-      "description": "最近 30 秒内服务端耗时总和的增长率除以请求次数增长率；无请求时可能无值。",
       "datasource": {
         "type": "prometheus",
         "uid": "lab4-prometheus"
       },
+      "description": "最近 30 秒内服务端耗时总和的增长率除以请求次数增长率；无请求时可能无值。",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 8,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            }
+          },
+          "decimals": 2,
+          "min": 0,
+          "unit": "s"
+        },
+        "overrides": []
+      },
       "gridPos": {
-        "x": 12,
-        "y": 7,
+        "h": 7,
         "w": 12,
-        "h": 7
+        "x": 12,
+        "y": 7
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
       },
       "targets": [
         {
-          "refId": "A",
           "datasource": {
             "type": "prometheus",
             "uid": "lab4-prometheus"
           },
           "editorMode": "code",
           "expr": "sum(rate(chat_request_duration_seconds_sum{job=\"chat-app\"}[30s])) / sum(rate(chat_request_duration_seconds_count{job=\"chat-app\"}[30s]))",
+          "instant": false,
+          "interval": "2s",
           "legendFormat": "平均耗时",
           "range": true,
-          "instant": false,
-          "interval": "2s"
+          "refId": "A"
         }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "min": 0,
-          "decimals": 2,
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "lineWidth": 2,
-            "fillOpacity": 8,
-            "showPoints": "never",
-            "spanNulls": false,
-            "axisCenteredZero": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            }
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        },
-        "legend": {
-          "showLegend": true,
-          "displayMode": "table",
-          "placement": "bottom",
-          "calcs": [
-            "lastNotNull",
-            "max"
-          ]
-        }
-      }
+      "title": "平均处理耗时",
+      "type": "timeseries"
     }
   ],
-  "links": []
+  "refresh": "2s",
+  "schemaVersion": 39,
+  "tags": [
+    "lab4",
+    "chat-app"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "2s",
+      "5s",
+      "10s",
+      "30s",
+      "1m"
+    ]
+  },
+  "timezone": "browser",
+  "title": "Lab 4 · 聊天应用监控",
+  "uid": "lab4-chat-2300017804",
+  "version": 1
 }
