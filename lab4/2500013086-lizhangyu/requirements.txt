@@ -1,4 +1,4 @@
 Flask
 openai
-python-dotenv
 prometheus-client
+

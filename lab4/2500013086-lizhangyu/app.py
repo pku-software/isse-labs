@@ -4,7 +4,6 @@ from pathlib import Path
 import threading
 import time
 
-from dotenv import load_dotenv
 from flask import Flask, jsonify, request, send_from_directory
 from openai import OpenAI
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
@@ -12,7 +11,6 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from metrics import CHAT_DURATION, CHAT_INPROGRESS, CHAT_REQUESTS
 
 
-load_dotenv(Path(__file__).with_name(".env"))
 
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 app.json.ensure_ascii = False
@@ -250,4 +248,6 @@ def create_conversation_message(conversation_id):
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=int(os.getenv("PORT", "5001")), threaded=True, debug=False)
+
+
 
