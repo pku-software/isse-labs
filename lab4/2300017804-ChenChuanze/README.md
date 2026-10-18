@@ -71,3 +71,74 @@ CHAT_MODE=mock .venv/bin/python -B app.py
 工具下载包放在 `.tools/downloads/`，Prometheus 和 Grafana 分别解压到 `.tools/prometheus/`、`.tools/grafana/`。对应运行数据放在 `.runtime/prometheus/` 和 `.runtime/grafana/`，应用运行数据及日志放在 `.runtime/app/`，Python 环境放在 `.venv/`。这些目录及 `.env` 已被个人 `.gitignore` 排除；配置、仪表盘、`results/*.json` 和截图可正常提交。
 
 参考：[Prometheus Python 指标类型](https://prometheus.github.io/client_python/instrumenting/)、[Histogram](https://prometheus.github.io/client_python/instrumenting/histogram/)。
+
+## Prometheus 与 Grafana
+
+本项目选择 Prometheus **3.15.0** 和 Grafana OSS **13.2.4** 的 macOS ARM64 稳定发行包。下载地址来自 [Prometheus 官方发行页](https://github.com/prometheus/prometheus/releases/tag/v3.15.0) 与 [Grafana 官方下载页](https://grafana.com/grafana/download/13.2.4?edition=oss&platform=mac)，安装前核对 SHA256。
+
+在个人目录运行：
+
+```sh
+bash install-monitoring.sh
+```
+
+安装脚本先核验 Git 忽略规则和未跟踪状态，下载并校验发行包，再解压到固定 `.tools/` 子目录。已有正确校验值的包会复用。两个 SHA256 为：
+
+```text
+920df4d17e78b3b0175af144eb318b0c74d1cf7b1d1251b326966f0e81977260  prometheus-3.15.0.darwin-arm64.tar.gz
+a910966466359212f1d875748a72a4638c7d3724448d0c369210b31d763b165d  grafana_13.2.4_38252365904_darwin_arm64.tar.gz
+```
+
+启动时分别在三个终端中执行以下命令，保持它们运行；已启动的服务无需重复启动：
+
+```sh
+bash monitoring.sh app
+bash monitoring.sh prometheus
+bash monitoring.sh grafana
+```
+
+`monitoring.sh` 根据自身位置设置 `LAB4_ROOT`，显式指定工具、配置、数据库、日志及插件路径。Grafana 启动时把仪表盘副本复制到 `.runtime/grafana/dashboards/`，由 `grafana/provisioning/` 中的配置自动加载数据源和仪表盘。停止时在各自终端按 Ctrl+C，仅停止本项目进程。
+
+| 程序 | 本地地址 | 数据位置 |
+| --- | --- | --- |
+| 聊天应用 | `http://127.0.0.1:5001/` | `.runtime/app/` |
+| Prometheus | `http://127.0.0.1:9090/` | `.runtime/prometheus/`，保留 7 天 |
+| Grafana | `http://127.0.0.1:3000/` | `.runtime/grafana/data/`、`logs/`、`plugins/` |
+
+三个服务均只监听 `127.0.0.1`。本项目专用 Grafana 允许本机匿名只读查看，配置通过文件加载，无需输入账号密码。它使用 UID 为 `lab4-prometheus` 的数据源，地址为 `http://127.0.0.1:9090`。导入仪表盘到其他实例时，先使用本项目数据源配置，或把三个 Panel 的数据源改为该实例中的 Prometheus 数据源。
+
+Prometheus 的 `chat-app` job 每 2 秒采集 `127.0.0.1:5001/metrics`，采集超时为 1 秒。Target 页面为 `http://127.0.0.1:9090/targets`。应用端口变化时修改 `prometheus.yml`；Prometheus 端口变化时同步修改启动脚本和 Grafana 数据源配置；Grafana 端口变化时同步修改 `grafana.ini` 的 `http_port` 和 `root_url`。
+
+仪表盘 UID 为 `lab4-chat-2300017804`，每 2 秒刷新，默认显示最近 15 分钟。三个 Panel 使用：
+
+**成功 / 失败请求速率**
+
+```promql
+sum by (outcome) (rate(chat_requests_total{job="chat-app"}[30s]))
+```
+
+按 outcome 分组，显示最近 30 秒内平均每秒完成的请求数，单位为次/秒。
+
+**正在处理的请求**
+
+```promql
+sum(chat_inprogress_requests{job="chat-app"})
+```
+
+显示采集时刻正在执行的聊天请求数量。
+
+**平均处理耗时**
+
+```promql
+sum(rate(chat_request_duration_seconds_sum{job="chat-app"}[30s]))
+/
+sum(rate(chat_request_duration_seconds_count{job="chat-app"}[30s]))
+```
+
+用窗口内耗时总和的增长率除以次数增长率，得到平均服务端耗时，单位秒。Histogram 的 `_bucket{le="3.0"}` 表示耗时不超过 3 秒的累计观测次数；各桶为累积桶，同一次观测可能计入多个上界。没有新请求或采集样本不足时，耗时图可能无值，配置不补零、不制造样本。
+
+2026-10-19 本地安装验证：两个发行包均通过上述 SHA256 校验，程序报告 `darwin/arm64`、Prometheus 3.15.0 与 Grafana 13.2.4；`promtool check config prometheus.yml` 通过。Prometheus 实际 Target 的 job 为 `chat-app`、地址为 `http://127.0.0.1:5001/metrics`，状态为 `UP`，采集错误为空。查询成功、错误累计值分别为 2、1。Grafana 健康接口报告数据库正常，数据源健康检查成功查询 Prometheus API，浏览器实际显示三个 Panel，刷新间隔为 2 秒。
+
+采集开始时此前的聊天已经完成，窗口内没有新增请求，因此成功/失败速率与在途数量为 0，平均耗时无有效数值。Grafana 的 macOS 启动日志包含读取 Linux `/proc` 进程启动时间失败的信息；上述健康、数据源、仪表盘实际验证通过。
+
+Prometheus Target 原始截图：[chat-app 采集状态 UP](screenshots/prometheus-targets.png)。
