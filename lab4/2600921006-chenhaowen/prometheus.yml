@@ -1,4 +1,4 @@
-# Agent 复制到个人目录后改成学生应用实际本地地址；它不是容器地址。
+# 本机 Flask 聊天应用；仅采集聊天业务指标。
 global:
   scrape_interval: 2s
   scrape_timeout: 1s

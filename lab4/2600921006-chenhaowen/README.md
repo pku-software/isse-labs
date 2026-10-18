@@ -49,6 +49,54 @@ mock 聊天数据写入 `.runtime/app/mock/conversations.json`，real 数据使�
 
 `simulate_traffic.py`、`project_adapter.py` 和 `prometheus.yml` 来自课程 `lab4/starter/`。调度器保留课程实现；`project_adapter.py` 是项目 HTTP 适配入口，只有完成适配并通过单请求验证后才能启用。运行结果、仪表盘配置与截图保留在可提交的位置。
 
+## 安装本地监控工具
+
+使用官方 macOS ARM64 稳定版 [Prometheus 3.15.0](https://github.com/prometheus/prometheus/releases/tag/v3.15.0) 和 [Grafana OSS 13.2.4](https://grafana.com/grafana/download/13.2.4?edition=oss&platform=mac)。下载包与校验文件放在 `.tools/downloads/`，工具分别解压到 `.tools/prometheus/`、`.tools/grafana/`，不安装到系统目录。
+
+在本项目目录执行以下命令；`curl -C -` 支持中断后重新执行以续传，完整校验成功后再解压。
+
+```sh
+mkdir -p .tools/downloads .tools/prometheus .tools/grafana
+curl -fL --retry 2 -C - -o .tools/downloads/prometheus-3.15.0.darwin-arm64.tar.gz https://github.com/prometheus/prometheus/releases/download/v3.15.0/prometheus-3.15.0.darwin-arm64.tar.gz
+curl -fL --retry 2 -C - -o .tools/downloads/grafana_13.2.4_38252365904_darwin_arm64.tar.gz https://dl.grafana.com/grafana/release/13.2.4/grafana_13.2.4_38252365904_darwin_arm64.tar.gz
+printf '%s\n' '920df4d17e78b3b0175af144eb318b0c74d1cf7b1d1251b326966f0e81977260  prometheus-3.15.0.darwin-arm64.tar.gz' 'a910966466359212f1d875748a72a4638c7d3724448d0c369210b31d763b165d  grafana_13.2.4_38252365904_darwin_arm64.tar.gz' > .tools/downloads/sha256sums.txt
+(cd .tools/downloads && shasum -a 256 -c sha256sums.txt) && \
+tar -xzf .tools/downloads/prometheus-3.15.0.darwin-arm64.tar.gz --strip-components=1 -C .tools/prometheus && \
+tar -xzf .tools/downloads/grafana_13.2.4_38252365904_darwin_arm64.tar.gz --strip-components=1 -C .tools/grafana
+```
+
+## 启动采集和仪表盘
+
+保持聊天应用运行，在两个独立终端中分别执行：
+
+```sh
+zsh start-prometheus.zsh
+```
+
+```sh
+zsh start-grafana.zsh
+```
+
+启动脚本会定位本项目目录，显式指定配置与数据路径。Prometheus 数据位于 `.runtime/prometheus/`；Grafana 的数据库、日志和插件分别位于 `.runtime/grafana/data/`、`.runtime/grafana/logs/`、`.runtime/grafana/plugins/`。前台运行时使用 `Ctrl+C` 停止相应进程，保留这些数据可继续查看历史。
+
+| 程序 | 本地地址 | 用途 |
+| --- | --- | --- |
+| Flask | `http://127.0.0.1:5001/` | 聊天页面；`/metrics` 提供当前指标。 |
+| Prometheus | `http://127.0.0.1:9090/` | 查询指标；`/targets` 显示采集状态。 |
+| Grafana | `http://127.0.0.1:3000/d/lab4-chat-app` | 三个时间序列图表。 |
+
+三者均只监听 `127.0.0.1`。Prometheus 通过 `prometheus.yml` 每 2 秒采集一次 `127.0.0.1:5001/metrics`，超时为 1 秒，job 为 `chat-app`。Target 的 `UP` 表示指标采集成功；聊天请求的结果通过 `chat_requests_total` 的 outcome 区分。
+
+Grafana 启动时读取 `grafana/provisioning/`：数据源 `Lab 4 Prometheus` 指向 `http://127.0.0.1:9090`，UID 为 `lab4-prometheus`；仪表盘源文件为 `grafana-dashboard.json`，UID 为 `lab4-chat-app`。本机浏览器可匿名只读查看，图表每 5 秒刷新，时间按浏览器时区显示。使用这些配置启动新实例时无需重新选择数据源；单独导入仪表盘到其他实例时，先创建 UID 为 `lab4-prometheus` 的 Prometheus 数据源，或将 JSON 中的同名 UID 替换为目标数据源 UID。
+
+| Panel | PromQL | 含义 |
+| --- | --- | --- |
+| 成功／失败请求速率 | `sum by (outcome) (rate(chat_requests_total{job="chat-app"}[30s]))` | 最近 30 秒内平均每秒完成的请求数，按结果区分。 |
+| 正在处理的请求 | `sum(chat_inprogress_requests{job="chat-app"})` | 采集时刻的在途请求数。 |
+| 平均处理耗时 | `sum(rate(chat_request_duration_seconds_sum{job="chat-app"}[30s])) / sum(rate(chat_request_duration_seconds_count{job="chat-app"}[30s]))` | 最近 30 秒内服务端平均处理秒数。 |
+
+Histogram 的 `_bucket{le="1.0"}` 表示耗时不超过 1 秒的累计请求数，各桶是累积的，`+Inf` 桶包含所有记录。平均耗时图使用 `_sum` 与 `_count` 的窗口增量比例，而不是桶边界。窗口内没有请求时可能显示无值；图表不补零，也不连接缺失区间。新启动的 Prometheus 需要积累多个采样点后才能计算速率。
+
 ## 验证
 
 在本项目目录执行：

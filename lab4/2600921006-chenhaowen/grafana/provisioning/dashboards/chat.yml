@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: lab4-chat
+    orgId: 1
+    folder: Lab 4
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 15
+    allowUiUpdates: true
+    options:
+      path: ${LAB4_PROJECT_DIR}/grafana-dashboard.json
