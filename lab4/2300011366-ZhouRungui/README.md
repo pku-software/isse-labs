@@ -68,4 +68,4 @@ Grafana 仪表盘包含以下 Panel：
 ## 截图
 
 - `screenshots/prometheus-targets.png`：Prometheus 中 `chat-app` Target 状态为 `UP`。
-- `screenshots/grafana-dashboard.<扩展名>`：待补充覆盖完整模拟时间范围、包含三个 Panel 的 Grafana 原始截图。
+- `screenshots/grafana-dashboard.png`：Last 1 hour 范围内的原始 Grafana 截图，覆盖完整两次模拟并展示三个 Panel。
