@@ -1,0 +1,13 @@
+apiVersion: 1
+
+providers:
+  - name: lab4
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: D:/Files/Desktop/isse-labs/lab4/2200014163-wangqi
+      foldersFromFilesStructure: false
