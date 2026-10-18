@@ -23,6 +23,7 @@ DEEPSEEK_MODEL = "deepseek-flash"
 LAB4_MODE = os.getenv("LAB4_MODE", "mock").strip().lower()
 if LAB4_MODE not in {"mock", "real"}:
     raise RuntimeError("LAB4_MODE 只能为 mock 或 real。")
+MOCK_MAX_DELAY_SECONDS = 10
 
 DATA_FILE = Path(__file__).resolve().parent / "data" / "messages.json"
 
@@ -162,7 +163,7 @@ def read_mock_options():
     if (
         isinstance(delay, bool)
         or not isinstance(delay, (int, float))
-        or not 0 <= delay <= 8
+        or not 0 <= delay <= MOCK_MAX_DELAY_SECONDS
         or not isinstance(force_error, bool)
     ):
         return None
@@ -235,7 +236,7 @@ def create_message():
             if LAB4_MODE == "mock":
                 options = read_mock_options()
                 if options is None:
-                    return jsonify(error="模拟延迟须为 0～8 秒，模拟失败须为布尔值。"), 400
+                    return jsonify(error=f"模拟延迟须为 0～{MOCK_MAX_DELAY_SECONDS} 秒，模拟失败须为布尔值。"), 400
                 reply = generate_mock_reply(*options)
             else:
                 reply = generate_reply(message)
