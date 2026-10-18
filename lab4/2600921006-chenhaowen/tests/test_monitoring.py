@@ -1,8 +1,9 @@
 """HTTP contract checks using isolated storage and no external model access."""
 
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import ExitStack
+from contextlib import ExitStack, redirect_stdout
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -18,6 +19,9 @@ from urllib.request import ProxyHandler, Request, build_opener
 
 from prometheus_client.parser import text_string_to_metric_families
 from werkzeug.serving import WSGIRequestHandler, make_server
+
+import project_adapter
+import simulate_traffic
 
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -164,8 +168,38 @@ class MonitoringTests(unittest.TestCase):
         self.assertEqual(self.value(after, "chat_inprogress_requests"), 0)
 
     def test_real_configuration_cannot_report_mock(self):
+        before = self.samples()
         with patch.object(self.module, "CHAT_MODE", "real", create=True):
             self.assertEqual(self.http("/api/lab-status")[0], 404)
+            self.assertIs(project_adapter.confirm_mock_mode(self.base_url, 1), False)
+            with patch.object(project_adapter, "ADAPTER_READY", True), redirect_stdout(io.StringIO()):
+                code = simulate_traffic.main([
+                    "--base-url", self.base_url, "--scenario", "baseline",
+                    "--phase-seconds", "0.01", "--settle-seconds", "0", "--timeout", "5",
+                    "--output", str(self.module.DATA_DIR.parent / "rejected-run.json"),
+                ])
+            self.assertEqual(code, 2)
+        after = self.samples()
+        for outcome in ("success", "error"):
+            self.assertEqual(self.value(after, "chat_requests_total", outcome=outcome),
+                             self.value(before, "chat_requests_total", outcome=outcome))
+
+    def test_adapter_sends_success_and_expected_error_through_original_api(self):
+        self.assertIs(project_adapter.confirm_mock_mode(self.base_url + "/", 1), True)
+        before = self.samples()
+        for force_error in (False, True):
+            phase = simulate_traffic.Phase("adapter-check", 1, 0.02, 3 if force_error else 0)
+            observed = simulate_traffic.send_one(self.base_url, phase, 3, 1, threading.Event())
+            self.assertIs(observed.success, not force_error)
+            self.assertFalse(observed.transport_error)
+            self.assertIs(observed.expected_error, force_error)
+        after = self.samples()
+        for outcome in ("success", "error"):
+            self.assertEqual(self.value(after, "chat_requests_total", outcome=outcome)
+                             - self.value(before, "chat_requests_total", outcome=outcome), 1)
+        self.assertEqual(self.value(after, "chat_request_duration_seconds_count")
+                         - self.value(before, "chat_request_duration_seconds_count"), 2)
+        self.assertEqual(self.value(after, "chat_inprogress_requests"), 0)
 
 
 if __name__ == "__main__":
