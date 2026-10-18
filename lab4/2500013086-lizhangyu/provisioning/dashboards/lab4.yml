@@ -1,0 +1,11 @@
+apiVersion: 1
+providers:
+  - name: Lab 4 dashboards
+    orgId: 1
+    folder: Lab 4
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: C:/Users/lizhangyu/isse-labs/lab4/2500013086-lizhangyu/dashboards
+
