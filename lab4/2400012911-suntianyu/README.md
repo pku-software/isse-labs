@@ -59,7 +59,7 @@ LAB4_MODE=mock ./.venv/bin/python app.py
 
 Prometheus 在 `http://127.0.0.1:9090` 使用 `prometheus.yml`，每 2 秒采集一次应用 `/metrics`，数据库及日志写入 `.runtime/prometheus/`。Grafana 在 `http://127.0.0.1:3000` 使用 `grafana.ini`；数据源配置位于 `grafana-provisioning/datasources/prometheus.yml`，其数据库、日志和插件位于 `.runtime/grafana/`。应用日志可放在 `.runtime/app/`。这些路径由启动脚本显式指定，服务只监听本机地址。
 
-首次打开 Grafana 时按页面提示设置本机管理员密码。数据源由启动配置自动添加；在 Grafana 的仪表盘导入界面选择 `grafana-dashboard.json`，即可重建本实验的三个 Panel。仪表盘引用数据源 UID `lab4-prometheus`，与配置文件一致。
+首次打开 Grafana 时按页面提示设置本机管理员密码。数据源由启动配置自动添加；`grafana-dashboard.json` 是从 Grafana 13.2.4 导出的 V2 Dashboard 原始 JSON，可在 Grafana 的仪表盘导入界面选择该文件，重建本实验的三个 Panel。仪表盘引用数据源 UID `lab4-prometheus`，与配置文件一致。
 
 仪表盘使用三个 PromQL 查询：
 
