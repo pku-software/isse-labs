@@ -55,3 +55,70 @@ Histogram 的桶上界为 0.05、0.1、0.25、0.5、1、2、3、5、10、20、30
 课程访问脚本的个人副本为 `simulate_traffic.py`；项目适配位于 `project_adapter.py`。采集配置为 `prometheus.yml`，目标为 `127.0.0.1:5001`，采集间隔 2 秒，超时 1 秒。
 
 `.venv/` 存放 Python 环境；`.tools/` 用于本地监控程序；`.runtime/` 用于运行数据库和日志，均被 Git 忽略。模拟结果、仪表盘配置及截图保留为可提交文件。
+
+## Prometheus 与 Grafana
+
+本项目使用官方稳定版 Prometheus 3.13.4（LTS）和 Grafana OSS 13.2.4 的 macOS arm64 二进制程序。下载来源为 [Prometheus 官方下载页](https://prometheus.io/download/) 和 [Grafana OSS 官方下载页](https://grafana.com/grafana/download?edition=oss&platform=mac)。其他系统应选对应的官方架构包，并调整可执行文件名。
+
+在个人目录下载、校验和解压：
+
+```bash
+mkdir -p .tools/downloads .tools/prometheus .tools/grafana
+curl -fL -o .tools/downloads/prometheus-3.13.4.darwin-arm64.tar.gz https://github.com/prometheus/prometheus/releases/download/v3.13.4/prometheus-3.13.4.darwin-arm64.tar.gz
+curl -fL -o .tools/downloads/grafana_13.2.4_darwin_arm64.tar.gz https://dl.grafana.com/grafana/release/13.2.4/grafana_13.2.4_38252365904_darwin_arm64.tar.gz
+shasum -a 256 .tools/downloads/*.tar.gz
+```
+
+对照以下官方 SHA256，两份均一致后才解压和执行：
+
+- Prometheus：`0714a2812b2880078eeb10244d684981905fda568b50351ad6eea29397e55996`
+- Grafana：`a910966466359212f1d875748a72a4638c7d3724448d0c369210b31d763b165d`
+
+```bash
+tar -xzf .tools/downloads/prometheus-3.13.4.darwin-arm64.tar.gz -C .tools/prometheus --strip-components=1
+tar -xzf .tools/downloads/grafana_13.2.4_darwin_arm64.tar.gz -C .tools/grafana --strip-components=1
+```
+
+保持聊天应用运行，另开两个终端进入个人目录，分别运行：
+
+```bash
+./start-prometheus.sh
+```
+
+```bash
+./start-grafana.sh
+```
+
+- Prometheus：`http://127.0.0.1:9090/`，Targets 页面检查 `chat-app`；数据库显式保存在 `.runtime/prometheus/`。
+- Grafana：`http://127.0.0.1:3000/d/lab4-2400018814`；数据、日志、插件分别位于 `.runtime/grafana/` 的子目录。
+- 两者只监听本机，Grafana 开启匿名 Viewer 供本地实验查看。配置文件自动加载 `Lab4 Prometheus` 数据源及三个 Panel，无需云账号。
+- `start-grafana.sh` 将可提交的 `grafana-dashboard.json` 复制到专用运行目录，再由 provisioning 导入。启动脚本使用自身目录定位文件，不依赖启动时所在目录。
+- 停止时分别在对应终端按 Control+C。不要关闭其他应用的进程。端口被其他程序占用时，需要同时调整启动配置、数据源 URL 和访问地址。
+
+### 三个查询
+
+成功与失败请求速率，单位为次/秒，采用最近 30 秒窗口：
+
+```promql
+sum by (outcome) (rate(chat_requests_total{job="chat-app"}[30s]))
+```
+
+当前正在处理的请求数：
+
+```promql
+sum(chat_inprogress_requests{job="chat-app"})
+```
+
+最近窗口内的服务端平均处理耗时，单位秒：
+
+```promql
+sum(rate(chat_request_duration_seconds_sum{job="chat-app"}[30s]))
+/
+sum(rate(chat_request_duration_seconds_count{job="chat-app"}[30s]))
+```
+
+图表每 2 秒刷新。刚启动时样本不足，或者最近没有请求，平均耗时可能无值；不把这些空值伪造为 0。Histogram 的桶是累计分布；此处用总耗时与次数的变化率计算平均值，并未计算分位数。30 秒窗口会使阶段边界平滑，恢复也会有滞后。
+
+### 仪表盘导入
+
+从干净环境运行以上启动脚本，会按 `provisioning/datasources/prometheus.yml` 创建 UID 为 `lab4-prometheus` 的数据源，并自动导入仪表盘。已有 Grafana 可导入 `grafana-dashboard.json`，将各 Panel 的数据源选择为自己的 Prometheus；或者沿用本项目 provisioning 文件创建同名 UID。数据源地址需能访问实际 Prometheus 服务。
