@@ -27,3 +27,32 @@ mock 模式的聊天 JSON 除 `message` 外，可选 `mock_delay_seconds`（0～
 | `chat_request_duration_seconds` | Histogram | 每次聊天创建请求的服务端耗时，含失败请求 |
 
 只有 `POST /api/messages` 计入以上业务指标；页面、静态资源、状态接口与 `/metrics` 不计入。指标标签不包含聊天内容。Histogram 同时提供 `_bucket`、`_sum` 和 `_count` 序列。
+
+## 本地监控工具
+
+本机为 macOS ARM64。使用以下官方稳定版压缩包；下载包放在 `.tools/downloads/`，按官网公布的 SHA-256 校验后，去掉压缩包最外层目录并分别解压到 `.tools/prometheus/` 与 `.tools/grafana/`。工具包与运行数据均不提交。
+
+| 工具 | 官方下载 | SHA-256 |
+| --- | --- | --- |
+| Prometheus 3.15.0 | [macOS ARM64 包](https://github.com/prometheus/prometheus/releases/download/v3.15.0/prometheus-3.15.0.darwin-arm64.tar.gz) | `920df4d17e78b3b0175af144eb318b0c74d1cf7b1d1251b326966f0e81977260` |
+| Grafana OSS 13.2.4 | [macOS ARM64 包](https://dl.grafana.com/grafana/release/13.2.4/grafana_13.2.4_38252365904_darwin_arm64.tar.gz) | `a910966466359212f1d875748a72a4638c7d3724448d0c369210b31d763b165d` |
+
+准备好工具后，在三个独立终端中从本目录依次运行：
+
+```sh
+LAB4_MODE=mock ./.venv/bin/python app.py
+./start-prometheus.sh
+./start-grafana.sh
+```
+
+Prometheus 在 `http://127.0.0.1:9090` 使用 `prometheus.yml`，每 2 秒采集一次应用 `/metrics`，数据库及日志写入 `.runtime/prometheus/`。Grafana 在 `http://127.0.0.1:3000` 使用 `grafana.ini`；数据源配置位于 `grafana-provisioning/datasources/prometheus.yml`，其数据库、日志和插件位于 `.runtime/grafana/`。应用日志可放在 `.runtime/app/`。这些路径由启动脚本显式指定，服务只监听本机地址。
+
+仪表盘使用三个 PromQL 查询：
+
+| Panel | 查询 | 显示值 |
+| --- | --- | --- |
+| 成功与失败请求速率 | `sum by (outcome) (rate(chat_requests_total{job="chat-app"}[30s]))` | 最近 30 秒窗口内各类请求平均每秒完成数 |
+| 正在处理的聊天请求 | `sum(chat_inprogress_requests{job="chat-app"})` | 当前在途请求数 |
+| 平均聊天处理耗时 | `sum(rate(chat_request_duration_seconds_sum{job="chat-app"}[30s])) / sum(rate(chat_request_duration_seconds_count{job="chat-app"}[30s]))` | 最近窗口内服务端平均耗时，单位秒 |
+
+仪表盘每 5 秒刷新。无请求时平均耗时可能没有值，不补零；Histogram 的 `_bucket` 表示落在各耗时上限内的累计样本数，本仪表盘用 `_sum` 与 `_count` 计算平均值。
