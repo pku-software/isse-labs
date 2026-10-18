@@ -1,0 +1,11 @@
+apiVersion: 1
+providers:
+  - name: lab4
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: C:/Users/Lenovo/Desktop/isse-labs/lab4/2300010746-Wuchengcan/grafana/dashboards
