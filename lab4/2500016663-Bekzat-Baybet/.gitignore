@@ -1,0 +1,16 @@
+# 环境变量与密钥
+.env
+.env.*
+!.env.example
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+
+# 虚拟环境
+.venv/
+venv/
+
+# 本实验固定的本地工具与运行数据目录，不入库
+.tools/
+.runtime/
