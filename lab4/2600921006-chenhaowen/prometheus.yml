@@ -1,0 +1,10 @@
+# 本机 Flask 聊天应用；仅采集聊天业务指标。
+global:
+  scrape_interval: 2s
+  scrape_timeout: 1s
+
+scrape_configs:
+  - job_name: chat-app
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["127.0.0.1:5001"]
