@@ -65,4 +65,4 @@ Grafana 仪表盘：<http://127.0.0.1:3000/d/lab4-chat-monitoring/lab-4-chat-app
 
 第二次运行只运行 slow 阶段，保持 2 次/秒与 3 秒延迟，将并发上限从 6 提高到 12：发送 60 次，60 次成功，0 错误、0 跳过、0 网络错误。并发上限增加后，慢阶段不再跳过调度机会；此运行没有启用 errors 场景的每第三次失败规则，因此没有模拟失败。目标速率是调度目标，实际完成数会受后端耗时和并发上限影响。
 
-两次真实 JSON 结果分别保存在 `results/first-run.json` 和 `results/changed-run.json`。Targets 原始截图及三个 Grafana Panel 原始截图保存在 `screenshots/`。
+两次真实 JSON 结果分别保存在 `results/first-run.json` 和 `results/changed-run.json`。Targets 原始截图、包含三个 Panel 的完整仪表盘截图及各 Panel 细节截图保存在 `screenshots/`。
