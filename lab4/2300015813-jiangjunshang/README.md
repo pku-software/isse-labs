@@ -42,7 +42,7 @@ python -m venv .venv
 
 ## 本地文件
 
-`.venv/` 为 Python 虚拟环境，`.tools/` 存放后续监控工具，`.runtime/` 存放运行数据和日志，均由个人 `.gitignore` 忽略。课程 `simulate_traffic.py`、`project_adapter.py`、`prometheus.yml` 已复制到个人目录，适配器尚未启用，不能据此运行完整模拟。
+`.venv/` 为 Python 虚拟环境，`.tools/` 存放监控工具，`.runtime/` 存放运行数据和日志，均由个人 `.gitignore` 忽略。课程 `simulate_traffic.py`、`project_adapter.py`、`prometheus.yml` 已复制到个人目录。
 
 ## Prometheus 与 Grafana
 
@@ -101,3 +101,64 @@ sum(rate(chat_request_duration_seconds_count{job="chat-app"}[30s]))
 ![Prometheus Target UP](screenshots/prometheus-targets.png)
 
 ![Prometheus 累计聊天请求查询](screenshots/prometheus-query.png)
+
+## 访问脚本适配
+
+`simulate_traffic.py` 与课程调度器一致，发送节奏、并发限制、本地地址检查、禁用重定向和结果统计均保留。个人 `project_adapter.py` 的三个适配函数已完成真实 HTTP 单请求验证，`ADAPTER_READY=True`：
+
+- `confirm_mock_mode()` 请求 `/api/lab/status`，只有响应明确为 mock 且 `external_model_calls` 为 false 才通过；禁用代理和重定向，并在适配器自身请求前验证本地根地址。
+- `build_chat_request()` 为每个并发线程通过原 `/api/conversations` 接口创建独立测试会话，并在线程内顺序复用，再构造 `POST /api/conversations/<id>/messages` 请求，传入 `message`、`mock_delay_seconds`、`mock_force_error`。线程之间隔离会话，避免原项目的同会话并发变更冲突；复用减少额外创建和磁盘写入。创建会话超时为 10 秒。模拟产生的会话只保存在被忽略的本地运行数据中，不清理用户自己的会话。
+- `response_is_success()` 同时检查 HTTP 201、有效记录 ID、非空问题与回复，以及响应中没有 error；错误及无效 JSON 均判为失败，不打印聊天正文。
+
+验证中，正常聊天返回 201，强制失败返回 503 且 `simulated=true`；测试会话随后删除。两个并发线程的测试进一步确认：线程内顺序复用同一会话，线程之间使用不同会话，成功与模拟失败均能识别。对临时本地 real 配置服务的 HTTP 核验返回不通过，调度器在发送聊天前退出，未调用外部模型。验证和未完成运行产生的真实请求也进入指标；正式结果以结果 JSON 中的完整阶段时间范围为准。
+
+线程首次创建测试会话的操作不计入聊天指标。调度器的客户端计时从构造聊天请求后开始，因此不包含创建会话的准备时间；发送调度的并发占用仍包含这段准备时间。后续比较图表时，以服务端 Histogram 作为服务端耗时依据。
+
+## 首次完整模拟
+
+在个人目录运行：
+
+```powershell
+./.venv/Scripts/python.exe -u ./simulate_traffic.py --base-url http://127.0.0.1:5001 --output results/first-run.json
+```
+
+真实结果见 `results/first-run.json`，运行未中断，退出码为 0。五个阶段均使用默认参数：每阶段发送 30 秒、并发上限 6、聊天超时 10 秒，最后等待采集 10 秒。时间为 2026-10-18 北京时间（JSON 记录 UTC）：
+
+| 阶段 | 实际时间 | 发送 | 成功 | 业务/HTTP 错误 | 并发满跳过 | 客户端平均秒数 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| baseline：1 次/秒，延迟 0.1 秒 | 17:40:05–17:40:35 | 30 | 30 | 0 | 0 | 0.184 |
+| burst：4 次/秒，延迟 0.1 秒 | 17:40:35–17:41:05 | 120 | 120 | 0 | 0 | 0.188 |
+| slow：2 次/秒，延迟 3 秒 | 17:41:05–17:41:38 | 52 | 52 | 0 | 8 | 3.091 |
+| errors：1 次/秒，每第 3 次失败 | 17:41:38–17:42:08 | 30 | 20 | 10 | 0 | 0.189 |
+| recovery：1 次/秒，延迟 0.1 秒 | 17:42:08–17:42:38 | 30 | 30 | 0 | 0 | 0.203 |
+
+共发送 262 次，成功 252 次，预期模拟失败 10 次；网络错误与非预期结果均为 0。慢阶段的实际结束时间包含在途请求收尾，因此超过 30 秒。并发满时跳过发送机会，不无限排队，目标速率不等于完成速率。
+
+对完整运行时间范围实际查询 Prometheus（2 秒步长），成功请求速率最大值为 4 次/秒，错误请求速率最大值约为 0.357 次/秒，在途量最大值为 6，服务端平均耗时最大值约为 3.036 秒。该均值来自 Histogram 的 `_sum`/`_count`，不同于表中含网络开销的客户端耗时。30 秒窗口会平滑阶段边界，并使恢复后的速率回落有滞后。
+
+首次运行查看范围：2026-10-18 17:40:05–17:43:13，包含末尾恢复观测。[打开本地仪表盘固定范围](http://127.0.0.1:3000/d/lab4-chat/lab4-chat-monitoring?from=1792316405000&to=1792316593000)。该范围避开未完成的先前尝试；原始累计 Counter 包含所有真实测试请求。
+
+学生原始仪表盘截图包含三个 Panel 及图例，时间轴覆盖完整五阶段，也包含之前未完成尝试。应以 17:40:05–17:42:38 对照本次结果；更早的峰值不属于这次完整模拟。图片按原始 PNG 保存，未裁剪或修改。
+
+![首次完整模拟的 Grafana 仪表盘](screenshots/grafana-dashboard.png)
+
+## 调整并发上限后的模拟
+
+只修改并发上限，由 6 改为 3；单独重跑 slow 场景，其余请求参数仍为默认值：目标每秒 2 次、后端延迟 3 秒、持续发送 30 秒。
+
+```powershell
+./.venv/Scripts/python.exe -u ./simulate_traffic.py --base-url http://127.0.0.1:5001 --scenario slow --concurrency 3 --output results/changed-run.json
+```
+
+真实结果见 `results/changed-run.json`，北京时间为 2026-10-18 17:57:22–17:57:54，之后等待采集 10 秒。运行未中断，退出码为 0。共计划 60 次发送机会，实际发送 27 次且全部成功，跳过 33 次；业务/HTTP 错误、网络错误和非预期结果均为 0。客户端平均耗时约 3.091 秒。
+
+| 比较项 | 首次 slow：并发 6 | 第二次 slow：并发 3 |
+| --- | ---: | ---: |
+| 实际成功请求数 | 52 | 27 |
+| 并发满跳过的发送机会 | 8 | 33 |
+| Prometheus 采集到的在途峰值 | 6 | 3 |
+| slow 阶段范围内的服务端平均耗时曲线最大值 | 约 3.04 秒 | 约 3.05 秒 |
+
+降低脚本并发上限后，实际在途峰值由 6 降为 3；平均耗时仍在 3 秒附近，实际发送减少、跳过增加。在途指标统计应用收到的所有聊天请求；这里的并发上限只约束模拟脚本，并非 Flask 的全局限流。比较时没有其他聊天访问。
+
+[第二次运行的固定仪表盘范围](http://127.0.0.1:3000/d/lab4-chat/lab4-chat-monitoring?from=1792317432000&to=1792317509000) 为 17:57:12–17:58:29，包含发送前及恢复后的观测。学生在浏览器观察到峰值为 3。`grafana-dashboard.json` 已从实际 Grafana 仪表盘接口导出，保留三个 Panel、查询和固定数据源 UID，仅移除当前安装分配的数字 ID，便于重新导入。
