@@ -122,3 +122,49 @@ sum(rate(chat_request_duration_seconds_count{job="chat-app"}[30s]))
 ### 仪表盘导入
 
 从干净环境运行以上启动脚本，会按 `provisioning/datasources/prometheus.yml` 创建 UID 为 `lab4-prometheus` 的数据源，并自动导入仪表盘。已有 Grafana 可导入 `grafana-dashboard.json`，将各 Panel 的数据源选择为自己的 Prometheus；或者沿用本项目 provisioning 文件创建同名 UID。数据源地址需能访问实际 Prometheus 服务。
+
+`grafana-dashboard.json` 从本次实际运行的 Grafana 导出，保留三个查询与数据源 UID，移除本机数据库 ID。默认展示最近 10 分钟；导入的是图表配置，历史数据仍保存在本机 Prometheus，复现实验需重新运行访问脚本。
+
+## 访问模拟与实验结果
+
+`simulate_traffic.py` 与课程 starter 调度脚本一致。`project_adapter.py` 实现三个适配函数：通过 `GET /api/lab4/status` 实际核验 mock 模式且外部模型调用关闭；构造原 `POST /api/messages` 的消息、延迟和失败字段；校验 HTTP 201 及有效的记录和回复。模式核验禁止重定向，调度器限制本机地址和有限并发。非 mock 状态、错误响应与无效响应的检查，以及一次实际正常请求和一次模拟失败验证均已通过。
+
+保持应用、Prometheus 和 Grafana 运行，在个人目录执行：
+
+```bash
+.venv/bin/python simulate_traffic.py --base-url http://127.0.0.1:5001 --output results/first-run.json
+.venv/bin/python simulate_traffic.py --base-url http://127.0.0.1:5001 --scenario slow --slow-delay 1 --phase-seconds 30 --output results/changed-run.json
+```
+
+两条命令应先后运行，避免流量叠加。重复实验时改用新的输出文件名，避免覆盖已有结果。首次使用默认五阶段，每阶段发送窗口 30 秒、并发上限 6，结束后等待在途请求完成并留出 10 秒采集时间。第二次仅将 slow 场景延迟从 3 秒改为 1 秒，目标频率仍为每秒 2 次、并发上限仍为 6。
+
+### 首次完整实验
+
+2026 年 10 月 18 日实际运行结果如下，时间为北京时间（JSON 内保存 UTC 时间）：
+
+| 场景 | 起止时间 | 目标频率（次/秒） | 后端延迟（秒） | 实际发送 | 成功 | 业务/HTTP 错误 | 跳过发送机会 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| baseline | 20:17:49–20:18:19 | 1 | 0.1 | 30 | 30 | 0 | 0 |
+| burst | 20:18:19–20:18:49 | 4 | 0.1 | 120 | 120 | 0 | 0 |
+| slow | 20:18:49–20:19:22 | 2 | 3 | 52 | 52 | 0 | 8 |
+| errors | 20:19:22–20:19:52 | 1 | 0.1 | 30 | 20 | 10 | 0 |
+| recovery | 20:19:52–20:20:22 | 1 | 0.1 | 30 | 30 | 0 | 0 |
+
+共发送 262 次，252 次成功，10 次为每第 3 次请求产生的预设失败；网络错误与非预期结果均为 0。slow 阶段因并发名额已满跳过 8 次发送机会，跳过不算已发送或失败请求；阶段结束包含在途请求收尾，因此实际起止时间可超过 30 秒。
+
+真实 Prometheus 历史查询中，成功请求速率最高约 4 次/秒，慢请求期间在途请求峰值为 6，平均服务端耗时升至约 3.006 秒；错误阶段失败速率上升，恢复后回落。0.1 秒短请求可能在两次采集之间完成，因此 Gauge 为 0 的采样点不代表那段时间完全没有请求。30 秒速率窗口使曲线变化平滑，并使部分变化延后显示。
+
+原始截图：`screenshots/prometheus-targets.png` 显示 `127.0.0.1:5001/metrics`、`job="chat-app"` 和 `UP`；`screenshots/grafana-dashboard.png` 展示 20:17:34–20:21:02 的三个 Panel，覆盖五个阶段及恢复。
+
+### 缩短延迟的对照实验
+
+第二次于 20:45:08–20:45:38 运行 slow 场景，实际发送 60 次，全部成功，跳过、业务/HTTP 错误、网络错误与非预期结果均为 0。
+
+| 对比项 | 首次 slow：延迟 3 秒 | 第二次 slow：延迟 1 秒 |
+| --- | --- | --- |
+| 脚本客户端平均耗时 | 3.018 秒 | 1.015 秒 |
+| Prometheus 采集的在途请求峰值 | 6 | 2 |
+| 图表服务端平均耗时峰值 | 约 3.006 秒 | 约 1.008 秒 |
+| 实际发送 / 跳过机会 | 52 / 8 | 60 / 0 |
+
+缩短处理时间后，请求更快释放并发名额，平均耗时及在途数量降低，本次没有因并发已满跳过发送。客户端耗时包含网络等开销，与服务端 Histogram 不是同一指标；两者分别取自结果 JSON 与 Prometheus 历史查询。两次实验在不同时间执行，横轴位置不同本身不表示处理变慢。
