@@ -84,7 +84,7 @@ Histogram 同时暴露桶、总和和次数。平均耗时使用总和除以次�
 | errors | 30 | 20 | 10 | 0 |
 | recovery | 30 | 30 | 0 | 0 |
 
-仪表盘上，burst 期间成功速率升到接近每秒 4 次。slow 期间正在处理的请求升到 5，平均耗时大约 2.5 秒；服务端延迟是 3 秒，30 秒窗口混入了阶段边缘更快的请求。errors 期间失败曲线上升，recovery 后失败速率随 30 秒窗口回落。截图为 `screenshots/grafana-dashboard.png`，采集目标截图为 `screenshots/prometheus-targets.png`。
+仪表盘上，burst 期间成功速率升到接近每秒 4 次。slow 期间正在处理的请求升到 5，平均耗时大约 2.5 秒；服务端延迟是 3 秒，30 秒窗口混入了阶段边缘更快的请求。errors 期间失败曲线上升，recovery 后失败速率随 30 秒窗口回落。截图为 `screenshots/grafana-dashboard.jpg`，采集目标截图为 `screenshots/prometheus-targets.jpg`。
 
 ## 第二次模拟
 
