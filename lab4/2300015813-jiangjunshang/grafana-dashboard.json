@@ -1,0 +1,198 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lab4-prometheus"
+      },
+      "description": "Completed chat requests per second, averaged over the last 30 seconds. This is not the cumulative request count.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "spanNulls": false
+          },
+          "min": 0,
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lab4-prometheus"
+          },
+          "expr": "sum by (outcome) (rate(chat_requests_total{job=\"chat-app\"}[30s]))",
+          "instant": false,
+          "interval": "2s",
+          "legendFormat": "{{outcome}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Success / error request rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lab4-prometheus"
+      },
+      "description": "Concurrent chat requests currently being processed. This is not the online user count.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "spanNulls": false
+          },
+          "min": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lab4-prometheus"
+          },
+          "expr": "sum(chat_inprogress_requests{job=\"chat-app\"})",
+          "instant": false,
+          "interval": "2s",
+          "legendFormat": "in progress",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "In-progress chat requests",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "lab4-prometheus"
+      },
+      "description": "Server-side mean processing time over the last 30 seconds, including failures. No requests may produce no value.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "spanNulls": false
+          },
+          "min": 0,
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "lab4-prometheus"
+          },
+          "expr": "sum(rate(chat_request_duration_seconds_sum{job=\"chat-app\"}[30s])) / sum(rate(chat_request_duration_seconds_count{job=\"chat-app\"}[30s]))",
+          "instant": false,
+          "interval": "2s",
+          "legendFormat": "mean duration",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Mean server processing duration",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": [
+    "lab4",
+    "chat-app"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "2s",
+      "5s",
+      "10s",
+      "30s",
+      "1m"
+    ]
+  },
+  "timezone": "browser",
+  "title": "Lab4 Chat Monitoring",
+  "uid": "lab4-chat",
+  "version": 1
+}

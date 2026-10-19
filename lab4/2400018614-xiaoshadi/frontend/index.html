@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 聊天</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>AI 聊天</h1>
+      <p class="app-subtitle">向 AI 提问，并随时修改或删除历史记录</p>
+    </header>
+
+    <main class="chat-panel">
+      <ul class="message-list" id="message-list">
+        <!-- 聊天记录由 app.js 调用后端 API 后动态渲染 -->
+      </ul>
+    </main>
+
+    <form class="composer" id="composer">
+      <label class="visually-hidden" for="message-input">输入消息</label>
+      <input
+        id="message-input"
+        class="composer-input"
+        type="text"
+        placeholder="输入消息，按回车或点击发送"
+        autocomplete="off"
+      >
+      <button type="submit" class="btn btn-send" id="send-button">发送</button>
+    </form>
+
+    <p class="status" id="status" role="status"></p>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

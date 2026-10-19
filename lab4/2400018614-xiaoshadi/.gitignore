@@ -1,0 +1,12 @@
+# 本地密钥，绝不提交
+.env
+
+# Python 缓存与虚拟环境
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 本实验下载的监控工具与运行数据，只在本机使用
+.tools/
+.runtime/
