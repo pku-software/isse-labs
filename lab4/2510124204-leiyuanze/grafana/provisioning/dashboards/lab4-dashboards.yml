@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: lab4-dashboards
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: D:/leiyuanze/0courses/大二上/智能化软件系统与工程/isse-labs/lab4/2510124204-leiyuanze/grafana/provisioning/dashboards

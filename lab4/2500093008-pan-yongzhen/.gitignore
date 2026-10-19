@@ -1,0 +1,12 @@
+.tools/
+.runtime/
+.venv/
+venv/
+.env
+.env.*
+__pycache__/
+*.py[cod]
+.DS_Store
+data/
+*.pem
+*.key

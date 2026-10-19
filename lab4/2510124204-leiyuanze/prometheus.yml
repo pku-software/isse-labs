@@ -1,0 +1,10 @@
+# Lab 4 本地采集配置：抓取本机聊天应用（127.0.0.1:5001）的 /metrics。
+global:
+  scrape_interval: 2s
+  scrape_timeout: 1s
+
+scrape_configs:
+  - job_name: chat-app
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["127.0.0.1:5001"]

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 聊天 Web 应用</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">AI</span>
+          <div>
+            <h1>聊天助手</h1>
+            <p>Flask + DeepSeek 多会话聊天</p>
+          </div>
+        </div>
+        <span
+          class="connection-status"
+          id="connection-status"
+          data-state="pending"
+        >
+          正在连接
+        </span>
+      </header>
+
+      <main class="workspace">
+        <aside class="conversation-sidebar">
+          <div class="sidebar-heading">
+            <div>
+              <p class="sidebar-kicker">会话</p>
+              <h2>聊天记录</h2>
+            </div>
+            <button class="new-conversation-button" id="new-conversation-button" type="button">
+              新建
+            </button>
+          </div>
+          <div
+            class="conversation-list"
+            id="conversation-list"
+            aria-label="会话列表"
+            aria-live="polite"
+          ></div>
+        </aside>
+
+        <section class="chat-panel">
+          <div class="panel-heading">
+            <div>
+              <h2 id="active-conversation-title">未选择会话</h2>
+              <p id="active-conversation-subtitle">选择或新建一个会话</p>
+            </div>
+            <span class="message-count" id="message-count">0 条消息</span>
+          </div>
+
+          <section
+            class="message-list"
+            id="message-list"
+            aria-label="聊天记录"
+            aria-live="polite"
+          ></section>
+        </section>
+      </main>
+
+      <div class="composer-area">
+        <p
+          class="feedback"
+          id="feedback"
+          role="status"
+          aria-live="polite"
+        ></p>
+        <form class="composer" id="message-form">
+          <label class="sr-only" for="message-input">输入消息</label>
+          <textarea
+            id="message-input"
+            name="message"
+            rows="2"
+            maxlength="2000"
+            placeholder="选择会话后输入消息..."
+            disabled
+            required
+          ></textarea>
+          <button class="send-button" id="send-button" type="submit" disabled>
+            发送
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

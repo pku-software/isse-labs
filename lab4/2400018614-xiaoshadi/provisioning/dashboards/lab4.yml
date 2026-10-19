@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: lab4
+    orgId: 1
+    folder: Lab 4
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 5
+    allowUiUpdates: true
+    options:
+      path: C:/Users/我不是宋荣子/isse-labs/lab4/2400018614-xiaoshadi
