@@ -1,0 +1,9 @@
+.env
+__pycache__/
+.venv/
+.pytest_cache/
+htmlcov/
+.coverage
+*.pyc
+data/*.json
+!data/messages.json
