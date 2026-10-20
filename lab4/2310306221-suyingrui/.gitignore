@@ -1,0 +1,18 @@
+# Local tools, databases and Python environment
+.tools/
+.runtime/
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# Credentials and local chat records
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+/data/
+
+# Incoming screenshot originals; named submission copies live in screenshots/.
+/temp/
