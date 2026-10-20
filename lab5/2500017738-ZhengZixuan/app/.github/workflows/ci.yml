@@ -1,0 +1,33 @@
+name: Lab5 CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    if: github.event_name == 'push'
+    runs-on: [self-hosted, macOS, ARM64]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Check local Python
+        run: python3.13 --version
+
+      - name: Create virtual environment
+        run: python3.13 -m venv .venv
+
+      - name: Install dependencies
+        run: .venv/bin/python -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests with coverage
+        run: .venv/bin/python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=70
+
+      - name: Run smoke test
+        run: .venv/bin/python scripts/smoke_test.py
