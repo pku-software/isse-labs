@@ -1,0 +1,32 @@
+name: Lab5 CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: [self-hosted, Windows]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Check local Python
+        run: python --version
+
+      - name: Create virtual environment
+        run: python -m venv .venv
+
+      - name: Install dependencies
+        run: .\.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests with coverage
+        run: .\.venv\Scripts\python.exe -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=70
+
+      - name: Run smoke test
+        run: .\.venv\Scripts\python.exe scripts\smoke_test.py
