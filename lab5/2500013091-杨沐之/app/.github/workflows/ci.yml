@@ -1,0 +1,55 @@
+name: Lab5 CI
+
+# 本机实验只接收 main 的推送，不执行 PR 事件中的代码。
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test and coverage
+    runs-on: self-hosted
+
+    defaults:
+      run:
+        shell: powershell
+
+    env:
+      PYTHONUTF8: "1"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Prepare local Python environment
+        run: |
+          & "C:\Users\yangm\miniconda3\python.exe" --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & "C:\Users\yangm\miniconda3\python.exe" -m venv .venv
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $lab5VenvScripts = Join-Path $env:GITHUB_WORKSPACE ".venv\Scripts"
+          $lab5VenvScripts | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Install dependencies
+        env:
+          NO_PROXY: "*"
+          PIP_CONFIG_FILE: "nul"
+        run: |
+          # 仅此步骤直连下载包，不修改 runner 主进程或系统代理设置。
+          foreach ($lab5ProxyName in @("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "PIP_PROXY", "PIP_EXTRA_INDEX_URL")) {
+            Remove-Item -LiteralPath "Env:$lab5ProxyName" -ErrorAction SilentlyContinue
+          }
+          python -c "import sys; print(sys.executable)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install --index-url https://pypi.org/simple -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests and coverage
+        run: python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=70
+
+      - name: Run smoke test
+        run: python scripts/smoke_test.py
