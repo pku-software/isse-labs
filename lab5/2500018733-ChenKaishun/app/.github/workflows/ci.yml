@@ -1,0 +1,42 @@
+name: Chat CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests and coverage
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Prepare local Python 3.13
+        run: |
+          $lab5Python = 'C:\Users\R32st\AppData\Local\Programs\Python\Python313\python.exe'
+          & $lab5Python --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $lab5Python -m venv .venv
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          .\.venv\Scripts\python.exe -m ensurepip --upgrade
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Install dependencies
+        run: .\.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests and coverage
+        run: .\.venv\Scripts\python.exe -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=70
+
+      - name: Run smoke test
+        run: .\.venv\Scripts\python.exe scripts/smoke_test.py
