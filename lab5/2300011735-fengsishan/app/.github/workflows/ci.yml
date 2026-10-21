@@ -1,0 +1,38 @@
+name: Chat CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests and coverage
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: cmd
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+
+      - name: Prepare local Python 3.12
+        run: |
+          "D:\Anaconda3\python.exe" --version
+          if errorlevel 1 exit /b 1
+          "D:\Anaconda3\python.exe" -m venv .venv
+          if errorlevel 1 exit /b 1
+          echo %GITHUB_WORKSPACE%\.venv\Scripts>>"%GITHUB_PATH%"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests and coverage
+        run: python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=70
+
+      - name: Run smoke test
+        run: python scripts/smoke_test.py
