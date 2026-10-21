@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: self-hosted
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Show runner environment
+        run: |
+          sw_vers
+          uname -m
+          python3 --version
+
+      - name: Prepare Python environment
+        run: |
+          python3 -m venv .venv-ci
+          .venv-ci/bin/python -m pip install --upgrade pip
+          .venv-ci/bin/python -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests with coverage
+        run: >-
+          .venv-ci/bin/python -m pytest -q
+          --cov=app
+          --cov-report=term-missing
+          --cov-fail-under=70
+
+      - name: Run smoke test
+        run: .venv-ci/bin/python scripts/smoke_test.py
