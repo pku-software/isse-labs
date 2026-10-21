@@ -1,0 +1,428 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #1e293b;
+  background: #eef2ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(129, 140, 248, 0.3), transparent 32rem),
+    linear-gradient(145deg, #f8fafc, #eef2ff 55%, #f5f3ff);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+  gap: 20px;
+  width: min(1200px, calc(100% - 32px));
+  min-height: calc(100vh - 64px);
+  margin: 0 auto;
+  padding: 32px 0;
+}
+
+.conversation-sidebar,
+.workspace {
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 24px 60px rgba(51, 65, 85, 0.1);
+  backdrop-filter: blur(16px);
+}
+
+.conversation-sidebar {
+  padding: 24px;
+}
+
+.brand-block h1 {
+  margin: 7px 0;
+  font-size: 1.8rem;
+  letter-spacing: -0.04em;
+}
+
+.brand-block > p:last-child {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.new-conversation-form {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.new-conversation-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.compact-form-row {
+  display: flex;
+  gap: 8px;
+}
+
+input {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+}
+
+input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
+}
+
+.compact-form-row input {
+  flex: 1;
+}
+
+.compact-form-row .primary-button {
+  padding-inline: 14px;
+}
+
+.conversation-list {
+  display: grid;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.conversation-list:empty::before {
+  padding: 24px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  color: #64748b;
+  font-size: 0.86rem;
+  text-align: center;
+  content: "还没有会话，请先创建一个。";
+}
+
+.conversation-item {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+  color: #334155;
+  background: #fff;
+  text-align: left;
+}
+
+.conversation-item strong,
+.conversation-item span {
+  display: block;
+}
+
+.conversation-item strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversation-item span {
+  margin-top: 4px;
+  color: #94a3b8;
+  font-size: 0.76rem;
+}
+
+.conversation-item.active {
+  border-color: #6366f1;
+  color: #3730a3;
+  background: #eef2ff;
+}
+
+.workspace {
+  display: flex;
+  min-height: 700px;
+  padding: 28px;
+  flex-direction: column;
+}
+
+.workspace-header,
+.conversation-controls,
+.composer-footer,
+.message-actions {
+  display: flex;
+  align-items: center;
+}
+
+.workspace-header,
+.composer-footer {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.conversation-controls {
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.conversation-panel {
+  margin-top: 12px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #6366f1;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+}
+
+h2 {
+  margin: 6px 0 0;
+  font-size: 1.35rem;
+}
+
+.status-badge {
+  padding: 7px 12px;
+  border-radius: 999px;
+  color: #4338ca;
+  background: #eef2ff;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.message-list {
+  flex: 1;
+  margin-top: 24px;
+}
+
+.message-list:empty::before {
+  display: block;
+  padding: 38px 20px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 18px;
+  color: #64748b;
+  text-align: center;
+  content: "当前会话还没有消息。";
+}
+
+.message-card {
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.message-card + .message-card {
+  margin-top: 14px;
+}
+
+.message-row {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.message-row + .message-row {
+  margin-top: 14px;
+}
+
+.message-row p {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 4px 14px 14px;
+  line-height: 1.6;
+}
+
+.user-message p {
+  background: #eef2ff;
+}
+
+.assistant-message p {
+  background: #f1f5f9;
+}
+
+.role {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 12px;
+  color: #fff;
+  background: #4f46e5;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.assistant-message .role {
+  background: #0f766e;
+}
+
+.message-actions {
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.inline-editor,
+.delete-confirmation {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.inline-editor label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.inline-editor textarea {
+  background: #fff;
+}
+
+.inline-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.delete-confirmation p {
+  margin: 0 0 10px;
+  color: #9f1239;
+  font-size: 0.9rem;
+}
+
+.hidden {
+  display: none;
+}
+
+.error-text {
+  color: #be123c;
+}
+
+.composer {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.composer label {
+  display: block;
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 14px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  color: #1e293b;
+  background: #f8fafc;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
+}
+
+.composer-footer {
+  margin-top: 14px;
+}
+
+.form-feedback {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.86rem;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button {
+  border: 0;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.primary-button {
+  padding: 11px 22px;
+  color: #fff;
+  background: #4f46e5;
+}
+
+.secondary-button,
+.danger-button {
+  padding: 8px 12px;
+  background: #f1f5f9;
+}
+
+.secondary-button {
+  color: #334155;
+}
+
+.danger-button {
+  color: #be123c;
+  background: #fff1f2;
+}
+
+@media (max-width: 800px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    width: min(100% - 20px, 1200px);
+    padding: 20px 0;
+  }
+
+  .conversation-sidebar,
+  .workspace {
+    padding: 20px;
+    border-radius: 18px;
+  }
+
+  .workspace {
+    min-height: 640px;
+  }
+
+  .composer-footer {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .primary-button {
+    width: 100%;
+  }
+
+  .compact-form-row .primary-button,
+  .inline-actions .primary-button {
+    width: auto;
+  }
+}
