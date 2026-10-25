@@ -1,0 +1,36 @@
+name: CI
+
+# 触发时机：向 main 分支推送代码，或向 main 发起 PR
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # 在本机自托管 runner 上执行（之前的云端结果保留在历史运行记录里）
+    runs-on: self-hosted
+    steps:
+      # 检出当前提交的代码到 runner 工作区
+      - uses: actions/checkout@v4
+      # 准备本机 Python：展示版本，在工作区建虚拟环境，并把它的 bin 目录
+      # 加入后续步骤的 PATH（runner 检出的工作区与日常开发目录不同，
+      # 日常终端里的虚拟环境不会自动可用）
+      - name: Prepare local Python 3.12
+        run: |
+          /opt/anaconda3/bin/python3.12 --version
+          /opt/anaconda3/bin/python3.12 -m venv .venv
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+      # 按依赖清单安装运行依赖和测试依赖
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      # 运行测试 + 70% 覆盖率检查
+      - name: Run tests with coverage
+        run: python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=70
+      # 冒烟检查：真正启动应用，确认首页和连通性接口能响应
+      - name: Run smoke test
+        run: python scripts/smoke_test.py
