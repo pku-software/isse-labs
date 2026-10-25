@@ -1,0 +1,53 @@
+name: Chat CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests, coverage and smoke on Windows
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -Command "{0}"
+    env:
+      PYTHONIOENCODING: "utf-8"
+      PYTHONUTF8: "1"
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Prepare Python environment
+        run: |
+          & 'D:\anaconda3\python.exe' --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & 'D:\anaconda3\python.exe' -m venv .venv
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & '.\.venv\Scripts\python.exe' --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Install dependencies
+        run: |
+          & '.\.venv\Scripts\python.exe' -m pip install -r requirements.txt -r requirements-dev.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run tests and check coverage
+        run: |
+          & '.\.venv\Scripts\python.exe' -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=70
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run smoke test
+        run: |
+          & '.\.venv\Scripts\python.exe' scripts\smoke_test.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
