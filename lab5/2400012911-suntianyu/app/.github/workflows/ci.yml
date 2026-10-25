@@ -1,0 +1,32 @@
+name: Chat CI
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests and coverage
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Prepare local Python environment
+        run: |
+          /usr/bin/python3 -m venv .venv
+          .venv/bin/python --version
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests and coverage
+        run: python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=70
+
+      - name: Run smoke test
+        run: python scripts/smoke_test.py

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>知聊 · AI 聊天</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <main class="chat-app">
+    <header class="app-header">
+      <div>
+        <p class="brand">知聊</p>
+        <h1>从一个问题开始。</h1>
+        <p class="subtitle">把想法写下来，让对话慢慢展开。</p>
+      </div>
+      <span class="mode-badge">问答练习</span>
+    </header>
+
+    <section class="conversation" aria-labelledby="conversation-title">
+      <div class="section-heading">
+        <h2 id="conversation-title">聊天记录</h2>
+        <button id="reload-button" class="text-button" type="button">重新加载</button>
+      </div>
+      <div id="message-list"><p class="empty-state">正在加载聊天记录……</p></div>
+    </section>
+
+    <form id="message-form" class="composer" aria-labelledby="input-label">
+      <label id="input-label" for="message-input">你的问题</label>
+      <textarea id="message-input" name="message" rows="3" required disabled
+        placeholder="写下你想聊的内容……" aria-describedby="message-note"></textarea>
+      <div class="composer-footer">
+        <p id="message-note">回复由 DeepSeek 生成。问答自动保存在本机，重启后仍可查看。</p>
+        <button id="send-button" class="send-button" type="submit" disabled>发送</button>
+      </div>
+      <p id="status-message" class="status-message" role="status" aria-live="polite" aria-atomic="true"></p>
+    </form>
+    <noscript><p>请启用 JavaScript，以加载和操作聊天记录。</p></noscript>
+    <footer class="app-footer">AI 聊天 · 留一点空间，给新的想法。</footer>
+  </main>
+</body>
+</html>
