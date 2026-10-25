@@ -1,0 +1,41 @@
+name: CI
+
+# 什么时候触发：推送 main 分支、或向 main 发 Pull Request
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    # 切到本机 runner：self-hosted 会匹配到注册时自动带上的
+    # self-hosted / Windows / X64 这三个标签
+    runs-on: self-hosted
+
+    steps:
+      # 把当前提交的代码检出到 runner 自己的工作区
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 本机执行用电脑上已安装的 Python，先确认它的版本和位置
+      - name: Show local Python
+        run: |
+          python --version
+          where.exe python
+
+      # runner 的工作区与日常开发目录不同，依赖要在工作区里重新准备
+      - name: Prepare virtual environment
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install --upgrade pip
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
+
+      # 与本地验证过的命令完全一致：测试 + 覆盖率门槛
+      - name: Run tests with coverage
+        run: .\.venv\Scripts\python.exe -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=70
+
+      # 真正启动一次服务，检查首页与连通性接口
+      # 前面的步骤通过后才会执行到这里；本步失败同样会让整个 job 失败
+      - name: Run smoke test
+        run: .\.venv\Scripts\python.exe scripts\smoke_test.py
