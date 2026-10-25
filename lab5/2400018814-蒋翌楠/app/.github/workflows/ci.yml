@@ -1,0 +1,29 @@
+name: Chat CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    if: github.event_name == 'push'
+    runs-on: self-hosted
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Prepare local Python
+        run: |
+          /Users/carrie/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m venv .venv
+          .venv/bin/python --version
+      - name: Install dependencies
+        run: .venv/bin/python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Test and coverage
+        run: .venv/bin/python -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=70
+      - name: Run smoke test
+        run: .venv/bin/python scripts/smoke_test.py
