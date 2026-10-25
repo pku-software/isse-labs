@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+data/
+.DS_Store
