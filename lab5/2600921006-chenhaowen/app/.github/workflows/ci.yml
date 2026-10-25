@@ -1,0 +1,45 @@
+name: Lab5 CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test and coverage
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: "0.10.2"
+          enable-cache: false
+
+      - name: Set up Python
+        run: |
+          uv python install 3.12.12
+          uv venv --python 3.12.12 .venv
+          uv run --no-project --python .venv/bin/python python --version
+
+      - name: Install dependencies
+        run: uv pip install --python .venv/bin/python -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests and coverage
+        run: >-
+          uv run --no-project --python .venv/bin/python python -m pytest -q
+          --cov=app --cov-report=term-missing --cov-fail-under=70
+
+      - name: Run smoke test
+        run: uv run --no-project --python .venv/bin/python python scripts/smoke_test.py
