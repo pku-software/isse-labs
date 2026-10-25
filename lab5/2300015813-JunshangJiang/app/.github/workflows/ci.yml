@@ -1,0 +1,43 @@
+name: Flask chat CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: [self-hosted, Windows, ARM64]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Show installed Python
+        run: python --version
+
+      - name: Create virtual environment and install dependencies
+        env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+          PIP_NO_INDEX: "false"
+          PIP_INDEX_URL: https://pypi.org/simple
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests and coverage
+        env:
+          LAB5_DATA_DIR: ${{ runner.temp }}/lab5-chat-data
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+        run: .\.venv\Scripts\python.exe -m pytest -q --cov=app --cov-report=term-missing --cov-fail-under=70
+
+      - name: Run smoke test
+        env:
+          TEMP: ${{ runner.temp }}
+          TMP: ${{ runner.temp }}
+        run: .\.venv\Scripts\python.exe scripts/smoke_test.py
