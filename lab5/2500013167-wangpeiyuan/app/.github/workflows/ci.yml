@@ -1,0 +1,50 @@
+name: Chat application CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests and coverage
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Configure Git to use SSH
+        run: |
+          $configPath = Join-Path $env:RUNNER_TEMP "lab5-gitconfig"
+          $keyPath = Join-Path $env:USERPROFILE ".ssh\id_ed25519_github"
+          $knownHostsPath = Join-Path $env:USERPROFILE ".ssh\known_hosts"
+          git config --file $configPath "url.git@github.com:.insteadOf" "https://github.com/"
+          "GIT_CONFIG_GLOBAL=$configPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $sshCommand = "ssh -o BatchMode=yes -o IdentitiesOnly=yes -i `"$keyPath`" -o UserKnownHostsFile=`"$knownHostsPath`""
+          "GIT_SSH_COMMAND=$sshCommand" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Prepare local Python environment
+        run: |
+          python --version
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run tests with coverage
+        run: >-
+          .\.venv\Scripts\python.exe -m pytest -q
+          --cov=app
+          --cov-report=term-missing
+          --cov-fail-under=70
+
+      - name: Run smoke test
+        run: .\.venv\Scripts\python.exe scripts\smoke_test.py
